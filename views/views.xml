@@ -1,0 +1,109 @@
+<odoo>
+    <data>
+        <!-- vista de lista/tree para gms.viajes -->
+        <record id="view_gms_viajes_tree" model="ir.ui.view">
+            <field name="name">gms.viaje.tree</field>
+            <field name="model">gms.viaje</field>
+            <field name="arch" type="xml">
+                <tree string="Viajes">
+                    <field name="name"/>
+                    <!-- Agrega los demás campos que necesites mostrar en la vista de lista -->
+                </tree>
+            </field>
+        </record>
+
+        <!-- vista de formulario/form para gms.viajes -->
+        <record id="view_gms_viajes_form" model="ir.ui.view">
+            <field name="name">gms.viaje.form</field>
+            <field name="model">gms.viaje</field>
+            <field name="arch" type="xml">
+                <form string="Viajes">
+                    <sheet>
+                        <group>
+                            <field name="name"/>
+                            <!-- Agrega los demás campos que necesites mostrar en el formulario -->
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+
+
+        <!-- vista de lista/tree para gms.propiedades -->
+        <record id="view_gms_propiedades_tree" model="ir.ui.view">
+            <field name="name">gms.propiedades.tree</field>
+            <field name="model">gms.propiedades</field>
+            <field name="arch" type="xml">
+                <tree string="Propiedades">
+                    <field name="name"/>
+                    <field name="formula"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- vista de formulario/form para gms.propiedades -->
+        <record id="view_gms_propiedades_form" model="ir.ui.view">
+            <field name="name">gms.propiedades.form</field>
+            <field name="model">gms.propiedades</field>
+            <field name="arch" type="xml">
+                <form string="Propiedades">
+                    <sheet>
+                        <group>
+                            <field name="name"/>
+                            <field name="formula"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+
+        <!-- Acción para el menú Rutas -->
+        <record id="action_rutas" model="ir.actions.act_window">
+            <field name="name">Rutas</field>
+            <field name="res_model">gms.rutas</field>
+            <field name="view_mode">tree,form</field>
+            <!-- Agrega más campos según tus necesidades -->
+        </record>
+
+        <!-- Acción para el menú Viajes -->
+        <record id="action_viajes" model="ir.actions.act_window">
+            <field name="name">Viajes</field>
+            <field name="res_model">gms.viaje</field>
+            <field name="view_mode">tree,form</field>
+            <!-- Agrega más campos según tus necesidades -->
+        </record>
+
+        <!-- Acción para el menú Camiones -->
+        <record id="action_camiones" model="ir.actions.act_window">
+            <field name="name">Camiones</field>
+            <field name="res_model">gms.camiones</field>
+            <field name="view_mode">tree,form</field>
+            <!-- Agrega más campos según tus necesidades -->
+        </record>
+
+        <!-- Acción para el menú Propiedades -->
+        <record id="action_propiedades" model="ir.actions.act_window">
+            <field name="name">Propiedades</field>
+            <field name="res_model">gms.propiedades</field>
+            <field name="view_mode">tree,form</field>
+            <!-- Agrega más campos según tus necesidades -->
+        </record>
+
+        <!-- menú principal para GMS -->
+        <menuitem id="gms_menu" name="GMS" />
+
+        <!-- submenú para Rutas -->
+        <menuitem id="gms_menu_rutas" name="Rutas" parent="gms_menu" action="action_rutas" />
+
+        <!-- submenú para Viajes -->
+        <menuitem id="gms_menu_viajes" name="Viajes" parent="gms_menu" action="action_viajes" />
+
+        <!-- submenú para Camiones -->
+        <menuitem id="gms_menu_camiones" name="Camiones" parent="gms_menu" action="action_camiones" />
+
+        <!-- submenú para Propiedades -->
+        <menuitem id="gms_menu_propiedades" name="Propiedades" parent="gms_menu" action="action_propiedades" />
+    </data>
+</odoo>
