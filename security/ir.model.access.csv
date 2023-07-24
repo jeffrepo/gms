@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_gms_viaje,gms.viaje,model_gms_viaje,base.group_user,1,1,1,1
+access_gms_rutas,gms.rutas,model_gms_rutas,base.group_user,1,1,1,1
+access_gms_camiones,gms.camiones,model_gms_camiones,base.group_user,1,1,1,1
+access_gms_propiedades,gms.propiedades,model_gms_propiedades,base.group_user,1,1,1,1
