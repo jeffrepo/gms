@@ -91,19 +91,52 @@
             <!-- Agrega más campos según tus necesidades -->
         </record>
 
+        <!-- Acción para el menú Producto -->
+        <record id="action_productos" model="ir.actions.act_window">
+            <field name="name">Productos</field>
+            <field name="res_model">product.template</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        
+        <!-- submenú para Productos -->
+        <menuitem id="gms_menu_productos" name="Productos" parent="gms_menu" action="action_productos" />
+
+
         <!-- menú principal para GMS -->
         <menuitem id="gms_menu" name="GMS" />
 
-        <!-- submenú para Rutas -->
+        <!-- Submenú para Rutas -->
         <menuitem id="gms_menu_rutas" name="Rutas" parent="gms_menu" action="action_rutas" />
 
-        <!-- submenú para Viajes -->
+        <!-- Submenú para Viajes -->
         <menuitem id="gms_menu_viajes" name="Viajes" parent="gms_menu" action="action_viajes" />
 
-        <!-- submenú para Camiones -->
+        <!-- Submenú para Camiones -->
         <menuitem id="gms_menu_camiones" name="Camiones" parent="gms_menu" action="action_camiones" />
 
-        <!-- submenú para Propiedades -->
+        <!-- Submenú para Propiedades -->
         <menuitem id="gms_menu_propiedades" name="Propiedades" parent="gms_menu" action="action_propiedades" />
+
+        <!-- Modificación a la vista de product.template -->
+
+        <record id="view_product_template_form_inherit" model="ir.ui.view">
+            <field name="name">product.template.form.inherit</field>
+            <field name="model">product.template</field>
+            <field name="inherit_id" ref="product.product_template_form_view"/> 
+            <field name="arch" type="xml">
+                <xpath expr="//notebook" position="inside">
+                    <page string="Propiedades">
+                        <field name="umbral_tolerancia"/>
+                        <field name="propiedades_ids">
+                            <tree editable="bottom">
+                                <field name="unidad_medida"/>
+                                <field name="propiedad"/>
+                            </tree>
+                        </field>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+
     </data>
 </odoo>
