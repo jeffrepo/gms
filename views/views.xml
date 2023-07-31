@@ -1,5 +1,19 @@
 <odoo>
     <data>
+
+        <!-- menú principal para GMS -->
+        <menuitem id="gms_menu" name="GMS" />
+
+        <!-- Acción para el menú Producto -->
+        <record id="action_productos" model="ir.actions.act_window">
+            <field name="name">Productos</field>
+            <field name="res_model">product.template</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- submenú para Productos -->
+        <menuitem id="gms_menu_productos" name="Productos" parent="gms_menu" action="action_productos" />
+
         <!-- vista de lista/tree para gms.viajes -->
         <record id="view_gms_viajes_tree" model="ir.ui.view">
             <field name="name">gms.viaje.tree</field>
@@ -28,7 +42,16 @@
             </field>
         </record>
 
+        <!-- Acción para el menú Viajes -->
+        <record id="action_viajes" model="ir.actions.act_window">
+            <field name="name">Viajes</field>
+            <field name="res_model">gms.viaje</field>
+            <field name="view_mode">tree,form</field>
+            <!-- Agrega más campos según tus necesidades -->
+        </record>
 
+        <!-- Submenú para Viajes -->
+        <menuitem id="gms_menu_viajes" name="Viajes" parent="gms_menu" action="action_viajes" />
 
         <!-- vista de lista/tree para gms.propiedades -->
         <record id="view_gms_propiedades_tree" model="ir.ui.view">
@@ -58,6 +81,16 @@
             </field>
         </record>
 
+        <!-- Acción para el menú Propiedades -->
+        <record id="action_propiedades" model="ir.actions.act_window">
+            <field name="name">Propiedades</field>
+            <field name="res_model">gms.propiedades</field>
+            <field name="view_mode">tree,form</field>
+            <!-- Agrega más campos según tus necesidades -->
+        </record>
+
+        <!-- Submenú para Propiedades -->
+        <menuitem id="gms_menu_propiedades" name="Propiedades" parent="gms_menu" action="action_propiedades" />
 
         <!-- Acción para el menú Rutas -->
         <record id="action_rutas" model="ir.actions.act_window">
@@ -67,13 +100,40 @@
             <!-- Agrega más campos según tus necesidades -->
         </record>
 
-        <!-- Acción para el menú Viajes -->
-        <record id="action_viajes" model="ir.actions.act_window">
-            <field name="name">Viajes</field>
-            <field name="res_model">gms.viaje</field>
-            <field name="view_mode">tree,form</field>
-            <!-- Agrega más campos según tus necesidades -->
+        <!-- vista de lista/tree para gms.rutas -->
+        <record id="view_gms_rutas_tree" model="ir.ui.view">
+            <field name="name">gms.rutas.tree</field>
+            <field name="model">gms.rutas</field>
+            <field name="arch" type="xml">
+                <tree string="Rutas">
+                    <field name="nombre_ruta"/>
+                    <field name="direccion_origen"/>
+                    <field name="direccion_destino"/>
+                    <field name="kilometros"/>
+                </tree>
+            </field>
         </record>
+
+        <!-- vista de formulario/form para gms.rutas -->
+        <record id="view_gms_rutas_form" model="ir.ui.view">
+            <field name="name">gms.rutas.form</field>
+            <field name="model">gms.rutas</field>
+            <field name="arch" type="xml">
+                <form string="Rutas">
+                    <sheet>
+                        <group>
+                            <field name="nombre_ruta"/>
+                            <field name="direccion_origen"/>
+                            <field name="direccion_destino"/>
+                            <field name="kilometros"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Submenú para Rutas -->
+        <menuitem id="gms_menu_rutas" name="Rutas" parent="gms_menu" action="action_rutas" />
 
         <!-- Acción para el menú Camiones -->
         <record id="action_camiones" model="ir.actions.act_window">
@@ -83,60 +143,24 @@
             <!-- Agrega más campos según tus necesidades -->
         </record>
 
-        <!-- Acción para el menú Propiedades -->
-        <record id="action_propiedades" model="ir.actions.act_window">
-            <field name="name">Propiedades</field>
-            <field name="res_model">gms.propiedades</field>
-            <field name="view_mode">tree,form</field>
-            <!-- Agrega más campos según tus necesidades -->
-        </record>
-
-        <!-- Acción para el menú Producto -->
-        <record id="action_productos" model="ir.actions.act_window">
-            <field name="name">Productos</field>
-            <field name="res_model">product.template</field>
-            <field name="view_mode">tree,form</field>
-        </record>
-        
-        <!-- submenú para Productos -->
-        <menuitem id="gms_menu_productos" name="Productos" parent="gms_menu" action="action_productos" />
-
-
-        <!-- menú principal para GMS -->
-        <menuitem id="gms_menu" name="GMS" />
-
-        <!-- Submenú para Rutas -->
-        <menuitem id="gms_menu_rutas" name="Rutas" parent="gms_menu" action="action_rutas" />
-
-        <!-- Submenú para Viajes -->
-        <menuitem id="gms_menu_viajes" name="Viajes" parent="gms_menu" action="action_viajes" />
-
         <!-- Submenú para Camiones -->
         <menuitem id="gms_menu_camiones" name="Camiones" parent="gms_menu" action="action_camiones" />
 
-        <!-- Submenú para Propiedades -->
-        <menuitem id="gms_menu_propiedades" name="Propiedades" parent="gms_menu" action="action_propiedades" />
-
         <!-- Modificación a la vista de product.template -->
-
         <record id="view_product_template_form_inherit" model="ir.ui.view">
             <field name="name">product.template.form.inherit</field>
             <field name="model">product.template</field>
-            <field name="inherit_id" ref="product.product_template_form_view"/> 
+            <field name="inherit_id" ref="product.product_template_only_form_view"/>
             <field name="arch" type="xml">
-                <xpath expr="//notebook" position="inside">
+                <field name="default_code" position="before">
+                    <field name="umbral_tolerancia"/>
+                </field>
+                <notebook position="inside">
                     <page string="Propiedades">
-                        <field name="umbral_tolerancia"/>
-                        <field name="propiedades_ids">
-                            <tree editable="bottom">
-                                <field name="unidad_medida"/>
-                                <field name="propiedad"/>
-                            </tree>
-                        </field>
+                        <field name="propiedades_ids" widget="many2many_tags"/>
                     </page>
-                </xpath>
+                </notebook>
             </field>
         </record>
-
     </data>
 </odoo>
