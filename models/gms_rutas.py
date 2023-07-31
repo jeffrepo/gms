@@ -1,10 +1,10 @@
 from odoo import models, fields
 
-class Rutas(models.Model):
+class GmsRutas(models.Model):
     _name = 'gms.rutas'
-    _description = 'Modelo de Rutas'
-
-    name = fields.Char(string='Nombre de la Ruta', required=True)
-    # Agrega más campos según tus necesidades
-
-    # Agrega métodos adicionales según tus necesidades
+    _description = 'Modelo Rutas'
+    
+    nombre_ruta = fields.Char(string='Nombre de la ruta')
+    direccion_origen = fields.Char(string='Dirección de origen')
+    direccion_destino = fields.Char(string='Dirección de destino')
+    kilometros = fields.Float(string='Kilómetros')
