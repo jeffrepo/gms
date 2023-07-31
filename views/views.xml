@@ -135,6 +135,43 @@
         <!-- Submenú para Rutas -->
         <menuitem id="gms_menu_rutas" name="Rutas" parent="gms_menu" action="action_rutas" />
 
+
+        <!-- vista de lista/tree para gms.camiones -->
+        <record id="view_gms_camiones_tree" model="ir.ui.view">
+            <field name="name">gms.camiones.tree</field>
+            <field name="model">gms.camiones</field>
+            <field name="arch" type="xml">
+                <tree string="Camiones">
+                    <field name="nombre"/>
+                    <field name="matricula"/>
+                    <field name="capacidad_kgs"/>
+                    <field name="minimo_carga_kgs"/>
+                    <field name="conductor_id"/>
+                    <field name="estado"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- vista de formulario/form para gms.camiones -->
+        <record id="view_gms_camiones_form" model="ir.ui.view">
+            <field name="name">gms.camiones.form</field>
+            <field name="model">gms.camiones</field>
+            <field name="arch" type="xml">
+                <form string="Camiones">
+                    <sheet>
+                        <group>
+                            <field name="nombre"/>
+                            <field name="matricula"/>
+                            <field name="capacidad_kgs"/>
+                            <field name="minimo_carga_kgs"/>
+                            <field name="conductor_id"/>
+                            <field name="estado"/>  
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
         <!-- Acción para el menú Camiones -->
         <record id="action_camiones" model="ir.actions.act_window">
             <field name="name">Camiones</field>
