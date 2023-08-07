@@ -203,11 +203,13 @@
             <field name="inherit_id" ref="product.product_template_only_form_view"/>
             <field name="arch" type="xml">
                 <field name="default_code" position="before">
-                    <field name="umbral_tolerancia"/>
+                
                 </field>
                 <notebook position="inside">
                     <page string="Propiedades">
                         <field name="propiedades_ids" widget="many2many_tags"/>
+                        <field name="umbral_tolerancia"/>
+                        
                     </page>
                 </notebook>
             </field>
