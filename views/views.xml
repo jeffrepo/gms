@@ -33,6 +33,10 @@
                 <tree string="Viajes">
                     <field name="name"/>
                     <!-- Agrega los demás campos que necesites mostrar en la vista de lista -->
+                    <field name="duracion_viaje"/>
+                    <field name="gastos_combustible"/>
+                    <field name="gastos_peaje"/>
+                    <field name="observaciones"/>
                 </tree>
             </field>
         </record>
@@ -47,6 +51,10 @@
                         <group>
                             <field name="name"/>
                             <!-- Agrega los demás campos que necesites mostrar en el formulario -->
+                            <field name="duracion_viaje"/>
+                            <field name="gastos_combustible"/>
+                            <field name="gastos_peaje"/>
+                            <field name="observaciones"/>
                         </group>
                     </sheet>
                 </form>
@@ -159,7 +167,9 @@
                     <field name="minimo_carga_kgs"/>
                     <field name="conductor_id"/>
                     <field name="estado"/>
-                    <field name="transportista_id" readonly="1"/>
+                    <field name="transportista_id" readonly="1" />
+                   
+
                 </tree>
             </field>
         </record>
@@ -178,7 +188,8 @@
                             <field name="minimo_carga_kgs"/>
                             <field name="conductor_id"/>
                             <field name="estado"/>
-                            <field name="transportista_id" readonly="1"/>  
+                            <field name="transportista_id" readonly="1"/>
+                             
                         </group>
                     </sheet>
                 </form>
@@ -202,18 +213,23 @@
             <field name="model">product.template</field>
             <field name="inherit_id" ref="product.product_template_only_form_view"/>
             <field name="arch" type="xml">
-                <field name="default_code" position="before">
-                
-                </field>
                 <notebook position="inside">
                     <page string="Propiedades">
-                        <field name="propiedades_ids" widget="many2many_tags"/>
-                        <field name="umbral_tolerancia"/>
-                        
+                        <!-- Otras configuraciones aquí -->
+                        <group>
+                            <field name="propiedades_ids" widget="one2many_list">
+                                <tree  editable="bottom">
+                                   
+                                    <field name="propiedades_id"/>
+                                    <field name="umbral_tolerancia"/>
+                                </tree>
+                            </field>
+                        </group>
                     </page>
                 </notebook>
             </field>
         </record>
+
         
         
         <record id="view_res_partner_form_inherit" model="ir.ui.view">
