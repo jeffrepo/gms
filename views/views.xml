@@ -14,6 +14,17 @@
         <!-- submenú para Productos -->
         <menuitem id="gms_menu_productos" name="Productos" parent="gms_menu" action="action_productos" />
 
+
+         <!-- Acción para el menú Contactos -->
+        <record id="action_contactos" model="ir.actions.act_window">
+            <field name="name">Contactos</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- submenú para Contactos -->
+        <menuitem id="gms_menu_contactos" name="Contacto" parent="gms_menu" action="action_contactos" />
+
         <!-- vista de lista/tree para gms.viajes -->
         <record id="view_gms_viajes_tree" model="ir.ui.view">
             <field name="name">gms.viaje.tree</field>
@@ -22,6 +33,10 @@
                 <tree string="Viajes">
                     <field name="name"/>
                     <!-- Agrega los demás campos que necesites mostrar en la vista de lista -->
+                    <field name="duracion_viaje"/>
+                    <field name="gastos_combustible"/>
+                    <field name="gastos_peaje"/>
+                    <field name="observaciones"/>
                 </tree>
             </field>
         </record>
@@ -36,6 +51,10 @@
                         <group>
                             <field name="name"/>
                             <!-- Agrega los demás campos que necesites mostrar en el formulario -->
+                            <field name="duracion_viaje"/>
+                            <field name="gastos_combustible"/>
+                            <field name="gastos_peaje"/>
+                            <field name="observaciones"/>
                         </group>
                     </sheet>
                 </form>
@@ -148,6 +167,9 @@
                     <field name="minimo_carga_kgs"/>
                     <field name="conductor_id"/>
                     <field name="estado"/>
+                    <field name="transportista_id" readonly="1" />
+                   
+
                 </tree>
             </field>
         </record>
@@ -165,7 +187,9 @@
                             <field name="capacidad_kgs"/>
                             <field name="minimo_carga_kgs"/>
                             <field name="conductor_id"/>
-                            <field name="estado"/>  
+                            <field name="estado"/>
+                            <field name="transportista_id" readonly="1"/>
+                             
                         </group>
                     </sheet>
                 </form>
@@ -189,15 +213,41 @@
             <field name="model">product.template</field>
             <field name="inherit_id" ref="product.product_template_only_form_view"/>
             <field name="arch" type="xml">
-                <field name="default_code" position="before">
-                    <field name="umbral_tolerancia"/>
-                </field>
                 <notebook position="inside">
                     <page string="Propiedades">
-                        <field name="propiedades_ids" widget="many2many_tags"/>
+                        <!-- Otras configuraciones aquí -->
+                        <group>
+                            <field name="propiedades_ids" widget="one2many_list">
+                                <tree  editable="bottom">
+                                   
+                                    <field name="propiedades_id"/>
+                                    <field name="umbral_tolerancia"/>
+                                </tree>
+                            </field>
+                        </group>
                     </page>
                 </notebook>
             </field>
         </record>
+
+        
+        
+        <record id="view_res_partner_form_inherit" model="ir.ui.view">
+            <field name="name">res.partner.form.inherit</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_partner_form"/>
+            <field name="arch" type="xml">
+                <notebook position="inside">
+                    <page string="Transportistas" name="transportista_page">
+                        <group>
+                            <field name="transportista"/>
+                            <field name="camiones_ids" widget="many2many_tags"/>
+                        </group>
+                    </page>
+                </notebook>
+            </field>
+        </record>
+       
+
     </data>
 </odoo>
