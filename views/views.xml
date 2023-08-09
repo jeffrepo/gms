@@ -41,25 +41,34 @@
             </field>
         </record>
 
-        <!-- vista de formulario/form para gms.viajes -->
-        <record id="view_gms_viajes_form" model="ir.ui.view">
-            <field name="name">gms.viaje.form</field>
-            <field name="model">gms.viaje</field>
-            <field name="arch" type="xml">
-                <form string="Viajes">
-                    <sheet>
-                        <group>
-                            <field name="name"/>
-                            <!-- Agrega los demás campos que necesites mostrar en el formulario -->
-                            <field name="duracion_viaje"/>
-                            <field name="gastos_combustible"/>
-                            <field name="gastos_peaje"/>
-                            <field name="observaciones"/>
-                        </group>
-                    </sheet>
-                </form>
-            </field>
-        </record>
+ <!-- Vista formulario -->
+ <record id="view_gms_viajes_form" model="ir.ui.view">
+    <field name="name">gms.viaje.form</field>
+    <field name="model">gms.viaje</field>
+    <field name="arch" type="xml">
+        <form string="Viajes">
+            <header>
+                <button name="action_confirm" string="Proceso" type="object" states="borrador" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'borrador')]}"/>
+                <button name="action_paid" string="Liquidado" type="object" states="proceso" attrs="{'invisible': [('state', '!=', 'proceso')]}"/>
+                <button name="action_cancel" string="Cancelado" type="object" attrs="{'invisible': [('state', 'in', ('liquidado', 'terminado'))]}"/>
+                <button name="action_done" string="Terminado" type="object" states="proceso" attrs="{'invisible': [('state', '!=', 'proceso')]}"/>
+            </header>
+            <field name="state" widget="statusbar" statusbar_visible="borrador,proceso,liquidado,cancelado,terminado"/>
+            <sheet>
+                <group>
+                    <field name="name"/>
+                    <field name="duracion_viaje"/>
+                    <field name="gastos_combustible"/>
+                    <field name="gastos_peaje"/>
+                    <field name="observaciones"/>
+                </group>
+            </sheet>
+        </form>
+    </field>
+</record>
+
+
+
 
         <!-- Acción para el menú Viajes -->
         <record id="action_viajes" model="ir.actions.act_window">

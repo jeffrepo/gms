@@ -14,3 +14,4 @@ class Camiones(models.Model):
         ('no_disponible', 'No Disponible')
     ], string='Estado', default='disponible')
     transportista_id = fields.Many2one('res.partner', string='Transportista', readonly=True)
+    
