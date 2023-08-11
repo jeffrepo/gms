@@ -23,7 +23,7 @@
         </record>
 
         <!-- submenú para Contactos -->
-        <menuitem id="gms_menu_contactos" name="Contacto" parent="gms_menu" action="action_contactos" />
+        <menuitem id="gms_menu_contactos" name="Transportistas" parent="gms_menu" action="action_contactos" />
 
 
 
