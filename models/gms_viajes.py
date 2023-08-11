@@ -1,14 +1,13 @@
-from odoo import models, fields
+from odoo import models, fields, api
 
 class Viajes(models.Model):
     _name = 'gms.viaje'
     _description = 'Viaje'
 
     name = fields.Char(string='Nombre del viaje')
-    duracion_viaje = fields.Float(string='Duración del Viaje')
-    gastos_combustible = fields.Float(string='Gastos de Combustible')
-    gastos_peaje = fields.Float(string='Gastos de Peaje')
-    observaciones = fields.Text(string='Observaciones')
+    fecha_viaje = fields.Date(string='Fecha de viaje')
+    origen = fields.Char(string='Origen', required=True)
+    destino = fields.Char(string='Destino', required=True)
 
     state = fields.Selection([
         ('borrador', 'Borrador'),
@@ -18,6 +17,7 @@ class Viajes(models.Model):
         ('terminado', 'Terminado')
     ], string='Estado', default='borrador', required=True)
 
+    
     def action_confirm(self):
         self.write({'state': 'proceso'})
 
@@ -29,3 +29,8 @@ class Viajes(models.Model):
 
     def action_done(self):
         self.write({'state': 'terminado'})
+        
+    gastos_ids = fields.One2many('gms.gasto_viaje', 'viaje_id', string='Gastos')
+
+
+    

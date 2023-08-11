@@ -25,6 +25,63 @@
         <!-- submenú para Contactos -->
         <menuitem id="gms_menu_contactos" name="Contacto" parent="gms_menu" action="action_contactos" />
 
+
+
+
+<!-- Vista List view de Agenda -->
+<record id="view_gms_agenda_list" model="ir.ui.view">
+    <field name="name">gms.agenda.list</field>
+    <field name="model">gms.agenda</field>
+    <field name="arch" type="xml">
+        <tree string="Agenda">
+            <field name="name"/>
+            <field name="fecha"/>
+            <field name="fecha_viaje"/>
+            <field name="origen"/>
+            <field name="destino"/>
+            <!--<field name="venta_id"/>-->
+            <field name="state"/>
+        </tree>
+    </field>
+</record>
+
+<!-- Vista Form view de Agenda -->
+<record id="view_gms_agenda_form" model="ir.ui.view">
+    <field name="name">gms.agenda.form</field>
+    <field name="model">gms.agenda</field>
+    <field name="arch" type="xml">
+        <form>
+            <header>
+                <button name="action_agendar" string="Agendar" type="object" attrs="{'invisible': [('state', '!=', 'solicitud')]}"/>
+                <button name="action_cancelar" string="Cancelar" type="object" attrs="{'invisible': [('state', '!=', 'solicitud')]}"/>
+                <field name="state" widget="statusbar" statusbar_visible="solicitud,agendado,cancelado"/>
+            </header>
+            <sheet>
+                <group>
+                    <field name="name" decoration-bf="1" readonly ="1" style="font-size: 22px;"/>
+                    <field name="fecha"/>
+                    <field name="fecha_viaje"/>
+                    <field name="origen"/>
+                    <field name="destino"/>
+                    <!--<field name="venta_id"/>-->
+                </group>
+            </sheet>
+        </form>
+    </field>
+</record>
+
+  <!-- Acción para el menú Agenda -->
+        <record id="action_agenda" model="ir.actions.act_window">
+            <field name="name">Agenda</field>
+            <field name="res_model">gms.agenda</field>
+            <field name="view_mode">tree,form</field>
+            <!-- Agrega más campos según tus necesidades -->
+        </record>
+
+        <!-- Submenú para Agenda -->
+        <menuitem id="gms_menu_agenda" name="Agenda" parent="gms_menu" action="action_agenda" />
+
+
         <!-- vista de lista/tree para gms.viajes -->
         <record id="view_gms_viajes_tree" model="ir.ui.view">
             <field name="name">gms.viaje.tree</field>
@@ -33,15 +90,15 @@
                 <tree string="Viajes">
                     <field name="name"/>
                     <!-- Agrega los demás campos que necesites mostrar en la vista de lista -->
-                    <field name="duracion_viaje"/>
-                    <field name="gastos_combustible"/>
-                    <field name="gastos_peaje"/>
-                    <field name="observaciones"/>
+                    <field name="fecha_viaje"/>
+                    <field name="origen"/>
+                    <field name="destino"/>
+                    
                 </tree>
             </field>
         </record>
 
- <!-- Vista formulario -->
+ <!-- Vista formulario gms.viajes -->
  <record id="view_gms_viajes_form" model="ir.ui.view">
     <field name="name">gms.viaje.form</field>
     <field name="model">gms.viaje</field>
@@ -52,20 +109,34 @@
                 <button name="action_paid" string="Liquidado" type="object" states="proceso" attrs="{'invisible': [('state', '!=', 'proceso')]}"/>
                 <button name="action_cancel" string="Cancelado" type="object" attrs="{'invisible': [('state', 'in', ('liquidado', 'terminado'))]}"/>
                 <button name="action_done" string="Terminado" type="object" states="proceso" attrs="{'invisible': [('state', '!=', 'proceso')]}"/>
+                <field name="state" widget="statusbar" statusbar_visible="borrador,proceso,liquidado,cancelado,terminado"/>
             </header>
-            <field name="state" widget="statusbar" statusbar_visible="borrador,proceso,liquidado,cancelado,terminado"/>
+            
             <sheet>
                 <group>
                     <field name="name"/>
-                    <field name="duracion_viaje"/>
-                    <field name="gastos_combustible"/>
-                    <field name="gastos_peaje"/>
-                    <field name="observaciones"/>
+                    <field name="fecha_viaje"/>
+                    <field name="origen"/>
+                    <field name="destino"/>
                 </group>
+                
+                <!-- Agrega la pestaña de Gastos -->
+                <notebook>
+                    <page string="Gastos">
+                        <field name="gastos_ids" widget="one2many_list">
+                            <tree>
+                                <field name="name"/>
+                                <field name="producto_id"/>
+                                <field name="precio_total"/>
+                            </tree>
+                        </field>
+                    </page>
+                </notebook>
             </sheet>
         </form>
     </field>
 </record>
+
 
 
 
@@ -108,6 +179,10 @@
                 </form>
             </field>
         </record>
+
+
+        
+
 
         <!-- Acción para el menú Propiedades -->
         <record id="action_propiedades" model="ir.actions.act_window">

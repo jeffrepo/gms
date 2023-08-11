@@ -6,3 +6,5 @@ from . import gms_viajes
 from . import product_template
 from . import res_partner
 from . import gms
+from . import gms_gastoViaje
+from . import gms_agenda

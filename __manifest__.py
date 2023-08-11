@@ -11,6 +11,8 @@
     'data': [
         'security/ir.model.access.csv',
         'views/views.xml',
+        'views/gms_agenda.xml',
+
     ],
     'images': [
         'static/description/icon.png',
