@@ -58,7 +58,7 @@
             </header>
             <sheet>
                 <group>
-                    <field name="name" decoration-bf="1" readonly ="1" />
+                    <field name="name" decoration-bf="1" readonly ="1" style="font-size: 22px;"/>
                     <field name="fecha"/>
                     <field name="fecha_viaje"/>
                     <field name="origen"/>
@@ -91,6 +91,8 @@
                     <field name="name"/>
                     <!-- Agrega los demás campos que necesites mostrar en la vista de lista -->
                     <field name="fecha_viaje"/>
+                    <field name="origen"/>
+                    <field name="destino"/>
                     
                 </tree>
             </field>
@@ -113,7 +115,9 @@
             <sheet>
                 <group>
                     <field name="name"/>
-                   <field name="fecha_viaje"/>
+                    <field name="fecha_viaje"/>
+                    <field name="origen"/>
+                    <field name="destino"/>
                 </group>
                 
                 <!-- Agrega la pestaña de Gastos -->

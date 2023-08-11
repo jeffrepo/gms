@@ -6,6 +6,8 @@ class Viajes(models.Model):
 
     name = fields.Char(string='Nombre del viaje')
     fecha_viaje = fields.Date(string='Fecha de viaje')
+    origen = fields.Char(string='Origen', required=True)
+    destino = fields.Char(string='Destino', required=True)
 
     state = fields.Selection([
         ('borrador', 'Borrador'),
