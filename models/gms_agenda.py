@@ -6,7 +6,7 @@ class Agenda(models.Model):
     _name = 'gms.agenda'
     _description = 'Agenda'
 
-    name = fields.Char(required=True, readonly=True, copy=False, default=lambda self: 'booking' + str(random.randint(100, 999)))
+    name = fields.Char(required=True, readonly=True, copy=False, default=lambda self: self.env['ir.sequence'].next_by_code('gms.agenda'))
     fecha = fields.Date(string='Fecha', required=True)
     fecha_viaje = fields.Date(string='Fecha de viaje', required=True)
     origen = fields.Char(string='Origen', required=True)
@@ -18,7 +18,14 @@ class Agenda(models.Model):
         ('cancelado', 'Cancelado')
     ], string='Estado', default='solicitud', required=True)
 
-
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('name', 'New') == 'New':
+                random_number = str(random.randint(100, 999))
+                vals['name'] = f'booking{random_number}'
+        return super().create(vals_list)
+    
     def action_agendar(self):
         self.write({'state': 'agendado'})
 

@@ -58,7 +58,7 @@
             </header>
             <sheet>
                 <group>
-                    <field name="name"/>
+                    <field name="name" decoration-bf="1" readonly ="1" />
                     <field name="fecha"/>
                     <field name="fecha_viaje"/>
                     <field name="origen"/>
