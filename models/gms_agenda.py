@@ -35,17 +35,17 @@ class Agenda(models.Model):
 
 
 
-class Viajes(models.Model):
-    _inherit = 'gms.agenda'
-
-    def action_agendar(self):
-        super(Viajes, self).action_agendar()
-        # Crear un nuevo Viaje (gms.viaje) al agendar la Agenda
-        viaje = self.env['gms.viaje'].create({
-            'name': self.name,
-            'fecha_viaje': self.fecha_viaje,
-            'origen': self.origen,
-            'destino': self.destino,
-        })
-        # Actualizar el estado de la Agenda para indicar que se ha convertido en un Viaje
-        self.write({'state': 'agendado'})
+# class Viajes(models.Model):
+#     _inherit = 'gms.agenda'
+# 
+#     def action_agendar(self):
+#         super(Viajes, self).action_agendar()
+#         # Crear un nuevo Viaje (gms.viaje) al agendar la Agenda
+#         viaje = self.env['gms.viaje'].create({
+#             'name': self.name,
+#             'fecha_viaje': self.fecha_viaje,
+#             'origen': self.origen,
+#             'destino': self.destino,
+#         })
+#         # Actualizar el estado de la Agenda para indicar que se ha convertido en un Viaje
+#         self.write({'state': 'agendado'})
