@@ -4,3 +4,7 @@ access_gms_rutas,gms.rutas,model_gms_rutas,base.group_user,1,1,1,1
 access_gms_camiones,gms.camiones,model_gms_camiones,base.group_user,1,1,1,1
 access_gms_propiedades,gms.propiedades,model_gms_propiedades,base.group_user,1,1,1,1
 access_gms_propiedades_lineas,gms.propiedades_lineas,model_gms_propiedades_lineas,base.group_user,1,1,1,1
+access_gms_gastoviaje,gms.gasto_viaje,model_gms_gasto_viaje,base.group_user,1,1,1,1
+access_gms_agenda,gms.agenda,model_gms_agenda,base.group_user,1,1,1,1
+
+
