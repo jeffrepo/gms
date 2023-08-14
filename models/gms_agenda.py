@@ -57,11 +57,3 @@ class Agenda(models.Model):
             name = record.camion_id.nombre if record.camion_id else ''  
             result.append((record.id, name))
         return result
-
-
-
-    
-   
-
-       
-      
