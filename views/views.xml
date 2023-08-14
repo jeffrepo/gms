@@ -53,8 +53,8 @@
         <form>
             <header>
                 <button name="action_cancel" string="Cancelado" type="object" attrs="{'invisible': [('state', '=', 'cancelado')]}"/>
-                <button name="action_confirm" string="Confirmado" type="object" attrs="{'invisible': [('state', '!=', 'proceso')]}"/>
-                <button name="action_crear_viaje" string="Crear Viaje" type="object" attrs="{'invisible': [('state', '!=', 'confirmado')]}"/>
+                <button name="action_proceso" string="Proceso" type="object" attrs="{'invisible': [('state', '!=', 'solicitud')]}"/>
+                <button name="action_confirm" string="Confirmar y agendar viaje" type="object" attrs="{'invisible': [('state', '!=', 'proceso')]}"/>
                 <field name="state" widget="statusbar" statusbar_visible="proceso,confirmado,cancelado,crear_viaje"/>
             </header>
             <sheet>
@@ -64,17 +64,18 @@
                     <field name="fecha_viaje"/>
                     <field name="origen"/>
                     <field name="destino"/>
-                    <field name="transportista_id" attrs="{'invisible': [('state', 'not in', ('proceso', 'confirmado', 'cancelado'))]}"/>
-                    <field name="camion_id" attrs="{'invisible': [('state', 'not in', ('proceso', 'confirmado', 'cancelado'))]}"/>
+                    <field name="transportista_id" attrs="{'invisible': [('state', '==', 'solicitud')]}"/>
+                    <field name="camion_id" attrs="{'invisible': [('state', '==', 'solicitud')]}"/>
                     <!--<field name="venta_id"/>-->
                 </group>
                 
-                <div class="oe_chatter">
-                    <field name="message_follower_ids"/>
-                    <field name="activity_ids"/>
-                    <field name="message_ids"/>
-                </div>
+               
             </sheet>
+            <div class="oe_chatter">
+                <field name="message_follower_ids"/>
+                <field name="activity_ids"/>
+                <field name="message_ids"/>
+            </div>
         </form>
     </field>
 </record>

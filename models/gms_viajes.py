@@ -4,6 +4,7 @@ class Viajes(models.Model):
     _name = 'gms.viaje'
     _description = 'Viaje'
 
+
     # Agregar nuevos campos específicos para la entidad "Viaje"
     name = fields.Char(string='Nombre del viaje')
     fecha_viaje = fields.Date(string='Fecha de viaje')

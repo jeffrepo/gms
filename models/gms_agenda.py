@@ -15,11 +15,11 @@ class Agenda(models.Model):
     camion_id = fields.Many2one('gms.camiones', string='Camión', states={'cancelado': [('readonly', True)]}, tracking="1")  
 
     state = fields.Selection([
+        ('solicitud', 'Solicitud'),
         ('proceso', 'Proceso'),
         ('confirmado', 'Confirmado'),
-        ('cancelado', 'Cancelado'),
-        ('crear_viaje', 'Crear Viaje')
-    ], string='Estado', default='proceso', required=True)
+        ('cancelado', 'Cancelado')
+    ], string='Estado', default='solicitud', required=True)
 
     follower_ids = fields.Many2many('res.users', string='Followers')
 
@@ -28,38 +28,40 @@ class Agenda(models.Model):
     def create(self, vals_list):
         for vals in vals_list:
             if vals.get('name', 'New') == 'New':
-                random_number = str(random.randint(100, 999))
-                vals['name'] = f'booking{random_number}'
+                vals['name'] = self.env['ir.sequence'].next_by_code('gms.agenda')
         return super().create(vals_list)
     
     def action_confirm(self):
-        self.write({'state': 'confirmado'})
-
-    def action_cancel(self):
-        self.write({'state': 'cancelado'})
-
-    def action_crear_viaje(self):
-        self.write({'state': 'crear_viaje'})
-
-    @api.model
-    def name_get(self):
-        result = []
-        for record in self:
-            name = record.camion_id.nombre if record.camion_id else ''  # Cambia "camion_id" al nombre de tu campo Many2one en gms.agenda
-            result.append((record.id, name))
-        return result
-
-
-class Viajes(models.Model):
-    _inherit = 'gms.agenda'
-    
-   
-    def action_crear_viaje(self):
-        super(Viajes, self).action_crear_viaje()
         viaje = self.env['gms.viaje'].create({
             'name': self.name,
             'fecha_viaje': self.fecha_viaje,
             'origen': self.origen,
             'destino': self.destino,
         })
-        self.write({'state': 'crear_viaje'})
+        self.write({'state': 'confirmado'})
+
+    def action_cancel(self):
+        self.write({'state': 'cancelado'})
+
+    def action_proceso(self):
+        self.write({'state': 'proceso'})
+
+   
+       
+        
+
+    @api.model
+    def name_get(self):
+        result = []
+        for record in self:
+            name = record.camion_id.nombre if record.camion_id else ''  
+            result.append((record.id, name))
+        return result
+
+
+
+    
+   
+
+       
+      
