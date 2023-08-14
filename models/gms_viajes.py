@@ -4,6 +4,7 @@ class Viajes(models.Model):
     _name = 'gms.viaje'
     _description = 'Viaje'
 
+    # Agregar nuevos campos específicos para la entidad "Viaje"
     name = fields.Char(string='Nombre del viaje')
     fecha_viaje = fields.Date(string='Fecha de viaje')
     origen = fields.Char(string='Origen', required=True)
@@ -17,7 +18,9 @@ class Viajes(models.Model):
         ('terminado', 'Terminado')
     ], string='Estado', default='borrador', required=True)
 
-    
+    gastos_ids = fields.One2many('gms.gasto_viaje', 'viaje_id', string='Gastos')
+
+    # Agregar métodos específicos para la entidad "Viaje"
     def action_confirm(self):
         self.write({'state': 'proceso'})
 
@@ -29,8 +32,4 @@ class Viajes(models.Model):
 
     def action_done(self):
         self.write({'state': 'terminado'})
-        
-    gastos_ids = fields.One2many('gms.gasto_viaje', 'viaje_id', string='Gastos')
-
-
     
