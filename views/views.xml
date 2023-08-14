@@ -52,23 +52,36 @@
     <field name="arch" type="xml">
         <form>
             <header>
-                <button name="action_agendar" string="Agendar" type="object" attrs="{'invisible': [('state', '!=', 'solicitud')]}"/>
-                <button name="action_cancelar" string="Cancelar" type="object" attrs="{'invisible': [('state', '!=', 'solicitud')]}"/>
-                <field name="state" widget="statusbar" statusbar_visible="solicitud,agendado,cancelado"/>
+                <button name="action_cancel" string="Cancelado" type="object" attrs="{'invisible': [('state', '=', 'cancelado')]}"/>
+                <button name="action_proceso" string="Proceso" type="object" attrs="{'invisible': [('state', '!=', 'solicitud')]}"/>
+                <button name="action_confirm" string="Confirmar y agendar viaje" type="object" attrs="{'invisible': [('state', '!=', 'proceso')]}"/>
+                <field name="state" widget="statusbar" statusbar_visible="proceso,confirmado,cancelado,crear_viaje"/>
             </header>
             <sheet>
                 <group>
-                    <field name="name" decoration-bf="1" readonly ="1" style="font-size: 22px;"/>
+                    <field name="name" decoration-bf="1" readonly="1" style="font-size: 22px;"/>
                     <field name="fecha"/>
                     <field name="fecha_viaje"/>
                     <field name="origen"/>
                     <field name="destino"/>
+                    <field name="transportista_id" attrs="{'invisible': [('state', '==', 'solicitud')]}"/>
+                    <field name="camion_id" attrs="{'invisible': [('state', '==', 'solicitud')]}"/>
                     <!--<field name="venta_id"/>-->
                 </group>
+                
+               
             </sheet>
+            <div class="oe_chatter">
+                <field name="message_follower_ids"/>
+                <field name="activity_ids"/>
+                <field name="message_ids"/>
+            </div>
         </form>
     </field>
 </record>
+
+
+
 
   <!-- Acción para el menú Agenda -->
         <record id="action_agenda" model="ir.actions.act_window">
