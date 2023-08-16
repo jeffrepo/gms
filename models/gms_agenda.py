@@ -9,8 +9,8 @@ class Agenda(models.Model):
     name = fields.Char(string="Booking", required=True, readonly=True, copy=False, default=lambda self: self.env['ir.sequence'].next_by_code('gms.agenda'))
     fecha = fields.Date(string='Fecha', required=True, tracking="1")  
     fecha_viaje = fields.Date(string='Fecha de viaje', required=True, tracking="1")  
-    origen = fields.Char(string='Origen', required=True, tracking="1")  
-    destino = fields.Char(string='Destino', required=True, tracking="1")  
+    origen = fields.Many2one('res.partner', string='Origen', required=True, tracking ="1")
+    destino = fields.Many2one('res.partner', string='Destino', required=True, tracking ="1")
     transportista_id = fields.Many2one('res.partner', string='Trasportista', states={'cancelado': [('readonly', True)]}, tracking="1")  
     camion_id = fields.Many2one('gms.camiones', string='Camión', states={'cancelado': [('readonly', True)]}, tracking="1")  
 
