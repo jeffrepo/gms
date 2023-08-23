@@ -36,32 +36,43 @@
         <menuitem id="gms_menu_camiones_disponibilidad" name="Disponibilidad de Camiones" parent="gms_menu_camiones" action="action_camiones_disponibilidad" />
 
 
-        <!-- Vista para el modelo gms.camiones.disponibilidad -->
-        <record id="view_gms_camiones_disponibilidad_tree" model="ir.ui.view">
-            <field name="name">gms.camiones.disponibilidad.tree</field>
-            <field name="model">gms.camiones.disponibilidad</field>
-            <field name="arch" type="xml">
-                <tree>
-                    <field name="camion_id" />
-                    <field name="fecha_inicio" />
-                    <field name="estado" />
-                </tree>
-            </field>
-        </record>
+     <!-- Vista List view de Disponibilidad de Camiones -->
+<record id="view_gms_camiones_disponibilidad_list" model="ir.ui.view">
+    <field name="name">gms.camiones.disponibilidad.list</field>
+    <field name="model">gms.camiones.disponibilidad</field>
+    <field name="arch" type="xml">
+        <tree string="Disponibilidad de Camiones">
+            <field name="camion_id"/>
+            <field name="fecha_inicio"/>
+            
+        </tree>
+    </field>
+</record>
 
-        <record id="view_gms_camiones_disponibilidad_form" model="ir.ui.view">
-            <field name="name">gms.camiones.disponibilidad.form</field>
-            <field name="model">gms.camiones.disponibilidad</field>
-            <field name="arch" type="xml">
-                <form>
-                    <group>
-                        <field name="camion_id" />
-                        <field name="fecha_inicio" />
-                        <field name="estado" />
-                    </group>
-                </form>
-            </field>
-        </record>
+
+       <!-- Vista Form view de Disponibilidad de Camiones -->
+<record id="view_gms_camiones_disponibilidad_form" model="ir.ui.view">
+    <field name="name">gms.camiones.disponibilidad.form</field>
+    <field name="model">gms.camiones.disponibilidad</field>
+    <field name="arch" type="xml">
+        <form>
+            
+            <sheet>
+                <group>
+                    <field name="camion_id"/>
+                    <field name="fecha_inicio"/>
+                    <field name="estado"/>
+                </group>
+            </sheet>
+            <div class="oe_chatter">
+                <field name="message_follower_ids"/>
+                <field name="activity_ids"/>
+                <field name="message_ids"/>
+            </div>
+        </form>
+    </field>
+</record>
+
 
 
         <!-- Vista List view de Agenda -->
@@ -413,32 +424,41 @@
 
      
 
-<!-- Vista de Lista para el modelo gms.historial -->
-<record model="ir.ui.view" id="view_gms_historial_tree">
-    <field name="name">gms.historial.tree</field>
+<!-- Vista List view de Historial de historial -->
+<record id="view_gms_historial_list" model="ir.ui.view">
+    <field name="name">gms.historial.list</field>
     <field name="model">gms.historial</field>
     <field name="arch" type="xml">
-        <tree>
-            <!-- Define las columnas que deseas mostrar en la lista -->
+        <tree string="Historial de Agendas de Camiones">
             <field name="camion_id"/>
-            <field name="fecha_evento"/>
-            <field name="evento"/>
+            <field name="fecha_hora_liberacion"/>
+            <field name="fecha"/>
+            <field name="agenda_id"/>
+            
         </tree>
     </field>
 </record>
 
-<!-- Vista de Formulario para el modelo gms.historial -->
-<record model="ir.ui.view" id="view_gms_historial_form">
+<!-- Vista Form view de Historial de historial -->
+<record id="view_gms_historial_form" model="ir.ui.view">
     <field name="name">gms.historial.form</field>
     <field name="model">gms.historial</field>
     <field name="arch" type="xml">
         <form>
-            <!-- Define los campos que deseas mostrar en el formulario -->
-            <group>
-                <field name="camion_id"/>
-                <field name="fecha_evento"/>
-                <field name="evento"/>
-            </group>
+            
+            <sheet>
+                <group>
+                    <field name="camion_id"/>
+                    <field name="fecha_hora_liberacion"/>
+                    <field name="fecha"/>
+                    <field name="agenda_id"/>
+                </group>
+            </sheet>
+            <div class="oe_chatter">
+                <field name="message_follower_ids"/>
+                <field name="activity_ids"/>
+                <field name="message_ids"/>
+            </div>
         </form>
     </field>
 </record>
