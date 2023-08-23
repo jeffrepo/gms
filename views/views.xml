@@ -410,5 +410,49 @@
             </field>
         </record>
 
+
+     
+
+<!-- Vista de Lista para el modelo gms.historial -->
+<record model="ir.ui.view" id="view_gms_historial_tree">
+    <field name="name">gms.historial.tree</field>
+    <field name="model">gms.historial</field>
+    <field name="arch" type="xml">
+        <tree>
+            <!-- Define las columnas que deseas mostrar en la lista -->
+            <field name="camion_id"/>
+            <field name="fecha_evento"/>
+            <field name="evento"/>
+        </tree>
+    </field>
+</record>
+
+<!-- Vista de Formulario para el modelo gms.historial -->
+<record model="ir.ui.view" id="view_gms_historial_form">
+    <field name="name">gms.historial.form</field>
+    <field name="model">gms.historial</field>
+    <field name="arch" type="xml">
+        <form>
+            <!-- Define los campos que deseas mostrar en el formulario -->
+            <group>
+                <field name="camion_id"/>
+                <field name="fecha_evento"/>
+                <field name="evento"/>
+            </group>
+        </form>
+    </field>
+</record>
+
+<!-- Acción para ver el historial de camiones -->
+<record model="ir.actions.act_window" id="action_gms_historial">
+    <field name="name">Historial de Camiones</field>
+    <field name="res_model">gms.historial</field>
+    <field name="view_mode">tree,form</field>
+</record>
+
+<!-- Menú para acceder al historial de camiones -->
+<menuitem id="gms_menu_historial" name="Historial de Camiones" parent="gms_menu" action="action_gms_historial" />
+
+
     </data>
 </odoo>

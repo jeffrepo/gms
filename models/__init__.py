@@ -10,3 +10,4 @@ from . import gms_gastoViaje
 from . import gms_agenda
 from . import gms_disponibilidad
 from . import gms_disponibilidad_2
+from . import gms_historial
