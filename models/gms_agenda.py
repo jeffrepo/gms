@@ -31,24 +31,43 @@ class Agenda(models.Model):
                 vals['name'] = self.env['ir.sequence'].next_by_code('gms.agenda')
         return super().create(vals_list)
     
-    def action_confirm(self):
-        viaje = self.env['gms.viaje'].create({
-            'name': self.name,
-            'fecha_viaje': self.fecha_viaje,
-            'origen': self.origen,
-            'destino': self.destino,
-        })
-        self.write({'state': 'confirmado'})
-
+    
     def action_cancel(self):
         self.write({'state': 'cancelado'})
 
     def action_proceso(self):
         self.write({'state': 'proceso'})
 
-   
+    def action_view_scheduled_trips(self):
+        action = self.env.ref('gms.action_view_scheduled_trips').read()[0]
+        action['context'] = {
+            'search_default_agenda_id': self.id,
+        }
+        return action
+
        
-        
+         # Actualiza el método action_confirm
+    def action_confirm(self):
+        viaje = self.env['gms.viaje'].create({
+            'name': self.name,
+            'fecha_viaje': self.fecha_viaje,
+            'origen': self.origen.id,
+            'destino': self.destino.id,
+        })
+
+        disponibilidad_camion = self.env['gms.camiones.disponibilidad'].create({
+        'camion_id': self.camion_id.id,
+        'fecha_inicio': self.fecha_viaje,
+        'estado': 'ocupado',
+    })
+        self.write({'state': 'confirmado'})
+
+        # Abre la vista de viajes agendados después de la confirmación
+        action = self.env.ref('gms.action_view_scheduled_trips').read()[0]
+        action['context'] = {
+            'search_default_agenda_id': self.id,
+        }
+        return action
 
     @api.model
     def name_get(self):
