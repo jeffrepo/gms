@@ -5,6 +5,7 @@ class Agenda(models.Model):
     _name = 'gms.agenda'
     _description = 'Agenda'
     _inherit = ['mail.thread', 'mail.activity.mixin']
+    _rec_name ="name"
 
     name = fields.Char(string="Booking", required=True, readonly=True, copy=False, default=lambda self: self.env['ir.sequence'].next_by_code('gms.agenda'))
     fecha = fields.Date(string='Fecha', required=True, tracking="1")  
@@ -12,7 +13,7 @@ class Agenda(models.Model):
     origen = fields.Many2one('res.partner', string='Origen', required=True, tracking ="1")
     destino = fields.Many2one('res.partner', string='Destino', required=True, tracking ="1")
     transportista_id = fields.Many2one('res.partner', string='Trasportista', states={'cancelado': [('readonly', True)]}, tracking="1")  
-    camion_id = fields.Many2one('gms.camiones', string='Camión', states={'cancelado': [('readonly', True)]}, tracking="1")  
+    camion_disponible_id = fields.Many2one('gms.camiones.disponibilidad', string='Camión', states={'cancelado': [('readonly', True)]}, tracking="1")  
 
     state = fields.Selection([
         ('solicitud', 'Solicitud'),
@@ -55,11 +56,18 @@ class Agenda(models.Model):
             'destino': self.destino.id,
         })
 
-        disponibilidad_camion = self.env['gms.camiones.disponibilidad'].create({
-        'camion_id': self.camion_id.id,
-        'fecha_inicio': self.fecha_viaje,
-        'estado': 'ocupado',
-    })
+        # Manda los datos a historial utilizando el camion_disponible_id
+        if self.camion_disponible_id:
+            self.env['gms.historial'].create({
+                'fecha': self.fecha_viaje,
+                'camion_id': self.camion_disponible_id.camion_id.id,
+                'agenda_id': self.id,
+        })
+
+        # Elimina la relación con camion_disponible_id
+        self.camion_disponible_id.unlink()
+
+
         self.write({'state': 'confirmado'})
 
         # Abre la vista de viajes agendados después de la confirmación
@@ -69,10 +77,10 @@ class Agenda(models.Model):
         }
         return action
 
-    @api.model
-    def name_get(self):
-        result = []
-        for record in self:
-            name = record.camion_id.nombre if record.camion_id else ''  
-            result.append((record.id, name))
-        return result
+  #  @api.model
+   # def name_get(self):
+    #    result = []
+     #   for record in self:
+      #      name = record.camion_id.nombre if record.camion_id else ''  
+       #     result.append((record.id, name))
+        #return result
