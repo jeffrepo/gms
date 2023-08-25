@@ -127,7 +127,7 @@
                             <field name="origen"/>
                             <field name="destino"/>
                             <field name="transportista_id" attrs="{'invisible': [('state', '==', 'solicitud')]}"/>
-                            <field name="camion_id" attrs="{'invisible': [('state', '==', 'solicitud')]}"/>
+                            <field name="camion_disponible_id" attrs="{'invisible': [('state', '==', 'solicitud')]}"/>
                             <!--<field name="venta_id"/>-->
                         </group>
 
