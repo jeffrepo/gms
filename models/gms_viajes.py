@@ -12,6 +12,8 @@ class Viajes(models.Model):
     origen = fields.Many2one('res.partner', string='Origen', required=True, tracking="1")
     destino = fields.Many2one('res.partner', string='Destino', required=True, tracking="1")
     camion_disponible_id = fields.Many2one('gms.camiones.disponibilidad', string='Camión Disponible', tracking="1")
+   
+
 
     state = fields.Selection([
         ('borrador', 'Borrador'),
@@ -36,11 +38,6 @@ class Viajes(models.Model):
         # Cambia el estado a 'terminado'
         self.write({'state': 'terminado'})
 
-        # Recupera el camión asociado a este viaje (si existe)
-        camion_id = False
-        if self.camion_disponible_id:
-            camion_id = self.camion_disponible_id.camion_id.id
-
         # Guarda la fecha y hora actual
         fecha_hora_actual = fields.Datetime.now()
 
@@ -51,15 +48,14 @@ class Viajes(models.Model):
             # Actualiza la fecha_hora_liberacion en el registro existente
             historial.write({'fecha_hora_liberacion': fecha_hora_actual})
 
-            # Recupera el registro de gms.camiones.disponibilidad relacionado con el camión utilizado en este viaje
-            if camion_id:
-                camion_disponibilidad = self.env['gms.camiones.disponibilidad'].search([('camion_id', '=', camion_id)], limit=1)
+        # Recupera el camión asociado a este viaje (si existe)
+        camion_id = self.camion_disponible_id.camion_id.id if self.camion_disponible_id else False
 
-                if camion_disponibilidad:
-                    # Establece el camión como disponible nuevamente
-                    camion_disponibilidad.write({'disponible': True})
-
-        # Reactiva el camión poniéndolo nuevamente como 'Disponible'
+         # Actualiza el estado del camión a 'disponible' si existe
         if camion_id:
-            camion = self.env['gms.camiones'].browse(camion_id)
-            camion.write({'estado': 'disponible'})
+            camion_disponible = self.env['gms.camiones.disponibilidad'].search([('camion_id', '=', camion_id), ('estado', '=', 'ocupado')], limit=1)
+            if camion_disponible:
+                camion_disponible.write({
+                'estado': 'disponible',
+                'fecha_hora_liberacion': fecha_hora_actual,
+            })

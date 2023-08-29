@@ -43,7 +43,8 @@
     <field name="arch" type="xml">
         <tree string="Disponibilidad de Camiones">
             <field name="camion_id"/>
-            <field name="fecha_inicio"/>
+            <field name="fecha_hora_liberacion"/>
+             <field name="estado"/>
             
         </tree>
     </field>
@@ -60,7 +61,7 @@
             <sheet>
                 <group>
                     <field name="camion_id"/>
-                    <field name="fecha_inicio"/>
+                    <field name="fecha_hora_liberacion"/>
                     <field name="estado"/>
                 </group>
             </sheet>
@@ -167,6 +168,8 @@
                     <field name="fecha_viaje"/>
                     <field name="origen"/>
                     <field name="destino"/>
+                    <field name="camion_disponible_id"/>
+                    
                 </tree>
             </field>
         </record>
@@ -191,6 +194,7 @@
                             <field name="fecha_viaje"/>
                             <field name="origen"/>
                             <field name="destino"/>
+                            <field name="camion_disponible_id"/>
                         </group>
 
                         <!-- Agrega la pestaña de Gastos -->
@@ -331,38 +335,41 @@
                     <field name="matricula"/>
                     <field name="capacidad_kgs"/>
                     <field name="minimo_carga_kgs"/>
-                    <field name="conductor_id"/>
-                    <field name="estado"/>
-                    <field name="transportista_id" readonly="1" />
+                    <field name="conductor_id"  readonly="1"/>
+                    <field name="transportista_id"/>
                 </tree>
             </field>
         </record>
 
-        <!-- vista de formulario/form para gms.camiones -->
-        <record id="view_gms_camiones_form" model="ir.ui.view">
-            <field name="name">gms.camiones.form</field>
-            <field name="model">gms.camiones</field>
-            <field name="arch" type="xml">
-                <form string="Camiones">
-                    <sheet>
-                        <group>
-                            <field name="nombre"/>
-                            <field name="matricula"/>
-                            <field name="capacidad_kgs"/>
-                            <field name="minimo_carga_kgs"/>
-                            <field name="conductor_id"/>
-                            <field name="estado"/>
-                            <field name="transportista_id" readonly="1"/>
-                        </group>
-                    </sheet>
-                    <div class="oe_chatter">
-                        <field name="message_follower_ids"/>
-                        <field name="activity_ids"/>
-                        <field name="message_ids"/>
-                    </div>
-                </form>
-            </field>
-        </record>
+       <!-- vista de formulario/form para gms.camiones -->
+<record id="view_gms_camiones_form" model="ir.ui.view">
+    <field name="name">gms.camiones.form</field>
+    <field name="model">gms.camiones</field>
+    <field name="arch" type="xml">
+        <form string="Camiones">
+            <header>
+                <button name="action_hacer_disponible" string="Hacer Disponible" type="object" class="oe_highlight"/>
+                <button name="action_hacer_ocupado" string="Hacer Ocupado" type="object" class="oe_highlight"/>
+            </header>
+            <sheet>
+                <group>
+                    <field name="nombre"/>
+                    <field name="matricula"/>
+                    <field name="capacidad_kgs"/>
+                    <field name="minimo_carga_kgs"/>
+                    <field name="conductor_id"  readonly="1"/>
+                    <field name="transportista_id" />
+                </group>
+            </sheet>
+            <div class="oe_chatter">
+                <field name="message_follower_ids"/>
+                <field name="activity_ids"/>
+                <field name="message_ids"/>
+            </div>
+        </form>
+    </field>
+</record>
+
 
         <!-- menú Camiones -->
 

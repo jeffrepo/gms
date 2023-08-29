@@ -13,7 +13,10 @@ class Agenda(models.Model):
     origen = fields.Many2one('res.partner', string='Origen', required=True, tracking ="1")
     destino = fields.Many2one('res.partner', string='Destino', required=True, tracking ="1")
     transportista_id = fields.Many2one('res.partner', string='Trasportista', states={'cancelado': [('readonly', True)]}, tracking="1")  
-    camion_disponible_id = fields.Many2one('gms.camiones.disponibilidad', string='Camión', states={'cancelado': [('readonly', True)]}, tracking="1")  
+    camion_disponible_id = fields.Many2one('gms.camiones.disponibilidad', string='Disponibilidad Camión', states={'cancelado': [('readonly', True)]}, tracking="1",  domain="[('estado', '=', 'disponible'), ('transportista_id', '=', transportista_id)]")
+    #camion_id = fields.Many2one('gms.camiones', string='Camión', states={'cancelado': [('readonly', True)]}, tracking="1")
+    #viaje_ids = fields.One2many('gms.viaje', 'agenda_id', string='Viajes')
+  
 
     state = fields.Selection([
         ('solicitud', 'Solicitud'),
@@ -49,24 +52,27 @@ class Agenda(models.Model):
        
          # Actualiza el método action_confirm
     def action_confirm(self):
+        if self.camion_disponible_id:
+            self.camion_disponible_id.write({'estado': 'ocupado'})
+
         viaje = self.env['gms.viaje'].create({
             'name': self.name,
             'fecha_viaje': self.fecha_viaje,
             'origen': self.origen.id,
             'destino': self.destino.id,
+            'camion_disponible_id': self.camion_disponible_id.id,
         })
+
 
         # Manda los datos a historial utilizando el camion_disponible_id
         if self.camion_disponible_id:
             self.env['gms.historial'].create({
-                'fecha': self.fecha_viaje,
+                'fecha': self.fecha,
                 'camion_id': self.camion_disponible_id.camion_id.id,
                 'agenda_id': self.id,
         })
 
-        # Elimina la relación con camion_disponible_id
-        self.camion_disponible_id.unlink()
-
+        
 
         self.write({'state': 'confirmado'})
 
@@ -77,10 +83,3 @@ class Agenda(models.Model):
         }
         return action
 
-  #  @api.model
-   # def name_get(self):
-    #    result = []
-     #   for record in self:
-      #      name = record.camion_id.nombre if record.camion_id else ''  
-       #     result.append((record.id, name))
-        #return result
