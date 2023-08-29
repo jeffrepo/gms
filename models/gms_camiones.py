@@ -16,21 +16,33 @@ class Camiones(models.Model):
     disponible = fields.Boolean(string='Disponible', default=True, tracking="1")
     ocupado = fields.Boolean(string='Ocupado', default=False, tracking="1")
 
-    
     def action_hacer_disponible(self):
         for camion in self:
-            if not camion.disponible:
-                camion.write({'disponible': True})
-                fecha_hora_actual = fields.Datetime.now()
+            # Buscar si ya existe una disponibilidad para este camión
+            disponibilidad_existente = self.env['gms.camiones.disponibilidad'].search([
+                ('camion_id', '=', camion.id),
+                ('estado', '=', 'ocupado'),  # Buscar si está ocupado
+            ], limit=1)
+
+            if disponibilidad_existente:
+                # Actualizar la disponibilidad existente a "disponible"
+                disponibilidad_existente.write({
+                    'estado': 'disponible',
+                    'fecha_hora_liberacion': fields.Datetime.now(),
+                })
+            else:
+                # Crear una nueva disponibilidad si no existe
                 disponibilidad_vals = {
                     'camion_id': camion.id,
                     'estado': 'disponible',
-                    'fecha_hora_liberacion': fecha_hora_actual,
-                    # Agrega otros campos de disponibilidad aquí según sea necesario
+                    'fecha_hora_liberacion': fields.Datetime.now(),
+                    'transportista_id': camion.transportista_id.id,
                 }
                 self.env['gms.camiones.disponibilidad'].create(disponibilidad_vals)
 
-    
+            # Marcar el camión como disponible
+            camion.write({'disponible': True})
+
     def action_hacer_ocupado(self):
         for camion in self:
             if camion.disponible:

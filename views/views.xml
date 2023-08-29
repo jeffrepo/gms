@@ -45,6 +45,7 @@
             <field name="camion_id"/>
             <field name="fecha_hora_liberacion"/>
              <field name="estado"/>
+             <field name="transportista_id"/>
             
         </tree>
     </field>
