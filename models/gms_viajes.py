@@ -16,20 +16,19 @@ class Viajes(models.Model):
 
 
     state = fields.Selection([
+        ('cancelado', 'Cancelado'),
         ('borrador', 'Borrador'),
         ('proceso', 'Proceso'),
-        ('liquidado', 'Liquidado'),
-        ('cancelado', 'Cancelado'),
-        ('terminado', 'Terminado')
-    ], string='Estado', default='borrador', required=True)
+        ('terminado', 'Terminado'),
+        ('liquidado', 'Liquidado')
+        
+    ], string='Estado', default='borrador', required=True)  
 
     gastos_ids = fields.One2many('gms.gasto_viaje', 'viaje_id', string='Gastos')
 
     def action_confirm(self):
         self.write({'state': 'proceso'})
 
-    def action_paid(self):
-        self.write({'state': 'liquidado'})
 
     def action_cancel(self):
         self.write({'state': 'cancelado'})
@@ -59,3 +58,6 @@ class Viajes(models.Model):
                 'estado': 'disponible',
                 'fecha_hora_liberacion': fecha_hora_actual,
             })
+                
+    def action_paid(self):
+        self.write({'state': 'liquidado'})      

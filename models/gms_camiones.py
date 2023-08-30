@@ -12,7 +12,7 @@ class Camiones(models.Model):
     capacidad_kgs = fields.Float(string='Capacidad en Kgs', tracking="1")
     minimo_carga_kgs = fields.Float(string='Mínimo de Carga en Kgs', tracking="1")
     transportista_id = fields.Many2one('res.partner', string='Transportista', tracking="1")
-    conductor_id = fields.Many2one('res.partner', string='Conductor', readonly=True, tracking="1")
+    conductor_id = fields.Many2one('res.partner', string='Conductor', tracking="1")
     disponible = fields.Boolean(string='Disponible', default=True, tracking="1")
     ocupado = fields.Boolean(string='Ocupado', default=False, tracking="1")
 
@@ -29,6 +29,7 @@ class Camiones(models.Model):
                 disponibilidad_existente.write({
                     'estado': 'disponible',
                     'fecha_hora_liberacion': fields.Datetime.now(),
+                    'conductor_id': camion.conductor_id.id,
                 })
             else:
                 # Crear una nueva disponibilidad si no existe
@@ -37,6 +38,7 @@ class Camiones(models.Model):
                     'estado': 'disponible',
                     'fecha_hora_liberacion': fields.Datetime.now(),
                     'transportista_id': camion.transportista_id.id,
+                    'conductor_id': camion.conductor_id.id,
                 }
                 self.env['gms.camiones.disponibilidad'].create(disponibilidad_vals)
 
