@@ -13,7 +13,7 @@ class Agenda(models.Model):
     origen = fields.Many2one('res.partner', string='Origen', required=True, tracking ="1")
     destino = fields.Many2one('res.partner', string='Destino', required=True, tracking ="1")
     transportista_id = fields.Many2one('res.partner', string='Trasportista', states={'cancelado': [('readonly', True)]}, tracking="1")  
-    camion_disponible_id = fields.Many2one('gms.camiones.disponibilidad', string='Disponibilidad Camión', states={'cancelado': [('readonly', True)]}, tracking="1",  domain="[('estado', '=', 'disponible'), ('transportista_id', '=', transportista_id)]")
+    camion_disponible_id = fields.Many2one('gms.camiones.disponibilidad', string='Disponibilidad Camión', states={'cancelado': [('readonly', True)]}, tracking="1",  domain="[('estado', '=', 'disponible')]")
     #camion_id = fields.Many2one('gms.camiones', string='Camión', states={'cancelado': [('readonly', True)]}, tracking="1")
     #viaje_ids = fields.One2many('gms.viaje', 'agenda_id', string='Viajes')
   
@@ -26,6 +26,11 @@ class Agenda(models.Model):
     ], string='Estado', default='solicitud', required=True)
 
     follower_ids = fields.Many2many('res.users', string='Followers')
+
+    @api.onchange('camion_disponible_id')
+    def _onchange_camion_disponible_id(self):
+        if self.camion_disponible_id:
+            self.transportista_id = self.camion_disponible_id.transportista_id.id
 
 
     @api.model_create_multi

@@ -46,7 +46,7 @@
             <field name="fecha_hora_liberacion"/>
              <field name="estado"/>
              <field name="transportista_id"/>
-            
+             <field name="conductor_id"/>
         </tree>
     </field>
 </record>
@@ -183,9 +183,10 @@
                 <form string="Viajes">
                     <header>
                         <button name="action_confirm" string="Proceso" type="object" states="borrador" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'borrador')]}"/>
-                        <button name="action_paid" string="Liquidado" type="object" states="proceso" attrs="{'invisible': [('state', '!=', 'proceso')]}"/>
-                        <button name="action_cancel" string="Cancelado" type="object" attrs="{'invisible': [('state', 'in', ('liquidado', 'terminado'))]}"/>
                         <button name="action_done" string="Terminado" type="object" states="proceso" attrs="{'invisible': [('state', '!=', 'proceso')]}"/>
+                        <button name="action_cancel" string="Cancelado" type="object" attrs="{'invisible': [('state', 'in', ('liquidado'))]}"/>
+                        <button name="action_paid" string="Liquidado" type="object" attrs="{'invisible': [('state', 'in', ('liquidado'))]}"/>
+
                         <field name="state" widget="statusbar" statusbar_visible="borrador,proceso,liquidado,cancelado,terminado"/>
                     </header>
 
@@ -336,7 +337,7 @@
                     <field name="matricula"/>
                     <field name="capacidad_kgs"/>
                     <field name="minimo_carga_kgs"/>
-                    <field name="conductor_id"  readonly="1"/>
+                    <field name="conductor_id"/>
                     <field name="transportista_id"/>
                 </tree>
             </field>
@@ -358,7 +359,7 @@
                     <field name="matricula"/>
                     <field name="capacidad_kgs"/>
                     <field name="minimo_carga_kgs"/>
-                    <field name="conductor_id"  readonly="1"/>
+                    <field name="conductor_id"/>
                     <field name="transportista_id" />
                 </group>
             </sheet>
