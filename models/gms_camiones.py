@@ -1,4 +1,5 @@
 from odoo import models, fields, api
+from odoo.exceptions import UserError
 
 class Camiones(models.Model):
     _name = 'gms.camiones'
@@ -14,25 +15,30 @@ class Camiones(models.Model):
     transportista_id = fields.Many2one('res.partner', string='Transportista', tracking="1")
     conductor_id = fields.Many2one('res.partner', string='Conductor', tracking="1")
     disponible = fields.Boolean(string='Disponible', default=True, tracking="1")
-    ocupado = fields.Boolean(string='Ocupado', default=False, tracking="1")
+    disponible_zafra = fields.Boolean(string="Zafra", tracking="1")
 
-    def action_hacer_disponible(self):
+    def action_liberar_camion(self):
         for camion in self:
-            # Buscar si ya existe una disponibilidad para este camión
-            disponibilidad_existente = self.env['gms.camiones.disponibilidad'].search([
-                ('camion_id', '=', camion.id),
-                ('estado', '=', 'ocupado'),  # Buscar si está ocupado
+            if not camion.disponible_zafra:
+                raise UserError("Este camión no tiene la opción 'Disponible Zafra' configurada.")
+
+            # Buscar disponibilidad del camión
+            disponibilidad = self.env['gms.camiones.disponibilidad'].search([
+                ('camion_id', '=', camion.id)
             ], limit=1)
 
-            if disponibilidad_existente:
-                # Actualizar la disponibilidad existente a "disponible"
-                disponibilidad_existente.write({
-                    'estado': 'disponible',
-                    'fecha_hora_liberacion': fields.Datetime.now(),
-                    'conductor_id': camion.conductor_id.id,
-                })
-            else:
-                # Crear una nueva disponibilidad si no existe
+            # Si hay una disponibilidad, verificar el estado del viaje asociado
+            if disponibilidad:
+                viaje_asociado = self.env['gms.viaje'].search([
+                    ('camion_disponible_id', '=', disponibilidad.id),
+                    ('state', 'in', ['borrador', 'coordinado', 'proceso'])
+                ], limit=1)
+                
+                if viaje_asociado:
+                    raise UserError("El camión no se puede liberar porque está ocupado en un viaje.")
+
+            # Si no hay disponibilidad, crear una nueva
+            if len(disponibilidad) == 0:
                 disponibilidad_vals = {
                     'camion_id': camion.id,
                     'estado': 'disponible',
@@ -42,16 +48,4 @@ class Camiones(models.Model):
                 }
                 self.env['gms.camiones.disponibilidad'].create(disponibilidad_vals)
 
-            # Marcar el camión como disponible
             camion.write({'disponible': True})
-
-    def action_hacer_ocupado(self):
-        for camion in self:
-            if camion.disponible:
-                camion.write({'disponible': False})
-                disponibilidad = camion.env['gms.camiones.disponibilidad'].search([
-                    ('camion_id', '=', camion.id),
-                    ('estado', '=', 'disponible')
-                ], limit=1)
-                if disponibilidad:
-                    disponibilidad.write({'estado': 'ocupado'})

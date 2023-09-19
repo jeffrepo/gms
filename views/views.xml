@@ -43,10 +43,12 @@
     <field name="arch" type="xml">
         <tree string="Disponibilidad de Camiones">
             <field name="camion_id"/>
+            <field name="conductor_id" string="Chofer"/>
+            <field name="transportista_id"/>
             <field name="fecha_hora_liberacion"/>
-             <field name="estado"/>
-             <field name="transportista_id"/>
-             <field name="conductor_id"/>
+            <field name="estado"/>
+            
+            
         </tree>
     </field>
 </record>
@@ -64,6 +66,7 @@
                     <field name="camion_id"/>
                     <field name="fecha_hora_liberacion"/>
                     <field name="estado"/>
+                    
                 </group>
             </sheet>
             <div class="oe_chatter">
@@ -84,11 +87,14 @@
             <field name="arch" type="xml">
                 <tree string="Agenda">
                     <field name="name"/>
+                    <field name="camion_id"/>
+                    <field name="conductor_id"/>
+                    <field name="transportista_id"/>
                     <field name="fecha"/>
                     <field name="fecha_viaje"/>
+                    <field name="solicitante_id"/>
                     <field name="origen"/>
                     <field name="destino"/>
-                    <!--<field name="venta_id"/>-->
                     <field name="state"/>
                 </tree>
             </field>
@@ -126,10 +132,13 @@
                             <field name="name" decoration-bf="1" readonly="1" style="font-size: 22px;"/>
                             <field name="fecha"/>
                             <field name="fecha_viaje"/>
+                            <field name="solicitante_id"/>
                             <field name="origen"/>
                             <field name="destino"/>
-                            <field name="transportista_id" attrs="{'invisible': [('state', '==', 'solicitud')]}"/>
-                            <field name="camion_disponible_id" attrs="{'invisible': [('state', '==', 'solicitud')]}"/>
+                            <field name="camion_disponible_id" attrs="{'invisible': ['|', ('state', '=', 'solicitud'), ('state', '=', 'confirmado')]}"/>
+                            <field name="transportista_id" attrs="{'invisible': [('state', '=', 'solicitud')]}" readonly="1"/>
+                            <field name="conductor_id" attrs="{'invisible': [('state', '=', 'solicitud')]}" readonly="1"/>
+                            <field name="camion_id" attrs="{'invisible': [('state', '=', 'solicitud')]}" readonly="1"/>
                             <!--<field name="venta_id"/>-->
                         </group>
 
@@ -164,8 +173,8 @@
             <field name="model">gms.viaje</field>
             <field name="arch" type="xml">
                 <tree string="Viajes">
-                    <field name="name"/>
-                    <!-- Agrega los demás campos que necesites mostrar en la vista de lista -->
+                    <field name="name"  class="oe_highlight" />
+                    <field name="agenda"/>   
                     <field name="fecha_viaje"/>
                     <field name="origen"/>
                     <field name="destino"/>
@@ -182,27 +191,34 @@
             <field name="arch" type="xml">
                 <form string="Viajes">
                     <header>
-                        <button name="action_confirm" string="Proceso" type="object" states="borrador" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'borrador')]}"/>
-                        <button name="action_done" string="Terminado" type="object" states="proceso" attrs="{'invisible': [('state', '!=', 'proceso')]}"/>
-                        <button name="action_cancel" string="Cancelado" type="object" attrs="{'invisible': [('state', 'in', ('liquidado'))]}"/>
-                        <button name="action_paid" string="Liquidado" type="object" attrs="{'invisible': [('state', 'in', ('liquidado'))]}"/>
-
-                        <field name="state" widget="statusbar" statusbar_visible="borrador,proceso,liquidado,cancelado,terminado"/>
+                        <button name="action_coordinado" string="Coordinado" type="object" states="borrador" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'borrador')]}"/>
+                        <button name="action_cancel" string="Cancelado" type="object" states="borrador" attrs="{'invisible': [('state', 'in', ('coordinado', 'liquidado', 'proceso', 'terminado'))]}"/>
+                        <button name="action_borrador" string="Borrador" type="object" states="coordinado" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'coordinado')]}"/>
+                        <button name="action_proceso" string="Proceso" type="object" states="coordinado" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'coordinado')]}"/>
+                        <button name="action_terminado" string="Terminado" type="object" states="proceso" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'proceso')]}"/>
+                        <button name="action_coordinado" string="Coordinado" type="object" states="proceso" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'proceso')]}"/>
+                        <button name="action_liquidado" string="Liquidado" type="object" states="terminado" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'terminado')]}"/>
+                        <button name="action_proceso" string="Proceso" type="object" states="terminado" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'terminado')]}"/>
+                         <field name="state" widget="statusbar" statusbar_visible="borrador,coordinado,proceso,terminado,cancelado,liquidado"/>
                     </header>
 
+                    
                     <sheet>
                         <group>
-                            <field name="name"/>
+                            <field name="name"  class="oe_highlight" decoration-bf="1" style="font-size: 22px;"/>
+                            <field name="agenda"/> 
                             <field name="fecha_viaje"/>
                             <field name="origen"/>
                             <field name="destino"/>
-                            <field name="camion_disponible_id"/>
+                            <field name="camion_id"/>
+                            <field name="conductor_id"/>
+                            
                         </group>
 
                         <!-- Agrega la pestaña de Gastos -->
                         <notebook>
                             <page string="Gastos">
-                                <field name="gastos_ids" widget="one2many_list">
+                                <field name="gastos_ids" >
                                     <tree>
                                         <field name="name"/>
                                         <field name="producto_id"/>
@@ -339,6 +355,7 @@
                     <field name="minimo_carga_kgs"/>
                     <field name="conductor_id"/>
                     <field name="transportista_id"/>
+                    <field name="disponible_zafra"/>
                 </tree>
             </field>
         </record>
@@ -350,8 +367,7 @@
     <field name="arch" type="xml">
         <form string="Camiones">
             <header>
-                <button name="action_hacer_disponible" string="Hacer Disponible" type="object" class="oe_highlight"/>
-                <button name="action_hacer_ocupado" string="Hacer Ocupado" type="object" class="oe_highlight"/>
+                <button name="action_liberar_camion" string="Liberar Camión" type="object" class="oe_highlight" context="{'warning': True}"/>
             </header>
             <sheet>
                 <group>
@@ -361,6 +377,7 @@
                     <field name="minimo_carga_kgs"/>
                     <field name="conductor_id"/>
                     <field name="transportista_id" />
+                    <field name="disponible_zafra"/>
                 </group>
             </sheet>
             <div class="oe_chatter">
@@ -429,6 +446,25 @@
                 </notebook>
             </field>
         </record>
+
+
+       <record id="gms_view_partner_form" model="ir.ui.view">
+           <field name="name">gms.res.partner.form</field>
+           <field name="model">res.partner</field>
+           <field name="inherit_id" ref="base.view_partner_form" />
+           <field name="arch" type="xml">
+               <xpath expr="//form/sheet/notebook/page/field/form/sheet/group/group/field[@name='name']" position="after">
+                   <field name="tipo" />
+               </xpath>    
+               <!-- <field name="name" position="after">
+                   <field name="tipo" />
+               </field> -->
+           </field>
+       </record>
+
+
+
+
 
 
      

@@ -5,4 +5,8 @@ class ResPartner(models.Model):
 
     transportista = fields.Boolean(string='Transportista', tracking ="1")
     camiones_ids = fields.One2many('gms.camiones', 'transportista_id', string='Camiones', tracking ="1")
+    tipo = fields.Selection([
+        ('chacra', 'Chacra'),
+        ('planta', 'Planta'),
+    ], string='Tipo')
 
