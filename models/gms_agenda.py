@@ -11,7 +11,7 @@ class Agenda(models.Model):
     'Name', )
 
 
-    name = fields.Char(string="Booking", required=True, default=lambda self: _('New'), copy=False, readonly=True, tracking=True)
+    name = fields.Char(required=True, default=lambda self: _('New'), copy=False, readonly=True, tracking=True)
     fecha = fields.Date(string='Fecha', required=True, tracking="1", default=fields.Date.today())
     fecha_viaje = fields.Date(string='Fecha de viaje', required=True, tracking="1")
     origen = fields.Many2one('res.partner', string='Origen', required=True, tracking="1", domain="['&',('tipo', '!=', False),('parent_id','=',solicitante_id)]")
@@ -26,7 +26,8 @@ class Agenda(models.Model):
 
     camion_id = fields.Many2one('gms.camiones', string='Camiones', readonly=True)
     conductor_id = fields.Many2one('res.partner', string='Chofer', readonly=True)
-    solicitante_id = fields.Many2one('res.partner', string='Solicitante', required=True, tracking="1")
+    solicitante_id = fields.Many2one('res.partner', string='Solicitante', required=True, tracking="1", domain="[('tipo', '=', False)]")
+
 
     state = fields.Selection([
         ('solicitud', 'Solicitud'),

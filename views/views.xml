@@ -119,28 +119,35 @@
                         <button name="action_confirm" string="Confirmar y agendar viaje" type="object" attrs="{'invisible': [('state', '!=', 'proceso')]}"/>
                         <field name="state" widget="statusbar" statusbar_visible="proceso,confirmado,cancelado,crear_viaje"/>
                     </header>
-                    <div class="oe_button_box" name="oe_button_box">
+                   
+                    <sheet>
+
+                     <div class="oe_right oe_button_box" name="oe_button_box">
                         <button name='action_view_scheduled_trips' icon="fa-truck" type="object" class="oe_stat_button">
                             <div class="o_field_widget o_stat_info">
                                 <span class="o_stat_text">Viajes Agendados</span>
                             </div>
                         </button>
                     </div>
-                    <sheet>
 
                         <group>
-                            <field name="name" decoration-bf="1" readonly="1" style="font-size: 22px;"/>
+                            <field name="name" string=" " decoration-bf="1" readonly="1" style="font-size: 22px;" widget="char_upper"/>
                             <field name="fecha"/>
                             <field name="fecha_viaje"/>
                             <field name="solicitante_id"/>
                             <field name="origen"/>
                             <field name="destino"/>
-                            <field name="camion_disponible_id" attrs="{'invisible': ['|', ('state', '=', 'solicitud'), ('state', '=', 'confirmado')]}"/>
-                            <field name="transportista_id" attrs="{'invisible': [('state', '=', 'solicitud')]}" readonly="1"/>
-                            <field name="conductor_id" attrs="{'invisible': [('state', '=', 'solicitud')]}" readonly="1"/>
-                            <field name="camion_id" attrs="{'invisible': [('state', '=', 'solicitud')]}" readonly="1"/>
-                            <!--<field name="venta_id"/>-->
+            
                         </group>
+
+
+                        <group>
+                            <field name="camion_disponible_id" attrs="{'invisible': ['|', ('state', '=', 'solicitud'), ('state', '=', 'confirmado')]}"/>
+                            <field name="transportista_id" attrs="{'invisible': [('state', '=', 'solicitud')]}" readonly="1" force_save="1"/>
+                            <field name="conductor_id" attrs="{'invisible': [('state', '=', 'solicitud')]}" readonly="1" force_save="1"/>
+                            <field name="camion_id" attrs="{'invisible': [('state', '=', 'solicitud')]}" readonly="1" force_save="1"/>
+                            <!--<field name="venta_id"/>-->
+                        </group>                
 
 
                     </sheet>
@@ -178,7 +185,6 @@
                     <field name="fecha_viaje"/>
                     <field name="origen"/>
                     <field name="destino"/>
-                    <field name="camion_disponible_id"/>
                     
                 </tree>
             </field>
@@ -205,7 +211,7 @@
                     
                     <sheet>
                         <group>
-                            <field name="name"  class="oe_highlight" decoration-bf="1" style="font-size: 22px;"/>
+                            <field name="name" string=" " class="oe_highlight" decoration-bf="1" style="font-size: 22px;" widget="char_upper"/>
                             <field name="agenda"/> 
                             <field name="fecha_viaje"/>
                             <field name="origen"/>

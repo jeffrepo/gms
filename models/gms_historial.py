@@ -11,8 +11,8 @@ class HistorialAgendasCamiones(models.Model):
     fecha = fields.Date(string='Fecha')
     agenda_id = fields.Many2one('gms.agenda', string='Agenda')
 
-    # Restricción para asegurarse de que el campo disponibilidad_id esté relacionado con el camión correcto
-    _sql_constraints = [
-        ('camion_disponibilidad_check', 'CHECK(disponibilidad_id.camion_id = camion_id)', 'La disponibilidad debe pertenecer al mismo camión.'),
-    ]
+    
+    # _sql_constraints = [
+    #     ('camion_disponibilidad_check', 'CHECK(disponibilidad_id.camion_id = camion_id)', 'La disponibilidad debe pertenecer al mismo camión.'),
+    # ]
    
