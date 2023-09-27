@@ -292,12 +292,15 @@
                             </page>
 
                             <page string="Mediciones">
-                                <field name="peso_bruto" string = "prueba"/>
-                                <field name="tara"/>
-                                <field name="peso_neto"/>
-                                <field name="peso_neto_destino"  attrs="{'invisible': [('tipo_viaje', '!=', 'salida')]}" />
-                                <field name="peso_producto_seco"/>
-                                <field name="porcentaje_humedad_primer_muestra"/>
+                                <group>
+                            
+                                    <field name="peso_bruto"/>
+                                    <field name="tara"/>
+                                    <field name="peso_neto"/>
+                                    <field name="peso_neto_destino"  attrs="{'invisible': [('tipo_viaje', '!=', 'salida')]}" />
+                                    <field name="peso_producto_seco"/>
+                                    <field name="porcentaje_humedad_primer_muestra"/>
+                                </group>
                                 
                             </page>
                         </notebook>
