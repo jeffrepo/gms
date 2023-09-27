@@ -107,7 +107,7 @@
             <field name="view_mode">tree,form</field>
         </record>
 
-        <!-- Vista Form view de Agenda -->
+          <!-- Vista Form view de Agenda -->
         <record id="view_gms_agenda_form" model="ir.ui.view">
             <field name="name">gms.agenda.form</field>
             <field name="model">gms.agenda</field>
@@ -121,34 +121,46 @@
                     </header>
                    
                     <sheet>
-
-                     <div class="oe_right oe_button_box" name="oe_button_box">
+                        <div class="oe_button_box" name="button_box">
+                            <button name="action_view_scheduled_trips"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-truck">
+                                <field name="viaje_count" widget="statinfo" string="Viajes"/>
+                            </button>
+                            <!-- attrs="{'invisible': [('invoice_count', '=', 0)]}" -->
+                        </div>
+                     <!-- <div class="oe_right oe_button_box" name="oe_button_box">
                         <button name='action_view_scheduled_trips' icon="fa-truck" type="object" class="oe_stat_button">
                             <div class="o_field_widget o_stat_info">
                                 <span class="o_stat_text">Viajes Agendados</span>
                             </div>
                         </button>
-                    </div>
-
+                     </div> -->
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name" readonly="1"/>
+                            </h1>
+                        </div>
                         <group>
-                            <field name="name" string=" " decoration-bf="1" readonly="1" style="font-size: 22px;" widget="char_upper"/>
-                            <field name="fecha"/>
-                            <field name="fecha_viaje"/>
-                            <field name="solicitante_id"/>
-                            <field name="origen"/>
-                            <field name="destino"/>
+                            <group>
+                                <field name="fecha"/>
+                                <field name="fecha_viaje"/>
+                                <field name="solicitante_id"/>
+                                <field name="origen"/>
+                                <field name="destino"/>
             
-                        </group>
+                            </group>
 
 
-                        <group>
-                            <field name="camion_disponible_id" attrs="{'invisible': ['|', ('state', '=', 'solicitud'), ('state', '=', 'confirmado')]}"/>
-                            <field name="transportista_id" attrs="{'invisible': [('state', '=', 'solicitud')]}" readonly="1" force_save="1"/>
-                            <field name="conductor_id" attrs="{'invisible': [('state', '=', 'solicitud')]}" readonly="1" force_save="1"/>
-                            <field name="camion_id" attrs="{'invisible': [('state', '=', 'solicitud')]}" readonly="1" force_save="1"/>
-                            <!--<field name="venta_id"/>-->
-                        </group>                
-
+                            <group>
+                                <field name="camion_disponible_id" attrs="{'invisible': ['|', ('state', '=', 'solicitud'), ('state', '=', 'confirmado')]}"/>
+                                <field name="transportista_id" attrs="{'invisible': [('state', '=', 'solicitud')]}" readonly="1" force_save="1"/>
+                                <field name="conductor_id" attrs="{'invisible': [('state', '=', 'solicitud')]}" readonly="1" force_save="1"/>
+                                <field name="camion_id" attrs="{'invisible': [('state', '=', 'solicitud')]}" readonly="1" force_save="1"/>
+                                <!--<field name="venta_id"/>-->
+                            </group>                
+                        </group> 
 
                     </sheet>
                     <div class="oe_chatter">
@@ -174,7 +186,7 @@
         <menuitem id="gms_menu_agenda" name="Agenda" parent="gms_menu" action="action_agenda" />
 
 
-        <!-- vista de lista/tree para gms.viajes -->
+         <!-- vista de lista/tree para gms.viajes -->
         <record id="view_gms_viajes_tree" model="ir.ui.view">
             <field name="name">gms.viaje.tree</field>
             <field name="model">gms.viaje</field>
@@ -210,15 +222,61 @@
 
                     
                     <sheet>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name" readonly="1"/>
+                            </h1>
+                        </div>                        
                         <group>
-                            <field name="name" string=" " class="oe_highlight" decoration-bf="1" style="font-size: 22px;" widget="char_upper"/>
-                            <field name="agenda"/> 
-                            <field name="fecha_viaje"/>
-                            <field name="origen"/>
-                            <field name="destino"/>
-                            <field name="camion_id"/>
-                            <field name="conductor_id"/>
+                            <group>
                             
+                                <field name="agenda"/> 
+                                <field name="fecha_viaje"/>
+                                <field name="solicitante_id"/>
+                                <field name="origen"/>
+                                <field name="destino"/>
+                                <field name="camion_id"/>
+                                <field name="conductor_id"/>
+
+                            </group>   
+
+
+
+                            <group>
+                            
+                                <field name="tipo_viaje"/> 
+                                <field name="numero_remito"/>
+                                <field name="tolva"/> 
+                                <field name="silo"/>
+                                <field name="prelimpieza_entrada"/>
+                                <field name="secado_entrada"/>
+                                <field name="kilometros_flete"/>
+                                <field name="kilogramos_a_liquidar"/>
+                                
+                                
+
+                            </group>    
+
+
+                            <group>
+                            
+                                <field name="transportista_id"/>
+                                <field name="ruta_id"/> 
+                                <field name="producto_transportado_id"/>
+                                
+                                <field name="pedido_venta_id"  attrs="{'invisible': [('tipo_viaje', '!=', 'salida')]}"/>
+                                <field name="pedido_compra_id"  attrs="{'invisible': [('tipo_viaje', '!=', 'entrada')]}"/>
+                                 
+                            </group>  
+
+
+                            <group string = "Inventario">
+                            <field name="albaran_id"/>
+                                 
+                            </group>  
+
+
+
                         </group>
 
                         <!-- Agrega la pestaña de Gastos -->
@@ -232,8 +290,32 @@
                                     </tree>
                                 </field>
                             </page>
+
+                            <page string="Mediciones">
+                                <group>
+                            
+                                    <field name="peso_bruto"/>
+                                    <field name="tara"/>
+                                    <field name="peso_neto"/>
+                                    <field name="peso_neto_destino"  attrs="{'invisible': [('tipo_viaje', '!=', 'salida')]}" />
+                                    <field name="peso_producto_seco"/>
+                                    <field name="porcentaje_humedad_primer_muestra"/>
+                                </group>
+                                
+                            </page>
                         </notebook>
+
+
+                        <group name="note_group" col="6" class="mt-2 mt-md-0">
+                            <group colspan="4">
+                                <field colspan="2" name="observaciones" nolabel="1" placeholder="Observaciones..."/>
+                            </group>
+                            <div class="clearfix"/>
+                        </group>
+                        
                     </sheet>
+
+
                     <div class="oe_chatter">
                         <field name="message_follower_ids"/>
                         <field name="activity_ids"/>
@@ -242,7 +324,6 @@
                 </form>
             </field>
         </record>
-
 
         <!-- Acción para el menú Viajes -->
         <record id="action_viajes" model="ir.actions.act_window">

@@ -7,7 +7,7 @@
     'website': '',
     'category': 'Uncategorized',
     'version': '0.1',
-    'depends': ['base','product'],
+    'depends': ['base','product','sale','purchase','stock'],
     'data': [
         'security/ir.model.access.csv',
         'views/views.xml',

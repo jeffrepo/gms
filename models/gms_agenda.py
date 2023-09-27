@@ -24,9 +24,17 @@ class Agenda(models.Model):
                                            domain="[('estado', '=', 'disponible'), ('camion_id.disponible_zafra', '=', True)]",
                                            attrs="{'invisible': [('state', '=', 'solicitud')]}")  # Ocultar en solicitud
 
-    camion_id = fields.Many2one('gms.camiones', string='Camiones', readonly=True)
+    camion_id = fields.Many2one('gms.camiones', string='Camion', readonly=True)
     conductor_id = fields.Many2one('res.partner', string='Chofer', readonly=True)
     solicitante_id = fields.Many2one('res.partner', string='Solicitante', required=True, tracking="1", domain="[('tipo', '=', False)]")
+
+    viaje_count = fields.Integer(string="Número de viajes", compute="_compute_viaje_count")
+
+    @api.depends('name') 
+    def _compute_viaje_count(self):
+        for record in self:
+            record.viaje_count = self.env['gms.viaje'].search_count([('agenda', '=', record.id)])
+
 
 
     state = fields.Selection([
@@ -60,11 +68,18 @@ class Agenda(models.Model):
         self.write({'state': 'proceso'})
 
     def action_view_scheduled_trips(self):
-        action = self.env.ref('gms.action_view_scheduled_trips').read()[0]
-        action['context'] = {
-            'search_default_agenda_id': self.id,
-        }
-        return action
+        self.ensure_one()  # Asegura que solo se está trabajando con un registro a la vez
+        viaje = self.env['gms.viaje'].search([('agenda', '=', self.id)], limit=1)
+        if viaje:
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'gms.viaje',
+                'view_mode': 'form',
+                'res_id': viaje.id,
+                'target': 'current',
+            }
+        else:
+            raise UserError(_('No hay un viaje asociado a esta agenda.'))   
 
     def _check_fecha_viaje(self):
         for agenda in self:
@@ -76,9 +91,8 @@ class Agenda(models.Model):
                     raise UserError("No se puede confirmar: La fecha de viaje es mayor a 1 día desde la fecha actual.")
 
     def action_confirm(self):
-        _logger.info(f"Before check: transportista_id={self.transportista_id}, conductor_id={self.conductor_id}, camion_id={self.camion_id}")
+       
         self._check_fecha_viaje()
-        _logger.info(f"After check: transportista_id={self.transportista_id}, conductor_id={self.conductor_id}, camion_id={self.camion_id}")
         
         if self.camion_disponible_id:
             self.camion_disponible_id.write({'estado': 'ocupado'})
@@ -91,7 +105,10 @@ class Agenda(models.Model):
             'camion_disponible_id': self.camion_disponible_id.id,
             'camion_id': self.camion_disponible_id.camion_id.id,  
             'conductor_id': self.camion_disponible_id.conductor_id.id,
+            'solicitante_id': self.solicitante_id.id,
             'state': 'proceso'
+            
+            
             
         })
 
