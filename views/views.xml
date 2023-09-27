@@ -125,9 +125,8 @@
                             <button name="action_view_scheduled_trips"
                                 type="object"
                                 class="oe_stat_button"
-                                icon="fa-pencil-square-o"
-                                >
-                                <!-- <field name="invoice_count" widget="statinfo" string="Viajes agendados"/> -->
+                                icon="fa-truck">
+                                <field name="viaje_count" widget="statinfo" string="Viajes"/>
                             </button>
                             <!-- attrs="{'invisible': [('invoice_count', '=', 0)]}" -->
                         </div>
@@ -145,7 +144,6 @@
                         </div>
                         <group>
                             <group>
-                                <!-- <field name="name" string=" " decoration-bf="1" readonly="1" style="font-size: 22px;" widget="char_upper"/> -->
                                 <field name="fecha"/>
                                 <field name="fecha_viaje"/>
                                 <field name="solicitante_id"/>
@@ -230,15 +228,55 @@
                             </h1>
                         </div>                        
                         <group>
+                            <group>
                             
-                            <field name="agenda"/> 
-                            <field name="fecha_viaje"/>
-                            <field name="solicitante_id"/>
-                            <field name="origen"/>
-                            <field name="destino"/>
-                            <field name="camion_id"/>
-                            <field name="conductor_id"/>
+                                <field name="agenda"/> 
+                                <field name="fecha_viaje"/>
+                                <field name="solicitante_id"/>
+                                <field name="origen"/>
+                                <field name="destino"/>
+                                <field name="camion_id"/>
+                                <field name="conductor_id"/>
+
+                            </group>   
+
+
+
+                            <group>
                             
+                                <field name="tipo_viaje"/> 
+                                <field name="numero_remito"/>
+                                <field name="tolva"/> 
+                                <field name="silo"/>
+                                <field name="prelimpieza_entrada"/>
+                                <field name="secado_entrada"/>
+                                <field name="kilometros_flete"/>
+                                <field name="kilogramos_a_liquidar"/>
+                                
+                                
+
+                            </group>    
+
+
+                            <group>
+                            
+                                <field name="transportista_id"/>
+                                <field name="ruta_id"/> 
+                                <field name="producto_transportado_id"/>
+                                
+                                <field name="pedido_venta_id"  attrs="{'invisible': [('tipo_viaje', '!=', 'salida')]}"/>
+                                <field name="pedido_compra_id"  attrs="{'invisible': [('tipo_viaje', '!=', 'entrada')]}"/>
+                                 
+                            </group>  
+
+
+                            <group string = "Inventario">
+                            <field name="albaran_id"/>
+                                 
+                            </group>  
+
+
+
                         </group>
 
                         <!-- Agrega la pestaña de Gastos -->
@@ -252,8 +290,29 @@
                                     </tree>
                                 </field>
                             </page>
+
+                            <page string="Mediciones">
+                                <field name="peso_bruto" string = "prueba"/>
+                                <field name="tara"/>
+                                <field name="peso_neto"/>
+                                <field name="peso_neto_destino"  attrs="{'invisible': [('tipo_viaje', '!=', 'salida')]}" />
+                                <field name="peso_producto_seco"/>
+                                <field name="porcentaje_humedad_primer_muestra"/>
+                                
+                            </page>
                         </notebook>
+
+
+                        <group name="note_group" col="6" class="mt-2 mt-md-0">
+                            <group colspan="4">
+                                <field colspan="2" name="observaciones" nolabel="1" placeholder="Observaciones..."/>
+                            </group>
+                            <div class="clearfix"/>
+                        </group>
+                        
                     </sheet>
+
+
                     <div class="oe_chatter">
                         <field name="message_follower_ids"/>
                         <field name="activity_ids"/>

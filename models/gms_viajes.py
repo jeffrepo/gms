@@ -21,7 +21,46 @@ class Viajes(models.Model):
     conductor_id = fields.Many2one('res.partner', string='Chofer')
     solicitante_id = fields.Many2one('res.partner', string='Solicitante')
     
+    # nuevos campos 
+    tipo_viaje = fields.Selection([('entrada', 'Entrada'), ('salida', 'Salida')], string="Tipo de Viaje")
+    numero_remito = fields.Char(string="Número de remito / Guía")
+    transportista_id = fields.Many2one('res.partner', string="Transportista", required=True)
+    ruta_id = fields.Many2one('gms.rutas', string="Ruta")
+    albaran_id = fields.Many2one('stock.picking', string="Albarán")
+    producto_transportado_id = fields.Many2one('product.product', string="Producto transportado")
+    peso_bruto = fields.Float(string="Peso bruto")
+    tara = fields.Float(string="Tara")
+    peso_neto = fields.Float(string="Peso neto", compute="_compute_peso_neto")
     
+
+
+    peso_neto_destino = fields.Float(string="Peso neto destino")
+    peso_producto_seco = fields.Float(string="Peso producto seco")
+    porcentaje_humedad_primer_muestra = fields.Float(string="Porcentaje humedad primer muestra")
+    tolva = fields.Char(string="Tolva")
+    silo = fields.Char(string="Silo")
+    prelimpieza_entrada = fields.Selection([('si', 'Si'), ('no', 'No')], string="Prelimpieza entrada")
+    secado_entrada = fields.Selection([('si', 'Si'), ('no', 'No')], string="Secado entrada")
+    kilometros_flete = fields.Float(string="Kilómetros flete")
+    kilogramos_a_liquidar = fields.Float(string="Kilogramos a liquidar")
+    pedido_venta_id = fields.Many2one('sale.order', string="Pedido de venta")
+    pedido_compra_id = fields.Many2one('purchase.order', string="Pedido de compra")
+    observaciones = fields.Text(string="Observaciones") 
+
+    @api.depends('peso_bruto', 'tara')
+    def _compute_peso_neto(self):
+        for record in self:
+            record.peso_neto = record.peso_bruto - record.tara
+
+
+
+    @api.onchange('ruta_id')
+    def _onchange_ruta_id(self):
+         if self.ruta_id:   
+             self.kilometros_flete = self.ruta_id.kilometros
+
+
+
     state = fields.Selection([
         ('cancelado', 'Cancelado'),
         ('borrador', 'Borrador'),
