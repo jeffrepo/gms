@@ -76,9 +76,8 @@ class Agenda(models.Model):
                     raise UserError("No se puede confirmar: La fecha de viaje es mayor a 1 día desde la fecha actual.")
 
     def action_confirm(self):
-        _logger.info(f"Before check: transportista_id={self.transportista_id}, conductor_id={self.conductor_id}, camion_id={self.camion_id}")
+       
         self._check_fecha_viaje()
-        _logger.info(f"After check: transportista_id={self.transportista_id}, conductor_id={self.conductor_id}, camion_id={self.camion_id}")
         
         if self.camion_disponible_id:
             self.camion_disponible_id.write({'estado': 'ocupado'})

@@ -19,7 +19,7 @@ class Viajes(models.Model):
     camion_disponible_id = fields.Many2one('gms.camiones.disponibilidad', string='Camión Disponible', tracking="1")
     camion_id = fields.Many2one('gms.camiones', string='Camiones')
     conductor_id = fields.Many2one('res.partner', string='Chofer')
-   
+    solicitante_id = fields.Many2one('res.partner', string='Solicitante')
     
     
     state = fields.Selection([
