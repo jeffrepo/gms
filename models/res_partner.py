@@ -1,4 +1,4 @@
-from odoo import fields, models
+from odoo import fields, models, api
 
 class ResPartner(models.Model):
     _inherit = 'res.partner'
@@ -15,3 +15,11 @@ class ResPartner(models.Model):
         ('chacra', 'Chacra'),
         ('planta', 'Planta'),
     ], string='Tipo')
+
+
+
+    @api.model
+    def search(self, args, offset=0, limit=None, order=None, count=False):
+        # Agregar el dominio para filtrar por transportista=True
+        args += [('transportista', '=', True)]
+        return super(ResPartner, self).search(args, offset, limit, order, count)

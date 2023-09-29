@@ -17,8 +17,8 @@ class Viajes(models.Model):
     origen = fields.Many2one('res.partner', string='Origen', required=True, tracking="1")
     destino = fields.Many2one('res.partner', string='Destino', required=True, tracking="1")
     camion_disponible_id = fields.Many2one('gms.camiones.disponibilidad', string='Camión Disponible', tracking="1")
-    camion_id = fields.Many2one('gms.camiones', string='Camiones')
-    conductor_id = fields.Many2one('res.partner', string='Chofer')
+    camion_id = fields.Many2one('gms.camiones', string='Camion')
+    conductor_id = fields.Many2one('res.partner', string='Chofer', required=True)
     solicitante_id = fields.Many2one('res.partner', string='Solicitante')
     
     # nuevos campos 
