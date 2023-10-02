@@ -29,6 +29,7 @@ class Agenda(models.Model):
     solicitante_id = fields.Many2one('res.partner', string='Solicitante', required=True, tracking="1", domain="[('tipo', '=', False)]")
 
     viaje_count = fields.Integer(string="Número de viajes", compute="_compute_viaje_count")
+    tipo_viaje = fields.Selection([('entrada', 'Entrada'), ('salida', 'Salida')], string="Tipo de Viaje")
 
     @api.depends('name') 
     def _compute_viaje_count(self):
@@ -106,6 +107,7 @@ class Agenda(models.Model):
             'camion_id': self.camion_disponible_id.camion_id.id,  
             'conductor_id': self.camion_disponible_id.conductor_id.id,
             'solicitante_id': self.solicitante_id.id,
+            'tipo_viaje': self.tipo_viaje,    
             'state': 'proceso'
             
             
