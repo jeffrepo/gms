@@ -193,7 +193,11 @@
             <field name="name">gms.viaje.tree</field>
             <field name="model">gms.viaje</field>
             <field name="arch" type="xml">
-                <tree string="Viajes">
+                <tree string="Viajes"
+                        decoration-muted="state in ('cancelado', 'liquidado')"
+                        decoration-info="state == 'borrador'"
+                        decoration-success="state == 'coordinado'"
+                        decoration-danger="state == 'terminado'">
                     <field name="name"  class="oe_highlight" />
                     <field name="agenda" domain="[('state', 'in', ['solicitud', 'proceso'])]" string="Agenda"/>
                     <field name="fecha_viaje"/>
@@ -237,12 +241,12 @@
                             
                                 <field name="agenda" domain="[('state', 'in', ['solicitud', 'proceso'])]" string="Agenda"/>
                                 <field name="fecha_viaje"/>
-                                <field name="solicitante_id"/>
-                                <field name="origen"/>
-                                <field name="destino"/>
-                                <field name="camion_id"/>
+                                <field name="solicitante_id" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}"/>
+                                <field name="origen" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}"/>
+                                <field name="destino" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}" />
+                                <field name="camion_id"  attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}" />
                                 <field name="conductor_id"/>
-
+                                <field name="fecha" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}" />
                             </group>   
 
 
