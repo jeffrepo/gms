@@ -16,6 +16,10 @@ class Camiones(models.Model):
     conductor_id = fields.Many2one('res.partner', string='Chofer', tracking="1")
     disponible = fields.Boolean(string='Disponible', default=True, tracking="1")
     disponible_zafra = fields.Boolean(string="Zafra", tracking="1")
+     
+    _sql_constraints = [
+        ('matricula_unique', 'UNIQUE(matricula)', 'La matrícula del camión debe ser única.')
+    ]
 
     def action_liberar_camion(self):
         for camion in self:
