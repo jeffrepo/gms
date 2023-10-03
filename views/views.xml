@@ -95,8 +95,12 @@
                     <field name="solicitante_id"/>
                     <field name="origen"/>
                     <field name="destino"/>
-                    <field name="state"/>
                     <field name="tipo_viaje"/>
+                    <field name="state" widget="badge"
+                        decoration-muted="state == 'cancelado'"
+                        decoration-info="state == 'solicitud'"
+                        decoration-success="state == 'proceso'"
+                    />
                 </tree>
             </field>
         </record>
@@ -188,17 +192,13 @@
         <menuitem id="gms_menu_agenda" name="Agenda" parent="gms_menu" action="action_agenda" />
 
 
-         <!-- vista de lista/tree para gms.viajes -->
+       <!-- vista de lista/tree para gms.viajes -->
         <record id="view_gms_viajes_tree" model="ir.ui.view">
             <field name="name">gms.viaje.tree</field>
             <field name="model">gms.viaje</field>
             <field name="arch" type="xml">
-                <tree string="Viajes"
-                        decoration-muted="state in ('cancelado', 'liquidado')"
-                        decoration-info="state == 'borrador'"
-                        decoration-success="state == 'coordinado'"
-                        decoration-danger="state == 'terminado'">
-                    <field name="name"  class="oe_highlight" />
+                <tree string="Viajes">
+                    <field name="name" class="oe_highlight" />
                     <field name="agenda" domain="[('state', 'in', ['solicitud', 'proceso'])]" string="Agenda"/>
                     <field name="fecha_viaje"/>
                     <field name="origen"/>
@@ -206,10 +206,15 @@
                     <field name="camion_id"/>
                     <field name="conductor_id"/>
                     <field name="tipo_viaje"/>
-                    
+                    <field name="state" widget="badge"
+                        decoration-muted="state in ('cancelado', 'liquidado')"
+                        decoration-info="state == 'borrador'"
+                        decoration-success="state == 'coordinado'"
+                    />
                 </tree>
             </field>
         </record>
+
 
         <!-- Vista formulario gms.viajes -->
         <record id="view_gms_viajes_form" model="ir.ui.view">
@@ -240,20 +245,19 @@
                             <group>
                             
                                 <field name="agenda" domain="[('state', 'in', ['solicitud', 'proceso'])]" string="Agenda"/>
-                                <field name="fecha_viaje"/>
+                                <field name="fecha_viaje" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}"/>
                                 <field name="solicitante_id" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}"/>
                                 <field name="origen" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}"/>
                                 <field name="destino" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}" />
                                 <field name="camion_id"  attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}" />
                                 <field name="conductor_id"/>
-                                <field name="fecha" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}" />
                             </group>   
 
 
 
                             <group>
                             
-                                <field name="tipo_de_viaje" attrs="{'readonly': [('state', 'in', ['cancelado', 'coordinado', 'proceso', 'terminado', 'liquidado'])]}"/>
+                                <field name="tipo_viaje" attrs="{'readonly': [('state', 'in', ['cancelado', 'coordinado', 'proceso', 'terminado', 'liquidado'])]}"/>
                                 <field name="numero_remito"/>
                                 <field name="tolva"/> 
                                 <field name="silo"/>
