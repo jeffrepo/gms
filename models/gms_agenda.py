@@ -107,7 +107,8 @@ class Agenda(models.Model):
             'camion_id': self.camion_disponible_id.camion_id.id,  
             'conductor_id': self.camion_disponible_id.conductor_id.id,
             'solicitante_id': self.solicitante_id.id,
-            'tipo_viaje': self.tipo_viaje,    
+            'tipo_viaje': self.tipo_viaje,
+            'transportista_id': self.transportista_id.id,    
             'state': 'proceso'
             
             
@@ -123,8 +124,3 @@ class Agenda(models.Model):
 
         self.write({'state': 'confirmado'})
 
-        action = self.env.ref('gms.action_view_scheduled_trips').read()[0]
-        action['context'] = {
-            'search_default_agenda_id': self.id,
-        }
-        return action
