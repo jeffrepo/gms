@@ -51,8 +51,8 @@ class Viajes(models.Model):
     @api.onchange('camion_id')
     def _onchange_camion_id(self):
         if self.camion_id:
-            self.conductor_id = self.camion_id.conductor_id  
-            self.transportista_id = self.camion_id.transportista_id  
+            self.conductor_id = self.camion_id.conductor_id.id  
+            self.transportista_id = self.camion_id.transportista_id.id  
 
 
     @api.depends('peso_bruto', 'tara')
