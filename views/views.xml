@@ -151,10 +151,11 @@
                             <group>
                                 <field name="fecha"/>
                                 <field name="fecha_viaje"/>
+                                 <field name="tipo_viaje"/>
                                 <field name="solicitante_id"/>
                                 <field name="origen"/>
                                 <field name="destino"/>
-                                <field name="tipo_viaje"/>
+                               
             
                             </group>
 
