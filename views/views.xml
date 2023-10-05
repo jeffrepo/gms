@@ -200,7 +200,7 @@
             <field name="arch" type="xml">
                 <tree string="Viajes">
                     <field name="name" class="oe_highlight" />
-                    <field name="agenda" domain="[('state', 'in', ['solicitud', 'proceso'])]" string="Agenda"/>
+                    <field name="agenda" domain="[('state', 'in', ['solicitud', 'proceso'])]"   string="Agenda"/>
                     <field name="fecha_viaje"/>
                     <field name="origen"/>
                     <field name="destino"/>
@@ -245,7 +245,7 @@
                         <group>
                             <group>
                             
-                                <field name="agenda" domain="[('state', 'in', ['solicitud', 'proceso'])]" string="Agenda"/>
+                                <field name="agenda" domain="[('state', 'in', ['solicitud', 'proceso'])]"   attrs="{'readonly': [('state', 'in', ['proceso', 'terminado', 'liquidado'])]}" string="Agenda"/>
                                 <field name="fecha_viaje" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}"/>
                                 <field name="solicitante_id" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}"/>
                                 <field name="origen" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}"/>
