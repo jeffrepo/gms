@@ -17,9 +17,28 @@ class Camiones(models.Model):
     disponible = fields.Boolean(string='Disponible', default=True, tracking="1")
     disponible_zafra = fields.Boolean(string="Zafra", tracking="1")
      
-    _sql_constraints = [
-        ('matricula_unique', 'UNIQUE(matricula)', 'La matrícula del camión debe ser única.')
-    ]
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            # Convertir la matrícula a mayúsculas
+            matricula = vals.get('matricula', '').upper()
+            # Verificar si la matrícula ya existe
+            existing = self.search([('matricula', '=', matricula)])
+            if existing:
+                raise UserError("La matrícula ya existe!")
+            vals['matricula'] = matricula
+        return super(Camiones, self).create(vals_list)
+
+    def write(self, vals):
+        # Si se está actualizando la matrícula
+        if 'matricula' in vals:
+            matricula = vals['matricula'].upper()
+            # Verificar si la matrícula ya existe y no es el mismo registro
+            existing = self.search([('matricula', '=', matricula), ('id', '!=', self.id)])
+            if existing:
+                raise UserError("La matrícula ya existe!")
+            vals['matricula'] = matricula
+        return super(Camiones, self).write(vals)
 
     def action_liberar_camion(self):
         for camion in self:

@@ -18,13 +18,13 @@ class Viajes(models.Model):
     destino = fields.Many2one('res.partner', string='Destino', tracking="1")
     camion_disponible_id = fields.Many2one('gms.camiones.disponibilidad', string='Camión Disponible', tracking="1")
     camion_id = fields.Many2one('gms.camiones', string='Camion')
-    conductor_id = fields.Many2one('res.partner', string='Chofer', required=True, readonly=True, store=True) 
+    conductor_id = fields.Many2one('res.partner', string='Chofer', compute="_compute_conductor_transportista")
     solicitante_id = fields.Many2one('res.partner', string='Solicitante')
     
     # nuevos campos 
     tipo_viaje = fields.Selection([('entrada', 'Entrada'), ('salida', 'Salida')], string="Tipo de Viaje")
     numero_remito = fields.Char(string="Número de remito / Guía")
-    transportista_id = fields.Many2one('res.partner', string="Transportista", required=True, readonly=True, store=True)
+    transportista_id = fields.Many2one('res.partner', string="Transportista", compute="_compute_conductor_transportista")
     ruta_id = fields.Many2one('gms.rutas', string="Ruta")
     albaran_id = fields.Many2one('stock.picking', string="Albarán")
     producto_transportado_id = fields.Many2one('product.product', string="Producto transportado")
@@ -49,11 +49,12 @@ class Viajes(models.Model):
 
 
     @api.onchange('camion_id')
-    def _onchange_camion_id(self):
-        if self.camion_id:
-            self.conductor_id = self.camion_id.conductor_id  
-            self.transportista_id = self.camion_id.transportista_id  
-
+    def _compute_conductor_transportista(self):
+        for viaje in self:
+            if viaje.camion_id:
+                viaje.conductor_id = viaje.camion_id.conductor_id.id
+                viaje.transportista_id = viaje.camion_id.transportista_id.id
+                
 
     @api.depends('peso_bruto', 'tara')
     def _compute_peso_neto(self):
