@@ -13,7 +13,7 @@ class Camiones(models.Model):
     capacidad_kgs = fields.Float(string='Capacidad en Kgs', tracking="1")
     minimo_carga_kgs = fields.Float(string='Mínimo de Carga en Kgs', tracking="1")
     transportista_id = fields.Many2one('res.partner', string='Transportista', tracking="1")
-    conductor_id = fields.Many2one('res.partner', string='Chofer', tracking="1")
+    conductor_id = fields.Many2one('res.partner', string='Chofer', required=True, tracking="1")
     disponible = fields.Boolean(string='Disponible', default=True, tracking="1")
     disponible_zafra = fields.Boolean(string="Zafra", tracking="1")
      

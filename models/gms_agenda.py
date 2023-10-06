@@ -31,6 +31,9 @@ class Agenda(models.Model):
     viaje_count = fields.Integer(string="Número de viajes", compute="_compute_viaje_count")
     tipo_viaje = fields.Selection([('entrada', 'Entrada'), ('salida', 'Salida')], string="Tipo de Viaje")
 
+    
+
+
     @api.depends('name') 
     def _compute_viaje_count(self):
         for record in self:
@@ -124,3 +127,10 @@ class Agenda(models.Model):
 
         self.write({'state': 'confirmado'})
 
+
+
+    def unlink(self):
+        for record in self:
+            if record.state in ['proceso', 'confirmado', 'cancelado']:
+                raise UserError(_('No puedes eliminar una agenda en el estado %s.') % record.state)
+        return super(Agenda, self).unlink()
