@@ -14,10 +14,10 @@ class Viajes(models.Model):
 
     agenda = fields.Many2one('gms.agenda', string='Agenda')
     fecha_viaje = fields.Date(string='Fecha de viaje', tracking="1")
-    origen = fields.Many2one('res.partner', string='Origen', tracking="1")
+    origen = fields.Many2one('res.partner', string='Origen', tracking="1", domain="['&',('tipo', '!=', False),('parent_id','=',solicitante_id)]")
     destino = fields.Many2one('res.partner', string='Destino', tracking="1")
     camion_disponible_id = fields.Many2one('gms.camiones.disponibilidad', string='Camión Disponible', tracking="1")
-    camion_id = fields.Many2one('gms.camiones', string='Camion')
+    camion_id = fields.Many2one('gms.camiones', string='Camion', required=True)
     conductor_id = fields.Many2one('res.partner', string='Chofer', compute="_compute_conductor_transportista")
     solicitante_id = fields.Many2one('res.partner', string='Solicitante')
     
@@ -25,7 +25,7 @@ class Viajes(models.Model):
     tipo_viaje = fields.Selection([('entrada', 'Entrada'), ('salida', 'Salida')], string="Tipo de Viaje")
     numero_remito = fields.Char(string="Número de remito / Guía")
     transportista_id = fields.Many2one('res.partner', string="Transportista", compute="_compute_conductor_transportista")
-    ruta_id = fields.Many2one('gms.rutas', string="Ruta")
+    ruta_id = fields.Many2one('gms.rutas', string="Ruta", domain=lambda self: [('direccion_origen', '=', self.origen.id),('direccion_destino', '=', self.destino.id)]) 
     albaran_id = fields.Many2one('stock.picking', string="Albarán")
     producto_transportado_id = fields.Many2one('product.product', string="Producto transportado")
     peso_bruto = fields.Float(string="Peso bruto")

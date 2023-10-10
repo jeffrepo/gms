@@ -97,9 +97,10 @@
                     <field name="destino"/>
                     <field name="tipo_viaje"/>
                     <field name="state" widget="badge"
-                        decoration-muted="state == 'cancelado'"
-                        decoration-info="state == 'solicitud'"
-                        decoration-success="state == 'proceso'"
+                         decoration-danger="state == 'cancelado'"
+                         decoration-warning="state == 'solicitud'"
+                         decoration-success="state == 'confirmado'"
+                         decoration-primary="state == 'proceso'"
                     />
                 </tree>
             </field>
@@ -208,9 +209,12 @@
                     <field name="conductor_id"/>
                     <field name="tipo_viaje"/>
                     <field name="state" widget="badge"
-                        decoration-muted="state in ('cancelado', 'liquidado')"
-                        decoration-info="state == 'borrador'"
-                        decoration-success="state == 'coordinado'"
+                         decoration-danger="state == 'cancelado'"
+                         decoration-muted="state == 'liquidado'"
+                         decoration-info="state == 'borrador'"
+                         decoration-primary="state == 'coordinado'"
+                         decoration-warning="state == 'proceso'"
+                         decoration-success="state == 'terminado'"
                     />
                 </tree>
             </field>
@@ -594,7 +598,7 @@
     <field name="name">gms.historial.form</field>
     <field name="model">gms.historial</field>
     <field name="arch" type="xml">
-        <form>
+        <form delete="false" duplicate="false" > 
             
             <sheet>
                 <group>
