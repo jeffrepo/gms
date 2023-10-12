@@ -237,13 +237,25 @@
                     <sheet>
 
                         <div class="oe_button_box" name="button_box">
+                           
+                            <!-- Nuevo botón de Agenda -->
+                            <button name="action_view_agenda"
+                                    type="object"
+                                    class="oe_stat_button"
+                                    icon="fa-calendar">
+                                <field name="agenda_count" widget="statinfo" string="Agenda"/>
+                            </button>
+                           
+                            <!-- Nuevo botón de Albaran -->
                             <button name="action_view_picking"
                                 type="object"
                                 class="oe_stat_button"
-                                icon="fa-archive">  <!-- Cambié el ícono a 'fa-archive' para representar albaranes, pero puedes usar el que prefieras -->
+                                icon="fa-archive">  
                                 <field name="albaran_count" widget="statinfo" string="Albarán"/>
                             </button>
                         </div>
+
+                       
 
                         <div class="oe_title">
                             <h1>
@@ -252,8 +264,6 @@
                         </div>                        
                         <group>
                             <group>
-                            
-                                <field name="agenda" domain="[('state', 'in', ['solicitud', 'proceso'])]"   attrs="{'readonly': [('state', 'in', ['proceso', 'terminado', 'liquidado', 'cancelado' ])]}" string="Agenda"/>
                                 <field name="fecha_viaje" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}"/>
                                 <field name="solicitante_id" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}"/>
                                 <field name="origen" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}"/>
@@ -268,8 +278,6 @@
                             
                                 <field name="tipo_viaje" attrs="{'readonly': [('state', 'in', ['cancelado', 'coordinado', 'proceso', 'terminado', 'liquidado'])]}"/>
                                 <field name="numero_remito" attrs="{'readonly': [('state', 'in',['cancelado','terminado', 'liquidado'])]}"/>
-                                <field name="tolva" attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/> 
-                                <field name="silo" attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
                                 <field name="prelimpieza_entrada" attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
                                 <field name="secado_entrada" attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
                                 <field name="kilometros_flete" attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
@@ -289,13 +297,6 @@
                                 <field name="pedido_compra_id"  attrs="{'invisible': [('tipo_viaje', '!=', 'entrada')], 'readonly': [('state', 'in',['cancelado','terminado', 'liquidado'])]}"/>
                                  
                             </group>  
-
-
-                            <group string = "Inventario">
-                            <field name="albaran_id" attrs="{'readonly': [('state', '=', 'cancelado')]}"/>
-                                 
-                            </group>  
-
 
 
                         </group>
@@ -321,6 +322,16 @@
                                     <field name="peso_neto_destino"  attrs="{'invisible': [('tipo_viaje', '!=', 'salida')]}" />
                                     <field name="peso_producto_seco"/>
                                     <field name="porcentaje_humedad_primer_muestra"/>
+                                </group>
+                                
+                            </page>
+
+
+                            <page string="Operaciones">
+                                <group string="Operaciones">
+                                    <field name="tolva" attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/> 
+                                    <field name="silo_id" attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
+                                
                                 </group>
                                 
                             </page>
@@ -556,17 +567,6 @@
         </record>
 
        
-        <record id="view_partner_form_inherit" model="ir.ui.view">
-        <field name="name">res.partner.form.inherit</field>
-        <field name="model">res.partner</field>
-        <field name="inherit_id" ref="base.view_partner_form"/>
-        <field name="arch" type="xml">
-            <!-- Asegúrate de colocar el campo en la ubicación deseada en la vista -->
-            <field name="vat" position="after">
-                <field name="ubicacion_id"/>
-            </field>
-        </field>
-    </record>
 
 
        <!-- transportista view from -->
