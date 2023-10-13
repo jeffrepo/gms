@@ -316,12 +316,12 @@
                             <page string="Mediciones">
                                 <group string="Mediciones">
                             
-                                    <field name="peso_bruto"/>
-                                    <field name="tara"/>
-                                    <field name="peso_neto"/>
-                                    <field name="peso_neto_destino"  attrs="{'invisible': [('tipo_viaje', '!=', 'salida')]}" />
-                                    <field name="peso_producto_seco"/>
-                                    <field name="porcentaje_humedad_primer_muestra"/>
+                                    <field name="peso_bruto"  attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
+                                    <field name="tara"  attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
+                                    <field name="peso_neto"  attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
+                                    <field name="peso_neto_destino" attrs="{'invisible': [('tipo_viaje', '!=', 'salida')], 'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}" />
+                                    <field name="peso_producto_seco" attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
+                                    <field name="porcentaje_humedad_primer_muestra" attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
                                 </group>
                                 
                             </page>

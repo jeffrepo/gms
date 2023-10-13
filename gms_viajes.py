@@ -60,10 +60,10 @@ class Viajes(models.Model):
     transportista_id = fields.Many2one('res.partner', string="Transportista", compute="_compute_conductor_transportista", tracking="1")
 
     ruta_id = fields.Many2one('gms.rutas', 
-                              string="Ruta", 
-                              domain=lambda self: [('direccion_origen_id', '=', self.origen.id),('direccion_destino_id', '=', self.destino.id)]
-                              , tracking="1")
-     
+                          string="Ruta", 
+                          domain="[('direccion_origen_id', '=', origen),('direccion_destino_id', '=', destino)]",
+                          tracking="1")
+
     albaran_id = fields.Many2one('stock.picking', string="Albarán", tracking="1")
 
     producto_transportado_id = fields.Many2one('product.product', string="Producto transportado", tracking="1")
@@ -84,8 +84,7 @@ class Viajes(models.Model):
 
     tolva = fields.Char(string="Tolva", tracking="1")
 
-    silo_id =  fields.Many2one('stock.location', string="Silio", tracking="1")
-
+    silo_id = fields.Many2one('stock.location', string="Silio", domain=[('usage', '=', 'internal')], tracking="1")
 
     prelimpieza_entrada = fields.Selection([('si', 'Si'), ('no', 'No')], string="Prelimpieza entrada", tracking="1")
 
@@ -183,20 +182,35 @@ class Viajes(models.Model):
 
         if self.tipo_viaje == 'entrada':
             location_id = location_supplier_id
-            location_dest_id = self.silo_id.id  # Usando silo_id para el campo 'Silo'
-            # Para el campo 'Asignar propietario', supongo que es un campo en el modelo 'stock.picking'
-            owner = self.solicitante
+            location_dest_id = self.silo_id.id  
+            owner = self.solicitante_id
+
+            # Buscar el tipo de operación "recepción" con el silo correspondiente
+            picking_type = self.env['stock.picking.type'].search([
+                ('code', '=', 'incoming'),
+                ('default_location_dest_id', '=', self.silo_id.id)
+            ], limit=1)
         else:  # salida
-            location_id = self.silo_id.id  # Usando silo_id para el campo 'Silo'
+            location_id = self.silo_id.id
             location_dest_id = location_customer_id
+
+            # Buscar el tipo de operación "entrega" con el silo correspondiente
+            picking_type = self.env['stock.picking.type'].search([
+                ('code', '=', 'outgoing'),
+                ('default_location_src_id', '=', self.silo_id.id)
+            ], limit=1)
+
+        if not picking_type:
+            raise UserError("No se encontró el tipo de operación necesario para crear el albarán.")
 
         # Crear el albarán
         picking_vals = {
             'location_id': location_id,
             'location_dest_id': location_dest_id,
             'origin': self.name,
+            'picking_type_id': picking_type.id,
             'owner_id': owner.id if self.tipo_viaje == 'entrada' else False
-        }
+        }   
 
         picking = self.env['stock.picking'].create(picking_vals)
 
