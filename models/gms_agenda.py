@@ -12,24 +12,52 @@ class Agenda(models.Model):
 
 
     name = fields.Char(required=True, default=lambda self: _('New'), copy=False, readonly=True, tracking=True)
+
     fecha = fields.Date(string='Fecha', required=True, tracking="1", default=fields.Date.today())
+
     fecha_viaje = fields.Date(string='Fecha de viaje', required=True, tracking="1")
-    origen = fields.Many2one('res.partner', string='Origen', required=True, tracking="1", domain="['&',('tipo', '!=', False),('parent_id','=',solicitante_id)]")
-    destino = fields.Many2one('res.partner', string='Destino', required=True, tracking="1", domain="[('tipo', '!=', False)]")
-    transportista_id = fields.Many2one('res.partner', string='Trasportista', readonly=True, states={'cancelado': [('readonly', True)]}, tracking="1")
+
+    origen = fields.Many2one('res.partner', 
+                             string='Origen', 
+                             required=True, 
+                             tracking="1", 
+                             domain="['&',('tipo', '!=', False),('parent_id','=',solicitante_id)]", 
+                             ondelete='cascade',context="{'default_parent_id': solicitante_id}") 
+    
+
+    destino = fields.Many2one('res.partner', 
+                              string='Destino', 
+                              required=True, 
+                              tracking="1", 
+                              domain="[('tipo', '!=', False)]")
+    
+    transportista_id = fields.Many2one('res.partner', 
+                                       string='Trasportista', 
+                                       readonly=True, 
+                                       states={'cancelado': [('readonly', True)]}, 
+                                       tracking="1")
+    
     camion_disponible_id = fields.Many2one('gms.camiones.disponibilidad',
                                            string='Disponibilidad Camión',
                                            states={'cancelado': [('readonly', True)]},
                                            tracking="1",
                                            domain="[('estado', '=', 'disponible'), ('camion_id.disponible_zafra', '=', True)]",
-                                           attrs="{'invisible': [('state', '=', 'solicitud')]}")  # Ocultar en solicitud
+                                           attrs="{'invisible': [('state', '=', 'solicitud')]}")  
+    
 
-    camion_id = fields.Many2one('gms.camiones', string='Camion', readonly=True)
-    conductor_id = fields.Many2one('res.partner', string='Chofer', readonly=True)
-    solicitante_id = fields.Many2one('res.partner', string='Solicitante', required=True, tracking="1", domain="[('tipo', '=', False)]")
+    camion_id = fields.Many2one('gms.camiones', string='Camion', readonly=True , tracking="1")
 
-    viaje_count = fields.Integer(string="Número de viajes", compute="_compute_viaje_count")
-    tipo_viaje = fields.Selection([('entrada', 'Entrada'), ('salida', 'Salida')], string="Tipo de Viaje")
+    conductor_id = fields.Many2one('res.partner', string='Chofer', readonly=True, tracking="1")
+
+    solicitante_id = fields.Many2one('res.partner', 
+                                     string='Solicitante', 
+                                     required=True, 
+                                     tracking="1", 
+                                     domain="[('tipo', '!=', 'chacras'), ('tipo', '!=', 'planta'), ('tipo', '=', False)]")
+
+    viaje_count = fields.Integer(string="Número de viajes", compute="_compute_viaje_count", tracking="1")
+
+    tipo_viaje = fields.Selection([('entrada', 'Entrada'), ('salida', 'Salida')], string="Tipo de Viaje", tracking="1")
 
     
 
@@ -134,3 +162,9 @@ class Agenda(models.Model):
             if record.state in ['proceso', 'confirmado', 'cancelado']:
                 raise UserError(_('No puedes eliminar una agenda en el estado %s.') % record.state)
         return super(Agenda, self).unlink()
+    
+
+    @api.onchange('origen', 'destino')
+    def _check_origen_destino(self):
+        if self.origen and self.destino and self.origen == self.destino:
+            raise UserError("Origen y Destino no pueden ser iguales.")
