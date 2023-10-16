@@ -226,11 +226,6 @@ class Viajes(models.Model):
 
         self.albaran_id = picking
 
-   
-
-
-
-
 
                 
     def action_liquidado(self):
@@ -268,3 +263,41 @@ class Viajes(models.Model):
         else:
             raise UserError(_('No hay un albarán asociado a este viaje.'))
     
+
+
+    def action_generate_purchase_order(self):
+        PurchaseOrder = self.env['purchase.order']
+
+        # Agrupa los viajes por transportista
+        grouped_trips_by_transportista = {}
+        for trip in self:
+            if trip.transportista_id not in grouped_trips_by_transportista:
+                grouped_trips_by_transportista[trip.transportista_id] = []
+            grouped_trips_by_transportista[trip.transportista_id].append(trip)
+
+        # Por cada transportista, crea una orden de compra
+        for transportista, trips in grouped_trips_by_transportista.items():
+            po_vals = {
+                'partner_id': transportista.id,
+                'order_line': [],
+            }
+
+            for trip in trips:
+                for gasto in trip.gastos_ids:
+                    if gasto.estado_compra == 'no_comprado':
+                        po_line_vals = {
+                            'product_id': gasto.producto_id.id,
+                            'name': gasto.name or gasto.producto_id.name,
+                            'product_qty': 1,
+                            'price_unit': gasto.precio_total,
+                            'product_uom': gasto.producto_id.uom_id.id,
+                            'date_planned': fields.Date.today(),
+                        }
+                        po_vals['order_line'].append((0, 0, po_line_vals))
+                    
+            if po_vals['order_line']:
+                PurchaseOrder.create(po_vals)
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'reload',
+        }

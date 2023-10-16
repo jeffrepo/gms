@@ -268,3 +268,9 @@ class Viajes(models.Model):
         else:
             raise UserError(_('No hay un albarán asociado a este viaje.'))
     
+
+
+
+
+
+    
