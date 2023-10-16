@@ -11,3 +11,11 @@ class GastosViaje(models.Model):
     producto_id = fields.Many2one('product.product', string='Producto', tracking ="1")
     precio_total = fields.Float(string='Precio Total', tracking ="1")
     viaje_id = fields.Many2one('gms.viaje', string='Viaje', tracking ="1")
+
+    estado_compra = fields.Selection([
+    ('comprado', 'Comprado'),
+    ('no_comprado', 'No comprado'),
+    ('no_aplica', 'No Aplica')
+], string='Estado de compra', default='no_aplica', tracking="1")
+
+

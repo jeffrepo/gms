@@ -11,3 +11,5 @@ from . import gms_agenda
 from . import gms_disponibilidad
 from . import gms_disponibilidad_2
 from . import gms_historial
+from . import gms_stock_picking
+from . import gms_sale_order
