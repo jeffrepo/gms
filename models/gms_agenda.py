@@ -57,7 +57,19 @@ class Agenda(models.Model):
 
     viaje_count = fields.Integer(string="Número de viajes", compute="_compute_viaje_count", tracking="1")
 
+    picking_id = fields.Many2one('stock.picking', string='Stock Picking')
+
     tipo_viaje = fields.Selection([('entrada', 'Entrada'), ('salida', 'Salida')], string="Tipo de Viaje", tracking="1")
+
+    albaran_id = fields.Many2one('stock.picking', string="Albarán", compute="_compute_albaran", store=True, readonly=True)
+
+    @api.depends('name')
+    def _compute_albaran(self):
+        for record in self:
+            viaje = self.env['gms.viaje'].search([('agenda', '=', record.id)], limit=1)
+            if viaje:
+                record.albaran_id = viaje.albaran_id
+
 
     
 
@@ -168,3 +180,20 @@ class Agenda(models.Model):
     def _check_origen_destino(self):
         if self.origen and self.destino and self.origen == self.destino:
             raise UserError("Origen y Destino no pueden ser iguales.")
+        
+
+
+    #ver albaran asociado 
+    def action_view_picking(self):
+        self.ensure_one()
+        if self.albaran_id:
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'stock.picking',
+                'view_mode': 'form',
+                'res_id': self.albaran_id.id,
+                'target': 'current',
+            }
+        else:
+            raise UserError(_('No hay un albarán asociado a esta agenda.'))
+        

@@ -20,12 +20,7 @@ class ResPartner(models.Model):
     ubicacion_id = fields.Many2one('stock.location', string="Ubicación")
 
 
-    @api.model
-    def search(self, args, offset=0, limit=None, order=None, count=False):
-        # Agregar el dominio para filtrar por transportista=True
-        args += [('transportista', '=', True)]
-        return super(ResPartner, self).search(args, offset, limit, order, count)
-    
+   
 
     def unlink(self):
         for record in self:

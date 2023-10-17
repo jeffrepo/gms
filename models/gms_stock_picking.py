@@ -14,13 +14,14 @@ class StockPicking(models.Model):
 
    
     def button_schedule_trip(self):
-     
         agenda_vals = {
             'fecha': fields.Date.today(),
             'fecha_viaje': fields.Date.today(),
             'solicitante_id': self.partner_id.id,
             'origen': self.picking_type_id.warehouse_id.partner_id.id,
-            'destino': self.partner_shipping_id.id,
+            'destino': self.partner_id.id,
+            'picking_id': self.id,
+            'tipo_viaje': 'salida',
         }
         agenda = self.env['gms.agenda'].create(agenda_vals)
         return True

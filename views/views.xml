@@ -4,6 +4,17 @@
         <!-- menú principal para GMS -->
         <menuitem id="gms_menu" name="GMS" />
 
+         <!-- Acción para el menú Agenda -->
+        <record id="action_agenda" model="ir.actions.act_window">
+            <field name="name">Agenda</field>
+            <field name="res_model">gms.agenda</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="view_gms_agenda_list"/>
+        </record>
+
+        <!-- Submenú para Agenda -->
+        <menuitem id="gms_menu_agenda" name="Agenda" parent="gms_menu" action="action_agenda" />
+
         <!-- Acción para el menú Producto -->
         <record id="action_productos" model="ir.actions.act_window">
             <field name="name">Productos</field>
@@ -25,6 +36,22 @@
         <!-- submenú para Contactos -->
         <menuitem id="gms_menu_contactos" name="Transportistas" parent="gms_menu" action="action_contactos" />
 
+          <!-- menú Camiones -->
+
+        <menuitem id="gms_menu_camiones" name="Camiones" parent="gms_menu" />
+
+
+        <!-- Acción para el menú Camiones -->
+        <record id="action_camiones" model="ir.actions.act_window">
+            <field name="name">Camiones</field>
+            <field name="res_model">gms.camiones</field>
+            <field name="view_mode">tree,form</field>
+            <!-- Agrega más campos según tus necesidades -->
+        </record>
+
+        <!-- Submenú para Camiones -->
+        <menuitem id="gms_menu_camiones_vista" name="Camiones" parent="gms_menu_camiones" action="action_camiones" />
+
         <!-- Acción para la Disponibilidad de Camiones -->
         <record id="action_camiones_disponibilidad" model="ir.actions.act_window">
             <field name="name">Disponibilidad de Camiones</field>
@@ -34,6 +61,52 @@
 
         <!-- Submenú para la Disponibilidad de Camiones -->
         <menuitem id="gms_menu_camiones_disponibilidad" name="Disponibilidad de Camiones" parent="gms_menu_camiones" action="action_camiones_disponibilidad" />
+
+
+
+        <!-- Acción para el menú Propiedades -->
+        <record id="action_propiedades" model="ir.actions.act_window">
+            <field name="name">Propiedades</field>
+            <field name="res_model">gms.propiedades</field>
+            <field name="view_mode">tree,form</field>
+            <!-- Agrega más campos según tus necesidades -->
+        </record>
+
+        <!-- Submenú para Propiedades -->
+        <menuitem id="gms_menu_propiedades" name="Propiedades" parent="gms_menu" action="action_propiedades" />
+
+        <!-- Acción para el menú Rutas -->
+        <record id="action_rutas" model="ir.actions.act_window">
+            <field name="name">Rutas</field>
+            <field name="res_model">gms.rutas</field>
+            <field name="view_mode">tree,form</field>
+            <!-- Agrega más campos según tus necesidades -->
+        </record>
+
+          <!-- Submenú para Rutas -->
+        <menuitem id="gms_menu_rutas" name="Rutas" parent="gms_menu" action="action_rutas" />
+
+           <!-- Acción para el menú Viajes -->
+        <record id="action_viajes" model="ir.actions.act_window">
+            <field name="name">Viajes</field>
+            <field name="res_model">gms.viaje</field>
+            <field name="view_mode">tree,form</field>
+            <!-- Agrega más campos según tus necesidades -->
+        </record>
+
+        <!-- Submenú para Viajes -->
+        <menuitem id="gms_menu_viajes" name="Viajes" parent="gms_menu" action="action_viajes" />
+
+
+        <!-- Acción para ver el historial de camiones -->
+        <record model="ir.actions.act_window" id="action_gms_historial">
+            <field name="name">Historial de Camiones</field>
+            <field name="res_model">gms.historial</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- Menú para acceder al historial de camiones -->
+        <menuitem id="gms_menu_historial" name="Historial de Camiones" parent="gms_menu" action="action_gms_historial" />
 
 
      <!-- Vista List view de Disponibilidad de Camiones -->
@@ -188,17 +261,7 @@
         </record>
 
 
-        <!-- Acción para el menú Agenda -->
-        <record id="action_agenda" model="ir.actions.act_window">
-            <field name="name">Agenda</field>
-            <field name="res_model">gms.agenda</field>
-            <field name="view_mode">tree,form</field>
-            <field name="view_id" ref="view_gms_agenda_list"/>
-            <!-- Agrega más campos según tus necesidades -->
-        </record>
-
-        <!-- Submenú para Agenda -->
-        <menuitem id="gms_menu_agenda" name="Agenda" parent="gms_menu" action="action_agenda" />
+       
 
 
        <!-- vista de lista/tree para gms.viajes -->
@@ -375,16 +438,7 @@
             </field>
         </record>
 
-        <!-- Acción para el menú Viajes -->
-        <record id="action_viajes" model="ir.actions.act_window">
-            <field name="name">Viajes</field>
-            <field name="res_model">gms.viaje</field>
-            <field name="view_mode">tree,form</field>
-            <!-- Agrega más campos según tus necesidades -->
-        </record>
-
-        <!-- Submenú para Viajes -->
-        <menuitem id="gms_menu_viajes" name="Viajes" parent="gms_menu" action="action_viajes" />
+     
 
         <!-- vista de lista/tree para gms.propiedades -->
         <record id="view_gms_propiedades_tree" model="ir.ui.view">
@@ -419,25 +473,6 @@
             </field>
         </record>
 
-
-        <!-- Acción para el menú Propiedades -->
-        <record id="action_propiedades" model="ir.actions.act_window">
-            <field name="name">Propiedades</field>
-            <field name="res_model">gms.propiedades</field>
-            <field name="view_mode">tree,form</field>
-            <!-- Agrega más campos según tus necesidades -->
-        </record>
-
-        <!-- Submenú para Propiedades -->
-        <menuitem id="gms_menu_propiedades" name="Propiedades" parent="gms_menu" action="action_propiedades" />
-
-        <!-- Acción para el menú Rutas -->
-        <record id="action_rutas" model="ir.actions.act_window">
-            <field name="name">Rutas</field>
-            <field name="res_model">gms.rutas</field>
-            <field name="view_mode">tree,form</field>
-            <!-- Agrega más campos según tus necesidades -->
-        </record>
 
         <!-- vista de lista/tree para gms.rutas -->
         <record id="view_gms_rutas_tree" model="ir.ui.view">
@@ -475,10 +510,6 @@
                 </form>
             </field>
         </record>
-
-        <!-- Submenú para Rutas -->
-        <menuitem id="gms_menu_rutas" name="Rutas" parent="gms_menu" action="action_rutas" />
-
 
         <!-- vista de lista/tree para gms.camiones -->
         <record id="view_gms_camiones_tree" model="ir.ui.view">
@@ -527,21 +558,7 @@
 </record>
 
 
-        <!-- menú Camiones -->
-
-        <menuitem id="gms_menu_camiones" name="Camiones" parent="gms_menu" />
-
-
-        <!-- Acción para el menú Camiones -->
-        <record id="action_camiones" model="ir.actions.act_window">
-            <field name="name">Camiones</field>
-            <field name="res_model">gms.camiones</field>
-            <field name="view_mode">tree,form</field>
-            <!-- Agrega más campos según tus necesidades -->
-        </record>
-
-        <!-- Submenú para Camiones -->
-        <menuitem id="gms_menu_camiones_vista" name="Camiones" parent="gms_menu_camiones" action="action_camiones" />
+      
 
 
         <!-- Modificación a la vista de product.template -->
@@ -649,15 +666,6 @@
     </field>
 </record>
 
-<!-- Acción para ver el historial de camiones -->
-<record model="ir.actions.act_window" id="action_gms_historial">
-    <field name="name">Historial de Camiones</field>
-    <field name="res_model">gms.historial</field>
-    <field name="view_mode">tree,form</field>
-</record>
-
-<!-- Menú para acceder al historial de camiones -->
-<menuitem id="gms_menu_historial" name="Historial de Camiones" parent="gms_menu" action="action_gms_historial" />
 
 
     <!-- vista from stock piking -->
