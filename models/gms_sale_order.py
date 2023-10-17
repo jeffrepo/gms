@@ -19,14 +19,12 @@ class SaleOrder(models.Model):
 
 
     def action_view_viajes(self):
-            self.ensure_one()
-            return {
-                'name': _('Viajes asociados al Pedido'),
-                'view_mode': 'tree,form',
-                'res_model': 'gms.viaje',
-                'type': 'ir.actions.act_window',
-                'domain': [('id', 'in', self.viaje_ids.ids)],
-                'context': {
-                    'default_pedido_venta_id': self.id
-                }
-            }
+        self.ensure_one()
+        domain = [('pedido_venta_id', '=', self.id)]
+        return {
+            'name': _('Viajes asociados al Pedido'),
+            'view_mode': 'tree,form',
+            'res_model': 'gms.viaje',
+            'type': 'ir.actions.act_window',
+            'domain': domain,
+        }

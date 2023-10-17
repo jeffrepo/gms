@@ -9,9 +9,9 @@
     'version': '0.1',
     'depends': ['base','product','sale','purchase','stock'],
     'data': [
-        'security/ir.model.access.csv',
         'views/views.xml',
         'views/gms_agenda.xml',
+        'security/ir.model.access.csv',
 
     ],
     'images': [
