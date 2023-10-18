@@ -13,3 +13,4 @@ from . import gms_disponibilidad_2
 from . import gms_historial
 from . import gms_stock_picking
 from . import gms_sale_order
+from . import purchase_order

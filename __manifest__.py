@@ -10,6 +10,7 @@
     'depends': ['base','product','sale','purchase','stock'],
     'data': [
         'views/views.xml',
+        'views/gms_viajes.xml',
         'views/gms_agenda.xml',
         'security/ir.model.access.csv',
 
