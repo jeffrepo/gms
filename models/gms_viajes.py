@@ -94,13 +94,16 @@ class Viajes(models.Model):
 
     kilogramos_a_liquidar = fields.Float(string="Kilogramos a liquidar", tracking="1")
 
-    pedido_venta_id = fields.Many2one('sale.order', string="Pedido de venta", tracking="1")
+    pedido_venta_id = fields.Many2one('sale.order', string="Pedido de venta", tracking="1", readonly=True)
 
-    pedido_compra_id = fields.Many2one('purchase.order', string="Pedido de compra", tracking="1")
+    pedido_compra_id = fields.Many2one('purchase.order', string="Pedido de compra", tracking="1", readonly=True)
 
     observaciones = fields.Text(string="Observaciones", tracking="1")
 
     albaran_count = fields.Integer(string="Número de Albaranes", compute="_compute_albaran_count")
+
+    albaran_id = fields.Many2one('stock.picking', string="Albarán")
+
 
     def _compute_albaran_count(self):
         for record in self:
@@ -296,7 +299,11 @@ class Viajes(models.Model):
                         po_vals['order_line'].append((0, 0, po_line_vals))
                     
             if po_vals['order_line']:
-                PurchaseOrder.create(po_vals)
+                purchase_order = PurchaseOrder.create(po_vals)
+                for trip in trips:
+                    for gasto in trip.gastos_ids:
+                        if gasto.estado_compra == 'no_comprado':
+                             gasto.purchase_order_id = purchase_order.id
         return {
             'type': 'ir.actions.client',
             'tag': 'reload',

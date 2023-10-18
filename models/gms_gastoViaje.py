@@ -11,6 +11,8 @@ class GastosViaje(models.Model):
     producto_id = fields.Many2one('product.product', string='Producto', tracking ="1")
     precio_total = fields.Float(string='Precio Total', tracking ="1")
     viaje_id = fields.Many2one('gms.viaje', string='Viaje', tracking ="1")
+    purchase_order_id = fields.Many2one('purchase.order', string='Orden de Compra' , readonly=True)
+
 
     estado_compra = fields.Selection([
     ('comprado', 'Comprado'),
