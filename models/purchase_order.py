@@ -5,6 +5,17 @@ class PurchaseOrder(models.Model):
     _inherit = 'purchase.order'
 
     agenda_ids = fields.One2many('gms.agenda', 'order_id', string='Agendas')
+   
+
+    viaje_ids = fields.One2many('gms.viaje', 'purchase_order_id', string='Viajes')
+
+    viaje_count = fields.Integer(string="Viajes Asociados", compute="_compute_viaje_count")
+
+    @api.depends('viaje_ids')
+    def _compute_viaje_count(self):
+        for order in self:
+            order.viaje_count = len(order.viaje_ids)
+
     agenda_count = fields.Integer(string='Agenda Count', compute='_compute_agenda_count')
 
     @api.depends('agenda_ids')
@@ -42,5 +53,22 @@ class PurchaseOrder(models.Model):
             'name': 'Agendas',
             'res_model': 'gms.agenda',
             'view_mode': 'tree,form',
-            'domain': [('order_id', '=', self.id)], # Nota que esto cambió de 'picking_id' a 'order_id'
+            'domain': [('order_id', '=', self.id)], 
         }
+
+
+
+    def action_view_viajes(self):
+        self.ensure_one()
+        return {
+            'name': _('Viajes Asociados'),
+            'type': 'ir.actions.act_window',
+            'view_mode': 'tree,form',
+            'res_model': 'gms.viaje',
+            'domain': [('id', 'in', self.viaje_ids.ids)],
+        }
+
+    def unlink(self):
+        gastos_viaje = self.env['gms.gasto_viaje'].search([('purchase_order_id', 'in', self.ids)])
+        gastos_viaje.write({'estado_compra': 'no_comprado'})
+        return super(PurchaseOrder, self).unlink()
