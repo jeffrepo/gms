@@ -12,6 +12,13 @@ class GastosViaje(models.Model):
     precio_total = fields.Float(string='Precio Total', tracking ="1")
     viaje_id = fields.Many2one('gms.viaje', string='Viaje', tracking ="1")
     purchase_order_id = fields.Many2one('purchase.order', string='Orden de Compra' , readonly=True)
+    purchase_order_line_id = fields.Many2one('purchase.order.line', string='Línea de Orden de Compra', readonly=True)
+
+    proveedor_id = fields.Many2one('res.partner', string='Proveedor', 
+                                   domain=[('supplier_rank', '>', 0)], 
+                                   help="Este es el proveedor del gasto.")
+    # ver solo aquellos partners que tienen una clasificación de proveedor
+
 
 
     estado_compra = fields.Selection([

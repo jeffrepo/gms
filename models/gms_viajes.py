@@ -104,6 +104,7 @@ class Viajes(models.Model):
 
     albaran_id = fields.Many2one('stock.picking', string="Albarán")
 
+    purchase_order_id= fields.Many2one('purchase.order')
 
     def _compute_albaran_count(self):
         for record in self:
@@ -174,60 +175,60 @@ class Viajes(models.Model):
         self.camion_disponible_id.fecha_hora_liberacion = fecha_hora_actual
         
 
-        # Buscar la ubicación 'Partners/Vendors'
-        location_supplier_id = self.env['stock.location'].search([('usage', '=', 'supplier')], limit=1).id
+        # # Buscar la ubicación 'Partners/Vendors'
+        # location_supplier_id = self.env['stock.location'].search([('usage', '=', 'supplier')], limit=1).id
 
-        # Buscar la ubicación 'Partners/Customers'
-        location_customer_id = self.env['stock.location'].search([('usage', '=', 'customer')], limit=1).id
+        # # Buscar la ubicación 'Partners/Customers'
+        # location_customer_id = self.env['stock.location'].search([('usage', '=', 'customer')], limit=1).id
 
-        if not location_supplier_id or not location_customer_id:
-            raise UserError("No se encontraron las ubicaciones necesarias para crear el albarán.")
+        # if not location_supplier_id or not location_customer_id:
+        #     raise UserError("No se encontraron las ubicaciones necesarias para crear el albarán.")
 
-        if self.tipo_viaje == 'entrada':
-            location_id = location_supplier_id
-            location_dest_id = self.silo_id.id  
-            owner = self.solicitante_id
+        # if self.tipo_viaje == 'entrada':
+        #     location_id = location_supplier_id
+        #     location_dest_id = self.silo_id.id  
+        #     owner = self.solicitante_id
 
-            # Buscar el tipo de operación "recepción" con el silo correspondiente
-            picking_type = self.env['stock.picking.type'].search([
-                ('code', '=', 'incoming'),
-                ('default_location_dest_id', '=', self.silo_id.id)
-            ], limit=1)
-        else:  # salida
-            location_id = self.silo_id.id
-            location_dest_id = location_customer_id
+        #     # Buscar el tipo de operación "recepción" con el silo correspondiente
+        #     picking_type = self.env['stock.picking.type'].search([
+        #         ('code', '=', 'incoming'),
+        #         ('default_location_dest_id', '=', self.silo_id.id)
+        #     ], limit=1)
+        # else:  # salida
+        #     location_id = self.silo_id.id
+        #     location_dest_id = location_customer_id
 
-            # Buscar el tipo de operación "entrega" con el silo correspondiente
-            picking_type = self.env['stock.picking.type'].search([
-                ('code', '=', 'outgoing'),
-                ('default_location_src_id', '=', self.silo_id.id)
-            ], limit=1)
+        #     # Buscar el tipo de operación "entrega" con el silo correspondiente
+        #     picking_type = self.env['stock.picking.type'].search([
+        #         ('code', '=', 'outgoing'),
+        #         ('default_location_src_id', '=', self.silo_id.id)
+        #     ], limit=1)
 
-        if not picking_type:
-            raise UserError("No se encontró el tipo de operación necesario para crear el albarán.")
+        # if not picking_type:
+        #     raise UserError("No se encontró el tipo de operación necesario para crear el albarán.")
 
-        # Crear el albarán
-        picking_vals = {
-            'location_id': location_id,
-            'location_dest_id': location_dest_id,
-            'origin': self.name,
-            'picking_type_id': picking_type.id,
-            'owner_id': owner.id if self.tipo_viaje == 'entrada' else False
-        }   
+        # # Crear el albarán
+        # picking_vals = {
+        #     'location_id': location_id,
+        #     'location_dest_id': location_dest_id,
+        #     'origin': self.name,
+        #     'picking_type_id': picking_type.id,
+        #     'owner_id': owner.id if self.tipo_viaje == 'entrada' else False
+        # }   
 
-        picking = self.env['stock.picking'].create(picking_vals)
+        # picking = self.env['stock.picking'].create(picking_vals)
 
-        # Agregar las líneas al albarán
-        picking.move_ids_without_package = [(0, 0, {
-            'name': self.producto_transportado_id.name,
-            'product_id': self.producto_transportado_id.id,
-            'product_uom_qty': self.kilogramos_a_liquidar,
-            'product_uom': self.producto_transportado_id.uom_id.id,
-            'location_id': location_id,
-            'location_dest_id': location_dest_id,
-        })]
+        # # Agregar las líneas al albarán
+        # picking.move_ids_without_package = [(0, 0, {
+        #     'name': self.producto_transportado_id.name,
+        #     'product_id': self.producto_transportado_id.id,
+        #     'product_uom_qty': self.kilogramos_a_liquidar,
+        #     'product_uom': self.producto_transportado_id.uom_id.id,
+        #     'location_id': location_id,
+        #     'location_dest_id': location_dest_id,
+        # })]
 
-        self.albaran_id = picking
+        # self.albaran_id = picking
 
 
                 
@@ -264,7 +265,7 @@ class Viajes(models.Model):
                 'target': 'current',
             }
         else:
-            raise UserError(_('No hay un albarán asociado a este viaje.'))
+            raise UserError('No hay un albarán asociado a este viaje.')
     
 
 
@@ -285,6 +286,9 @@ class Viajes(models.Model):
                 'order_line': [],
             }
 
+            # Guarda una relación entre gastos y líneas de compra
+            gastos_and_po_lines = {}
+
             for trip in trips:
                 for gasto in trip.gastos_ids:
                     if gasto.estado_compra == 'no_comprado':
@@ -297,14 +301,38 @@ class Viajes(models.Model):
                             'date_planned': fields.Date.today(),
                         }
                         po_vals['order_line'].append((0, 0, po_line_vals))
-                    
+                        # Asociar el gasto con esta línea de orden de compra
+                        gastos_and_po_lines[gasto] = po_line_vals
+
             if po_vals['order_line']:
                 purchase_order = PurchaseOrder.create(po_vals)
                 for trip in trips:
                     for gasto in trip.gastos_ids:
                         if gasto.estado_compra == 'no_comprado':
-                             gasto.purchase_order_id = purchase_order.id
+                            gasto.write({
+                                'purchase_order_id': purchase_order.id,
+                                'estado_compra': 'comprado'
+                            })
+
         return {
             'type': 'ir.actions.client',
             'tag': 'reload',
         }
+
+
+
+    
+
+
+
+    @api.onchange('kilogramos_a_liquidar')
+    def _onchange_kilogramos_a_liquidar(self):
+        if self.albaran_id:
+            # Obtener la primera línea del albarán (esto podría cambiar si hay múltiples líneas)
+            move_line = self.albaran_id.move_ids_without_package[0]
+            # Actualizar la demanda (product_uom_qty) de esa línea
+            move_line.write({
+                'product_uom_qty': self.kilogramos_a_liquidar
+            })
+        else:
+            raise UserError('Este viaje no tiene un albarán asociado.')

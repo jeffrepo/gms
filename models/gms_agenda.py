@@ -125,7 +125,7 @@ class Agenda(models.Model):
                 'target': 'current',
             }
         else:
-            raise UserError(_('No hay un viaje asociado a esta agenda.'))   
+            raise UserError('No hay un viaje asociado a esta agenda.')
 
     def _check_fecha_viaje(self):
         for agenda in self:
@@ -151,9 +151,13 @@ class Agenda(models.Model):
         if purchase_order_id:
         # Si es una orden de compra
             producto_transportado_id = purchase_orders.order_line[0].product_id.id if purchase_orders.order_line else False
+            cantidad = purchase_orders.order_line[0].product_qty if purchase_orders.order_line else 0.0
+
         else:
             # Si es una transferencia de stock
-            producto_transportado_id = self.picking_id.move_lines[0].product_id.id if self.picking_id.move_lines else False
+            producto_transportado_id = self.picking_id.move_line_ids_without_package[0].product_id.id if self.picking_id.move_line_ids_without_package else False
+            cantidad = self.picking_id.move_line_ids_without_package[0].product_uom_qty if self.picking_id.move_line_ids_without_package else 0.0
+
 
         viaje = self.env['gms.viaje'].create({
             'agenda': self.id,
@@ -170,7 +174,8 @@ class Agenda(models.Model):
             'pedido_venta_id': self.picking_id.sale_id.id,
             'pedido_compra_id': purchase_order_id,
             'producto_transportado_id': producto_transportado_id,
-            'albaran_id': self.picking_id.id, 
+            'albaran_id': self.picking_id.id,
+            'kilogramos_a_liquidar':cantidad 
             
             
             
