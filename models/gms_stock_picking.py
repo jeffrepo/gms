@@ -1,7 +1,11 @@
-from odoo import models, fields, api
+from odoo import models, fields, api 
+import logging
 from odoo.exceptions import UserError
+_logger = logging.getLogger(__name__)
 class StockPicking(models.Model):
     _inherit = 'stock.picking'
+  
+
 
     agenda_ids = fields.One2many('gms.agenda', 'picking_id', string='Agendas')
     agenda_count = fields.Integer(string='Agenda Count', compute='_compute_agenda_count')
@@ -22,7 +26,9 @@ class StockPicking(models.Model):
         else:
              # Obtener el cliente del pedido de venta
             solicitante = self.sale_id.partner_id.id if self.sale_id else self.partner_id.id
-        
+            tipo_viaje = 'entrada' if self.picking_type_id.code == 'incoming' else 'salida'
+            _logger.info("Picking type code: %s", self.picking_type_id.code)
+
 
             agenda_vals = {
                 'fecha': fields.Date.today(),
@@ -31,7 +37,7 @@ class StockPicking(models.Model):
                 'origen': self.picking_type_id.warehouse_id.partner_id.id,
                 'destino': self.partner_id.id,
                 'picking_id': self.id,
-                'tipo_viaje': 'salida',
+                'tipo_viaje': tipo_viaje,
             }
             agenda = self.env['gms.agenda'].create(agenda_vals)
         return True
