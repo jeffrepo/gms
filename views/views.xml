@@ -419,6 +419,20 @@
                                 </group>
                                 
                             </page>
+
+
+                            <page string="Medidas de propiedades">
+                                <field name="medidas_propiedades_ids">
+                                    <tree>
+                                        <field name="propiedad" widget='field' options="{'width': '25%'}"/>
+                                        <field name="valor_medida" widget='field' options="{'width': '25%'}"/>
+                                        <field name="parametro" widget='field' options="{'width': '25%'}"/>
+                                        <field name="merma_kg" widget='field' options="{'width': '25%'}"/>
+                                    </tree>
+                                </field>
+                            </page>
+
+
                         </notebook>
 
 

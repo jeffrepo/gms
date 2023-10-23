@@ -106,6 +106,8 @@ class Viajes(models.Model):
 
     purchase_order_id= fields.Many2one('purchase.order')
 
+    medidas_propiedades_ids = fields.One2many('gms.medida.propiedad', 'viaje_id', string='Medidas de Propiedades')
+
     def _compute_albaran_count(self):
         for record in self:
             record.albaran_count = 1 if record.albaran_id else 0
