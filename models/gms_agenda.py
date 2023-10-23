@@ -1,6 +1,11 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
+import logging
 from datetime import datetime, timedelta
+# import pdb; pdb.set_trace()
+
+
+_logger = logging.getLogger(__name__)
 
 class Agenda(models.Model):
     _name = 'gms.agenda'
@@ -143,22 +148,20 @@ class Agenda(models.Model):
         if self.camion_disponible_id:
             self.camion_disponible_id.write({'estado': 'ocupado'})
 
-        # Determinando el pedido de compra relacionado con el stock.picking
-        purchase_orders = self.env['purchase.order'].search([('name', '=', self.picking_id.origin)], limit=1)
-        purchase_order_id = purchase_orders.id if purchase_orders else False
-
-        # Determinando el producto transportado
-        if purchase_order_id:
-        # Si es una orden de compra
-            producto_transportado_id = purchase_orders.order_line[0].product_id.id if purchase_orders.order_line else False
-            cantidad = purchase_orders.order_line[0].product_qty if purchase_orders.order_line else 0.0
+      # Obtener producto y cantidad directamente desde stock.picking
+        if self.picking_id.move_line_ids_without_package:
+            producto_transportado_id = self.picking_id.move_line_ids_without_package[0].product_id.id
+            cantidad = self.picking_id.move_line_ids_without_package[0].product_uom_qty
 
         else:
-            # Si es una transferencia de stock
-            producto_transportado_id = self.picking_id.move_line_ids_without_package[0].product_id.id if self.picking_id.move_line_ids_without_package else False
-            cantidad = self.picking_id.move_line_ids_without_package[0].product_uom_qty if self.picking_id.move_line_ids_without_package else 0.0
+            producto_transportado_id = False
+            cantidad = 0.0
 
 
+        _logger.info("Producto transportado ID: %s", producto_transportado_id)
+        _logger.info("Cantidad: %s", cantidad)
+
+        # Llenar el registro gms.viaje
         viaje = self.env['gms.viaje'].create({
             'agenda': self.id,
             'fecha_viaje': self.fecha_viaje,
@@ -171,15 +174,10 @@ class Agenda(models.Model):
             'tipo_viaje': self.tipo_viaje,
             'transportista_id': self.transportista_id.id,    
             'state': 'proceso',
-            'pedido_venta_id': self.picking_id.sale_id.id,
-            'pedido_compra_id': purchase_order_id,
+            'pedido_venta_id': self.picking_id.sale_id.id,  # Esto puede quedarse si aún asocias los stock.picking con ventas
             'producto_transportado_id': producto_transportado_id,
             'albaran_id': self.picking_id.id,
-            'kilogramos_a_liquidar':cantidad 
-            
-            
-            
-            
+            'kilogramos_a_liquidar': cantidad
         })
 
         if self.camion_disponible_id:

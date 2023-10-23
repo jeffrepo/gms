@@ -332,7 +332,7 @@ class Viajes(models.Model):
             move_line = self.albaran_id.move_ids_without_package[0]
             # Actualizar la demanda (product_uom_qty) de esa línea
             move_line.write({
-                'product_uom_qty': self.kilogramos_a_liquidar
+                'quantity_done': self.kilogramos_a_liquidar
             })
         else:
             raise UserError('Este viaje no tiene un albarán asociado.')

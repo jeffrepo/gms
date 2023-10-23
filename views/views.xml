@@ -236,7 +236,7 @@
                                 <field name="solicitante_id" attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado'])]}"/>
                                 <field name="origen"  attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado'])]}"/>
                                 <field name="destino" attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado'])]}"/>
-                                <field name="picking_id" string = " " />
+                                <field name="picking_id" string = " "  invisible="True"/>
                                
             
                             </group>
@@ -369,7 +369,7 @@
                             <group>
                             
                                 <field name="transportista_id" attrs="{'readonly': [('state', '=', 'cancelado')]}"/>
-                                <field name="ruta_id" attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])], 'required': [('state', '=', 'terminado')]}"/>
+                                <field name="ruta_id" attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])], 'required': [('state', '=', 'proceso')]}"/>
                                 <field name="producto_transportado_id" attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])], 'required': [('state', '=', 'coordinado')]}"/>
                                 <field name="pedido_venta_id"  attrs="{'invisible': 1, 'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
                                 <field name="pedido_compra_id"  attrs="{'invisible': 1, 'readonly': [('state', 'in',['cancelado','terminado', 'liquidado'])]}"/>
@@ -726,17 +726,17 @@
         <field name="inherit_id" ref="purchase.purchase_order_form"/>
         <field name="arch" type="xml">
             <header position="inside">
-                <button name="button_schedule_trip" string="Agendar viaje" type="object"/>
+                <!-- <button name="button_schedule_trip" string="Agendar viaje" type="object"/> -->
             </header>
 
             <div class="oe_button_box" name="button_box" position="inside">
-                <!--  botón de Agenda -->
+                 <!-- botón de Agenda
                 <button name="action_view_agenda"
                         type="object"
                         class="oe_stat_button"
                         icon="fa-calendar">
                     <field name="agenda_count" widget="statinfo" string="Agenda"/>
-                </button>
+                </button> -->
 
                     <!-- boton de viajes -->
                  <button name="action_view_viajes"
