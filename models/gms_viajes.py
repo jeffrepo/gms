@@ -72,7 +72,7 @@ class Viajes(models.Model):
 
     tara = fields.Float(string="Tara", tracking="1")
 
-    peso_neto = fields.Float(string="Peso neto", compute="_compute_peso_neto", tracking="1")
+    peso_neto = fields.Float(string="Peso neto", compute="_compute_peso_neto", tracking="1",store=True)
     
 
 
@@ -338,3 +338,9 @@ class Viajes(models.Model):
             })
         else:
             raise UserError('Este viaje no tiene un albarán asociado.')
+        
+
+
+
+
+   

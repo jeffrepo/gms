@@ -586,7 +586,7 @@
             <field name="arch" type="xml">
                 <notebook position="inside">
                     <page string="Propiedades">
-                        <!-- Otras configuraciones aquí -->
+                       
                         <group>
                             <field name="propiedades_ids" widget="one2many_list">
                                 <tree  editable="bottom">
@@ -765,6 +765,29 @@
     </record>
 
 
+
+
+
+    <!-- Modificación a la vista de product.product -->
+    <record id="view_product_product_form_inherit" model="ir.ui.view">
+        <field name="name">product.product.form.inherit</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_normal_form_view"/>
+        <field name="arch" type="xml">
+            <notebook position="inside">
+                <page string="Propiedades">
+                    <group>
+                        <field name="propiedades_ids" widget="one2many_list">
+                            <tree editable="bottom">
+                                <field name="propiedades_id"/>
+                                <field name="umbral_tolerancia"/>
+                            </tree>
+                        </field>
+                    </group>
+                </page>
+            </notebook>
+        </field>
+    </record>
 
 
     </data>
