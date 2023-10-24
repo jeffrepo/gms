@@ -50,10 +50,10 @@ class MedidaPropiedad(models.Model):
                             localdict = {
                                 'parametro': parametro,
                                 'peso_neto': peso_neto,
-                                'resultado': record.merma_kg  # Aquí cambiamos la clave a 'resultado'
+                                'resultado': record.merma_kg  
                             }
-                            safe_eval.safe_eval(record.propiedad.formula, localdict, mode="exec", nocopy=True)
-                            record.merma_kg = localdict.get('resultado', record.merma_kg)  # Aquí también cambiamos la clave a 'resultado'
+                            safe_eval.safe_eval(record.propiedad.formula, localdict, mode="exec", nocopy=True) #Ejecuta la formula
+                            record.merma_kg = localdict.get('resultado', record.merma_kg) 
                         else:
                             record.merma_kg = (peso_neto * parametro) / 100.0
                         _logger.info("Merma KG Calculada: %s", record.merma_kg)
