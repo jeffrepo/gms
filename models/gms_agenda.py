@@ -148,10 +148,10 @@ class Agenda(models.Model):
         if self.camion_disponible_id:
             self.camion_disponible_id.write({'estado': 'ocupado'})
 
-      # Obtener producto y cantidad directamente desde stock.picking
-        if self.picking_id.move_line_ids_without_package:
-            producto_transportado_id = self.picking_id.move_line_ids_without_package[0].product_id.id
-            cantidad = self.picking_id.move_line_ids_without_package[0].product_uom_qty
+      
+        if len(self.picking_id.move_ids_without_package) > 0:
+            producto_transportado_id = self.picking_id.move_ids_without_package[0].product_id.id
+            cantidad = self.picking_id.move_ids_without_package[0].quantity_done
 
         else:
             producto_transportado_id = False
@@ -162,7 +162,7 @@ class Agenda(models.Model):
         _logger.info("Cantidad: %s", cantidad)
 
         # Llenar el registro gms.viaje
-        viaje = self.env['gms.viaje'].create({
+        dic_viaje = {
             'agenda': self.id,
             'fecha_viaje': self.fecha_viaje,
             'origen': self.origen.id,
@@ -174,11 +174,23 @@ class Agenda(models.Model):
             'tipo_viaje': self.tipo_viaje,
             'transportista_id': self.transportista_id.id,    
             'state': 'proceso',
-            'pedido_venta_id': self.picking_id.sale_id.id,  # Esto puede quedarse si aún asocias los stock.picking con ventas
             'producto_transportado_id': producto_transportado_id,
             'albaran_id': self.picking_id.id,
             'kilogramos_a_liquidar': cantidad
-        })
+        }
+        if self.tipo_viaje == "entrada":
+            dic_viaje['pedido_compra_id'] = self.picking_id.purchase_id.id
+
+        if self.tipo_viaje == "salida":
+            dic_viaje["pedido_venta_id"] = self.picking_id.sale_id.id
+
+
+        viaje = self.env['gms.viaje'].create(dic_viaje)
+
+        if self.tipo_viaje == 'entrada' and self.picking_id.purchase_id:
+            self.picking_id.purchase_id.viaje_ids += viaje
+        elif self.tipo_viaje == 'salida' and self.picking_id.sale_id:
+            self.picking_id.sale_id.viaje_ids += viaje
 
         if self.camion_disponible_id:
             self.env['gms.historial'].create({

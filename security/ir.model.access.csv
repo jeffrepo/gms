@@ -8,7 +8,7 @@ access_gms_gastoviaje,gms.gasto_viaje,model_gms_gasto_viaje,base.group_user,1,1,
 access_gms_agenda,gms.agenda,model_gms_agenda,base.group_user,1,1,1,1
 access_gms_camiones_disponibilidad,gms.camiones.disponibilidad,model_gms_camiones_disponibilidad,base.group_user,1,1,1,1
 access_gms_historial,model_gms_historial,model_gms_historial,base.group_user,1,1,1,1
-
+access_gms_medida_propiedad,access.gms.medida.propiedad,model_gms_medida_propiedad,,1,1,1,1
 
 
 

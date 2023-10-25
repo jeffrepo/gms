@@ -1,6 +1,9 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 import datetime
+import logging
+_logger = logging.getLogger(__name__)
+
 
 class Viajes(models.Model):
     _name = 'gms.viaje'
@@ -72,7 +75,7 @@ class Viajes(models.Model):
 
     tara = fields.Float(string="Tara", tracking="1")
 
-    peso_neto = fields.Float(string="Peso neto", compute="_compute_peso_neto", tracking="1")
+    peso_neto = fields.Float(string="Peso neto", compute="_compute_peso_neto", tracking="1",store=True)
     
 
 
@@ -92,7 +95,7 @@ class Viajes(models.Model):
 
     kilometros_flete = fields.Float(string="Kilómetros flete", tracking="1")
 
-    kilogramos_a_liquidar = fields.Float(string="Kilogramos a liquidar", tracking="1")
+    kilogramos_a_liquidar = fields.Float(string="Kilogramos a liquidar", compute="_compute_kilogramos_a_liquidar", store=True, tracking=True)
 
     pedido_venta_id = fields.Many2one('sale.order', string="Pedido de venta", tracking="1", readonly=True)
 
@@ -105,6 +108,8 @@ class Viajes(models.Model):
     albaran_id = fields.Many2one('stock.picking', string="Albarán")
 
     purchase_order_id= fields.Many2one('purchase.order')
+
+    medidas_propiedades_ids = fields.One2many('gms.medida.propiedad', 'viaje_id', string='Medidas de Propiedades')
 
     def _compute_albaran_count(self):
         for record in self:
@@ -336,3 +341,20 @@ class Viajes(models.Model):
             })
         else:
             raise UserError('Este viaje no tiene un albarán asociado.')
+        
+
+
+
+
+   
+    @api.depends('peso_neto', 'medidas_propiedades_ids.merma_kg')
+    def _compute_kilogramos_a_liquidar(self):
+        for record in self:
+            _logger.info("Calculando kilogramos a liquidar para el viaje %s", record.name)
+            _logger.info("Peso Neto: %s", record.peso_neto)
+            
+            total_mermas = sum(record.medidas_propiedades_ids.mapped('merma_kg'))
+            _logger.info("Total Mermas: %s", total_mermas)
+            
+            record.kilogramos_a_liquidar = record.peso_neto - total_mermas
+            _logger.info("Kilogramos a Liquidar Calculados: %s", record.kilogramos_a_liquidar)
