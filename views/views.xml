@@ -2,7 +2,7 @@
     <data>
 
         <!-- menú principal para GMS -->
-        <menuitem id="gms_menu" name="GMS" />
+        <menuitem id="gms_menu" name="Balanza" />
 
          <!-- Acción para el menú Agenda -->
         <record id="action_agenda" model="ir.actions.act_window">
@@ -355,7 +355,8 @@
 
 
                             <group>
-                            
+                                <field name="arribo"/>
+                                <field name="partida"/>
                                 <field name="tipo_viaje" attrs="{'readonly': [('state', 'in', ['cancelado', 'coordinado', 'proceso', 'terminado', 'liquidado'])]}"/>
                                 <field name="numero_remito" attrs="{'readonly': [('state', 'in',['cancelado','terminado', 'liquidado'])]}"/>
                                 <field name="kilometros_flete" attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
@@ -374,6 +375,14 @@
                                 <field name="pedido_venta_id"  attrs="{'invisible': 1, 'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
                                 <field name="pedido_compra_id"  attrs="{'invisible': 1, 'readonly': [('state', 'in',['cancelado','terminado', 'liquidado'])]}"/>
                                  
+
+                            </group>  
+
+
+                            <group>
+                            
+                                <field name="chacra"/>
+                                <field name="remito"/>
 
                             </group>  
 
@@ -413,7 +422,7 @@
                                 <group string="OPERACIONES SUGERIDAS">
                                     <field name="prelimpieza_entrada" attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
                                     <field name="secado_entrada" attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>  
-                                    <field name="tolva" attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/> 
+                                    <field name="tolva_id" attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/> 
                                     <field name="silo_id" attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
                                 
                                 </group>
@@ -424,10 +433,11 @@
                             <page string="Medidas de propiedades">
                                 <field name="medidas_propiedades_ids">
                                     <tree>
-                                        <field name="propiedad" widget='field' options="{'width': '25%'}"/>
+                                        <field name="propiedad" widget='field' options="{'width': '25%', 'no_create': True}"/>
                                         <field name="valor_medida" widget='field' options="{'width': '25%'}"/>
                                         <field name="parametro" widget='field' options="{'width': '25%'}"/>
                                         <field name="merma_kg" widget='field' options="{'width': '25%'}"/>
+                                        
                                     </tree>
                                 </field>
                             </page>

@@ -9,12 +9,30 @@ class MedidaPropiedad(models.Model):
     _name = 'gms.medida.propiedad'
     _description = 'Medida de Propiedad'
 
-    viaje_id = fields.Many2one('gms.viaje', string='Viaje', ondelete='cascade')
-    propiedad = fields.Many2one('gms.propiedades', string='Propiedad')
+    viaje_id = fields.Many2one('gms.viaje', string='Viaje', ondelete='cascade' , readonly=True)
+    propiedad = fields.Many2one('gms.propiedades', string='Propiedad', domain="[('id', 'in', propiedades_disponibles_ids)]")
+
     valor_medida = fields.Float(string='Valor Medida (%)')
     parametro = fields.Float(string='Parámetro', compute='_compute_parametro')
     merma_kg = fields.Float(string='Merma (kg)')
-   
+
+  
+
+    propiedades_disponibles_ids = fields.Many2many('gms.propiedades', compute='_compute_propiedades_disponibles', store=False)
+
+    @api.depends('viaje_id')
+    def _compute_propiedades_disponibles(self):
+        for record in self:
+            if record.viaje_id and record.viaje_id.producto_transportado_id:
+                producto = record.viaje_id.producto_transportado_id
+                propiedades_lineas = producto.propiedades_ids
+                propiedades_ids = propiedades_lineas.mapped('propiedades_id.id')
+                record.propiedades_disponibles_ids = [(6, 0, propiedades_ids)]
+            else:
+                record.propiedades_disponibles_ids = [(6, 0, [])]
+
+
+
 
     @api.depends('valor_medida')
     def _compute_parametro(self):

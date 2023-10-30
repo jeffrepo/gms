@@ -85,7 +85,7 @@ class Viajes(models.Model):
 
     porcentaje_humedad_primer_muestra = fields.Float(string="Porcentaje humedad primer muestra", tracking="1")
 
-    tolva = fields.Char(string="Tolva", tracking="1")
+    tolva_id = fields.Many2one('gms.tolva', string='Tolva', tracking="1")
 
     silo_id = fields.Many2one('stock.location', string="Silio", domain=[('usage', '=', 'internal')], tracking="1")
 
@@ -111,6 +111,23 @@ class Viajes(models.Model):
 
     medidas_propiedades_ids = fields.One2many('gms.medida.propiedad', 'viaje_id', string='Medidas de Propiedades')
 
+    arribo = fields.Datetime(string="Arribo")
+    partida = fields.Datetime(string="Partida")
+
+    chacra = fields.Char(string='Chacra', tracking="1")
+    remito = fields.Float(string='Remito', tracking="1")
+
+
+    
+
+    def write(self, vals):
+        for record in self:
+            if vals.get('state') == 'terminado' and 'partida' not in vals:
+                vals['partida'] = fields.Datetime.now()
+        return super(Viajes, self).write(vals)
+
+
+   
     def _compute_albaran_count(self):
         for record in self:
             record.albaran_count = 1 if record.albaran_id else 0
