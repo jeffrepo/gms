@@ -16,3 +16,4 @@ from . import gms_sale_order
 from . import purchase_order
 from . import gms_medidas_propiedad
 from . import gms_propiedades_lineas
+from . import gms_tolva

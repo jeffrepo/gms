@@ -176,7 +176,8 @@ class Agenda(models.Model):
             'state': 'proceso',
             'producto_transportado_id': producto_transportado_id,
             'albaran_id': self.picking_id.id,
-            'kilogramos_a_liquidar': cantidad
+            'kilogramos_a_liquidar': cantidad,
+            'arribo': fields.Datetime.now()
         }
         if self.tipo_viaje == "entrada":
             dic_viaje['pedido_compra_id'] = self.picking_id.purchase_id.id

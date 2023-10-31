@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <template id="report_viaje_template">
+            <t t-call="web.html_container">
+                <t t-foreach="docs" t-as="o">
+                    <div class="page">
+                        <style>
+                           .page {
+                                margin-top: 0px;
+                            }
+                            * {
+                                margin: 0;
+                                padding: 0;
+                            }
+                            .container {
+                                display: flex;
+                                flex-direction: column;
+                                height: 100%;
+                            }
+                            body {
+                                font-family: 'Arial', sans-serif;
+                                font-size: 12px; 
+                            }
+                            .header-content {
+                                display: flex;
+                                justify-content: space-between;
+                                align-items: center;
+                                margin-bottom: 15px;
+                            }
+                            .company-info, .tipo-viaje-numero {
+                                display: flex;
+                                align-items: center;
+                            }
+                            .company-info {
+                                width: 60%;
+                            }
+                            .tipo-viaje-numero {
+                                margin-top: 75px;  
+                            }
+                            .tipo-viaje-numero div {
+                                margin-right: 15px;
+                            }
+                            .main-content {
+                                display: flex;
+                                justify-content: space-between;
+                            }
+                            .additional-fields {
+                                margin-top: 5px;
+                                margin-right: 150px;
+                            }
+                            .footer-content {
+                                display: flex;
+                                justify-content: flex-end; 
+                                align-items: center;
+                            }
+                            .signature-line {
+                                width: 180px; 
+                                height: 1px; 
+                                background-color: black; 
+                                margin-bottom: 3px; 
+                            }
+                            .company-info {
+                                width: 60%;
+                                flex-wrap: wrap;
+                            }
+                            .logo-section {
+                                width: 100%; 
+                                display: flex;
+                                justify-content: start;
+                                align-items: center;
+                            }
+                            .contact-section {
+                                margin-top: 10px;
+                                margin-right: 15px;
+                            }
+                            .highlighted-text {
+                                font-size:  20px;
+                                font-weight: bold;
+                            }
+                            .blod-text{
+                                font-weight: bold;
+                            }
+                        </style>
+                        <body>
+                          <header class="header-content">
+                                <div class="company-info">
+                                    <div class="logo-section">
+                                        <img src="ruta_al_logo" alt="Logo" style="width: 80px; margin-right: 10px;"/>
+                                        <div>
+                                            <span>Tel.: 4540 4135 - Cel.: 098 530 081</span><br/>
+                                            <span>balanza@artigasilveira.com</span>
+                                        </div>
+                                    </div>
+                                    <div class="contact-section">
+                                        <span class="blod-text">ARTIGAS SILVEIRA S.A.</span><br/>
+                                        <span class="blod-text">RUT: <span t-field="o.solicitante_id.vat"/></span>
+                                    </div>
+                                </div>
+                                <div class="tipo-viaje-numero">
+                                    <div>
+                                        <span class="highlighted-text" >Tipo de Pesaje:</span><span t-field="o.tipo_viaje"/><br/>
+                                        <span class="blod-text" >Arribo: </span><span t-field="o.arribo"/><br/>
+                                        <span class="blod-text">Partida: </span><span t-field="o.partida"/>
+                                    </div>
+                                    <div>
+                                        <span  class="highlighted-text">Numero:</span><span t-esc="o.name[-4:]"/><br/>
+                                        <span class="blod-text">Bruto: </span><span t-field="o.peso_bruto"/><br/>
+                                        <span class="blod-text">Tara: </span><span t-field="o.tara"/><br/>
+                                        <span class="blod-text">Neto: </span><span t-field="o.peso_neto"/>
+                                    </div>
+                                </div>
+                            </header>
+
+                            <div class="main-content">
+                                <div class="content">
+                                    <div class="content-row">
+                                        <span class="blod-text">Producto: </span><span t-field="o.producto_transportado_id.name"/><br/>
+                                        <span class="blod-text">Vehiculo: </span><span t-field="o.camion_id.matricula"/>
+                                    </div>
+                                    <div class="content-row">
+                                        <span  class="blod-text">Chofer: </span><span t-field="o.conductor_id.name"/><br/>
+                                        <span  class="blod-text">Transportista: </span><span t-field="o.transportista_id.name"/>
+                                    </div>
+                                   <div>
+                                        <br/>
+                                        <span class="blod-text">Propiedades adicionales:</span>
+                                        <table>
+                                            <thead>
+                                                <tr>
+                                                    <th class="blod-text">Propiedad</th>
+                                                    <th class="blod-text">Valor</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <t t-foreach="o.medidas_propiedades_ids" t-as="medida">
+                                                    <tr>
+                                                        <td><span t-field="medida.propiedad.name"/></td>
+                                                        <td><span t-field="medida.parametro"/></td>
+                                                    </tr>
+                                                </t>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <div>
+                                       <span  class="blod-text"> Observaciones:</span> <span t-field="o.observaciones"/>
+                                    </div>
+                                </div>
+                                <div class="additional-fields">
+                                    <span  class="blod-text">Origen: </span><span t-field="o.origen"/><br/>
+                                    <span  class="blod-text">Destino: </span><span t-field="o.destino"/><br/>
+                                    <span  class="blod-text">Operador: </span><span t-field="o.solicitante_id.name"/><br/>
+                                    <span  class="blod-text">Chacra: </span><span t-field="o.chacra"/><br/>
+                                    <span  class="blod-text">Remito: </span><span t-field="o.remito"/>
+                                </div>
+                            </div>
+                            <div class="footer-content">
+                                <div>
+                                    <div class="signature-line"></div>
+                                    <span>Conformidad transportista</span>
+                                </div>
+                                <span>Original</span>
+                            </div>
+                            <hr style="border-top: 1px solid #000; margin: 10px 0;"/>
+                        </body>
+
+                           <body>
+                          <header class="header-content">
+                                <div class="company-info">
+                                    <div class="logo-section">
+                                        <img src="ruta_al_logo" alt="Logo" style="width: 80px; margin-right: 10px;"/>
+                                        <div>
+                                            <span>Tel.: 4540 4135 - Cel.: 098 530 081</span><br/>
+                                            <span>balanza@artigasilveira.com</span>
+                                        </div>
+                                    </div>
+                                    <div class="contact-section">
+                                        <span class="blod-text">ARTIGAS SILVEIRA S.A.</span><br/>
+                                        <span class="blod-text">RUT: <span t-field="o.solicitante_id.vat"/></span>
+                                    </div>
+                                </div>
+                                <div class="tipo-viaje-numero">
+                                    <div>
+                                        <span class="highlighted-text" >Tipo de Pesaje:</span><span t-field="o.tipo_viaje"/><br/>
+                                        <span class="blod-text" >Arribo: </span><span t-field="o.arribo"/><br/>
+                                        <span class="blod-text">Partida: </span><span t-field="o.partida"/>
+                                    </div>
+                                    <div>
+                                        <span  class="highlighted-text">Numero:</span><span t-esc="o.name[-4:]"/><br/>
+                                        <span class="blod-text">Bruto: </span><span t-field="o.peso_bruto"/><br/>
+                                        <span class="blod-text">Tara: </span><span t-field="o.tara"/><br/>
+                                        <span class="blod-text">Neto: </span><span t-field="o.peso_neto"/>
+                                    </div>
+                                </div>
+                            </header>
+
+                            <div class="main-content">
+                                <div class="content">
+                                    <div class="content-row">
+                                        <span class="blod-text">Producto: </span><span t-field="o.producto_transportado_id.name"/><br/>
+                                        <span class="blod-text">Vehiculo: </span><span t-field="o.camion_id.matricula"/>
+                                    </div>
+                                    <div class="content-row">
+                                        <span  class="blod-text">Chofer: </span><span t-field="o.conductor_id.name"/><br/>
+                                        <span  class="blod-text">Transportista: </span><span t-field="o.transportista_id.name"/>
+                                    </div>
+                                   <div>
+                                        <br/>
+                                        <span class="blod-text">Propiedades adicionales:</span>
+                                        <table>
+                                            <thead>
+                                                <tr>
+                                                    <th class="blod-text">Propiedad</th>
+                                                    <th class="blod-text">Valor</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <t t-foreach="o.medidas_propiedades_ids" t-as="medida">
+                                                    <tr>
+                                                        <td><span t-field="medida.propiedad.name"/></td>
+                                                        <td><span t-field="medida.parametro"/></td>
+                                                    </tr>
+                                                </t>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <div>
+                                       <span  class="blod-text"> Observaciones:</span> <span t-field="o.observaciones"/>
+                                    </div>
+                                </div>
+                                <div class="additional-fields">
+                                    <span  class="blod-text">Origen: </span><span t-field="o.origen"/><br/>
+                                    <span  class="blod-text">Destino: </span><span t-field="o.destino"/><br/>
+                                    <span  class="blod-text">Operador: </span><span t-field="o.solicitante_id.name"/><br/>
+                                    <span  class="blod-text">Chacra: </span><span t-field="o.chacra"/><br/>
+                                    <span  class="blod-text">Remito: </span><span t-field="o.remito"/>
+                                </div>
+                            </div>
+                            <div class="footer-content">
+                                <div>
+                                    <div class="signature-line"></div>
+                                    <span>Conformidad transportista</span>
+                                </div>
+                                <span>Original</span>
+                            </div>
+
+                            <hr style="border-top: 1px solid #000; margin: 10px 0;"/>
+                        </body>
+
+
+                        <body>
+                          <header class="header-content">
+                                <div class="company-info">
+                                    <div class="logo-section">
+                                        <img src="ruta_al_logo" alt="Logo" style="width: 80px; margin-right: 10px;"/>
+                                        <div>
+                                            <span>Tel.: 4540 4135 - Cel.: 098 530 081</span><br/>
+                                            <span>balanza@artigasilveira.com</span>
+                                        </div>
+                                    </div>
+                                    <div class="contact-section">
+                                        <span class="blod-text">ARTIGAS SILVEIRA S.A.</span><br/>
+                                        <span class="blod-text">RUT: <span t-field="o.solicitante_id.vat"/></span>
+                                    </div>
+                                </div>
+                                <div class="tipo-viaje-numero">
+                                    <div>
+                                        <span class="highlighted-text" >Tipo de Pesaje:</span><span t-field="o.tipo_viaje"/><br/>
+                                        <span class="blod-text" >Arribo: </span><span t-field="o.arribo"/><br/>
+                                        <span class="blod-text">Partida: </span><span t-field="o.partida"/>
+                                    </div>
+                                    <div>
+                                        <span  class="highlighted-text">Numero:</span><span t-esc="o.name[-4:]"/><br/>
+                                        <span class="blod-text">Bruto: </span><span t-field="o.peso_bruto"/><br/>
+                                        <span class="blod-text">Tara: </span><span t-field="o.tara"/><br/>
+                                        <span class="blod-text">Neto: </span><span t-field="o.peso_neto"/>
+                                    </div>
+                                </div>
+                            </header>
+
+                            <div class="main-content">
+                                <div class="content">
+                                    <div class="content-row">
+                                        <span class="blod-text">Producto: </span><span t-field="o.producto_transportado_id.name"/><br/>
+                                        <span class="blod-text">Vehiculo: </span><span t-field="o.camion_id.matricula"/>
+                                    </div>
+                                    <div class="content-row">
+                                        <span  class="blod-text">Chofer: </span><span t-field="o.conductor_id.name"/><br/>
+                                        <span  class="blod-text">Transportista: </span><span t-field="o.transportista_id.name"/>
+                                    </div>
+                                   <div>
+                                        <br/>
+                                        <span class="blod-text">Propiedades adicionales:</span>
+                                        <table>
+                                            <thead>
+                                                <tr>
+                                                    <th class="blod-text">Propiedad</th>
+                                                    <th class="blod-text">Valor</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <t t-foreach="o.medidas_propiedades_ids" t-as="medida">
+                                                    <tr>
+                                                        <td><span t-field="medida.propiedad.name"/></td>
+                                                        <td><span t-field="medida.parametro"/></td>
+                                                    </tr>
+                                                </t>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <div>
+                                       <span  class="blod-text"> Observaciones:</span> <span t-field="o.observaciones"/>
+                                    </div>
+                                </div>
+                                <div class="additional-fields">
+                                    <span  class="blod-text">Origen: </span><span t-field="o.origen"/><br/>
+                                    <span  class="blod-text">Destino: </span><span t-field="o.destino"/><br/>
+                                    <span  class="blod-text">Operador: </span><span t-field="o.solicitante_id.name"/><br/>
+                                    <span  class="blod-text">Chacra: </span><span t-field="o.chacra"/><br/>
+                                    <span  class="blod-text">Remito: </span><span t-field="o.remito"/>
+                                </div>
+                            </div>
+                            <div class="footer-content">
+                                <div>
+                                    <div class="signature-line"></div>
+                                    <span>Conformidad transportista</span>
+                                </div>
+                                <span>Copia</span>
+                            </div>
+                            <hr style="border-top: 1px solid #000; margin: 10px 0;"/>
+                        </body>
+                        
+                    </div>
+                </t>
+            </t>
+        </template>
+    </data>
+</odoo>
