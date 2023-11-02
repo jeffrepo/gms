@@ -77,7 +77,7 @@ class Viajes(models.Model):
 
     peso_neto = fields.Float(string="Peso neto", compute="_compute_peso_neto", tracking="1",store=True)
     
-
+    estado = fields.Char(string = "s")
 
     peso_neto_destino = fields.Float(string="Peso neto destino", tracking="1")
 
@@ -89,9 +89,8 @@ class Viajes(models.Model):
 
     silo_id = fields.Many2one('stock.location', string="Silio", domain=[('usage', '=', 'internal')], tracking="1")
 
-    prelimpieza_entrada = fields.Selection([('si', 'Si'), ('no', 'No')], string="Prelimpieza entrada", tracking="1")
-
-    secado_entrada = fields.Selection([('si', 'Si'), ('no', 'No')], string="Secado entrada", tracking="1")
+    prelimpieza_entrada = fields.Boolean(string="Prelimpieza Entrada", tracking=True)
+    secado_entrada = fields.Boolean(string="Secado Entrada", tracking=True)
 
     kilometros_flete = fields.Float(string="Kilómetros flete", tracking="1")
 
@@ -117,6 +116,9 @@ class Viajes(models.Model):
     chacra = fields.Char(string='Chacra', tracking="1")
     remito = fields.Float(string='Remito', tracking="1")
 
+    # prelimpieza_entrada_1 = fields.Selection([('si', 'Si'), ('no', 'No')], string="Prelimpieza entrada", tracking="1")
+
+    # secado_entrada_1 = fields.Selection([('si', 'Si'), ('no', 'No')], string="Secado entrada", tracking="1")
 
     
 
@@ -375,3 +377,27 @@ class Viajes(models.Model):
             
             record.kilogramos_a_liquidar = record.peso_neto - total_mermas
             _logger.info("Kilogramos a Liquidar Calculados: %s", record.kilogramos_a_liquidar)
+
+
+
+
+
+    @api.onchange('ruta_id')
+    def _onchange_ruta_id(self):
+        # Encuentra y elimina la línea antigua si existe
+        gastos_a_eliminar = self.gastos_ids.filtered(lambda g: g.es_de_ruta)
+        self.gastos_ids -= gastos_a_eliminar
+
+        if self.ruta_id:
+            producto = self.ruta_id.gasto_viaje_id
+            # Crear la nueva línea
+            nuevo_gasto = {
+                'name': 'Flete',
+                'producto_id': producto.id,  # Asigna el ID del producto
+                'proveedor_id': self.transportista_id.id,
+                'estado_compra': 'no_comprado',
+                'precio_total': producto.standard_price * self.ruta_id.kilometros,  # Accede directamente al precio estándar
+                'es_de_ruta': True,
+            }
+            self.gastos_ids |= self.gastos_ids.new(nuevo_gasto)
+ 
