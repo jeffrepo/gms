@@ -15,11 +15,12 @@ class ResPartner(models.Model):
     tipo = fields.Selection([
         ('chacra', 'Chacra'),
         ('planta', 'Planta'),
+        ('deposito', 'Deposito'),
     ], string='Tipo')
 
     ubicacion_id = fields.Many2one('stock.location', string="Ubicación")
 
-
+ 
    
 
     def unlink(self):
