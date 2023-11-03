@@ -2,7 +2,43 @@
     <data>
 
         <!-- menú principal para GMS -->
-        <menuitem id="gms_menu" name="Balanza" />
+        <menuitem id="gms_menu" name="Balanza" sequence="1"/>
+
+        <!-- Submenú para Agenda -->
+        <menuitem id="gms_menu_agenda" name="Agenda" parent="gms_menu" action="action_agenda" sequence="2"/>
+
+        <!-- Submenú para Viajes -->
+        <menuitem id="gms_menu_viajes" name="Viajes" parent="gms_menu" action="action_viajes" sequence="3"/>
+
+        <!-- Submenú para Contactos / Transportistas -->
+        <menuitem id="gms_menu_contactos" name="Transportistas" parent="gms_menu" action="action_contactos" sequence="4"/>
+
+        <!-- Submenú para la Disponibilidad de Camiones -->
+        <menuitem id="gms_menu_camiones_disponibilidad" name="Disponibilidad de Camiones" parent="gms_menu" action="action_camiones_disponibilidad" sequence="5"/>
+
+        <!-- Menú para acceder al historial de camiones -->
+        <menuitem id="gms_menu_historial" name="Historial de Camiones" parent="gms_menu" action="action_gms_historial" sequence="6"/>
+ 
+        <!-- Menú de Configuración -->
+        <menuitem id="gms_menu_configuracion" name="Configuración" parent="gms_menu" sequence="7"/>
+
+        <!-- Submenú para Productos, dentro de Configuración -->
+        <menuitem id="gms_menu_productos" name="Productos" parent="gms_menu_configuracion" action="action_productos" sequence="1"/>
+
+        <!-- Menú Camiones, dentro de Configuración -->
+        <menuitem id="gms_menu_camiones" name="Camiones" parent="gms_menu_configuracion" sequence="2"/>
+
+        <!-- Submenú para Camiones, dentro del menú Camiones -->
+        <menuitem id="gms_menu_camiones_vista" name="Camiones" parent="gms_menu_camiones" action="action_camiones" sequence="1"/>
+
+        <!-- Submenú para Propiedades, dentro de Configuración -->
+        <menuitem id="gms_menu_propiedades" name="Propiedades" parent="gms_menu_configuracion" action="action_propiedades" sequence="3"/>
+
+        <!-- Submenú para Rutas, dentro de Configuración -->
+        <menuitem id="gms_menu_rutas" name="Rutas" parent="gms_menu_configuracion" action="action_rutas" sequence="4"/>
+
+
+        
 
          <!-- Acción para el menú Agenda -->
         <record id="action_agenda" model="ir.actions.act_window">
@@ -12,8 +48,7 @@
             <field name="view_id" ref="view_gms_agenda_list"/>
         </record>
 
-        <!-- Submenú para Agenda -->
-        <menuitem id="gms_menu_agenda" name="Agenda" parent="gms_menu" action="action_agenda" />
+      
 
         <!-- Acción para el menú Producto -->
         <record id="action_productos" model="ir.actions.act_window">
@@ -22,9 +57,7 @@
             <field name="view_mode">tree,form</field>
         </record>
 
-        <!-- submenú para Productos -->
-        <menuitem id="gms_menu_productos" name="Productos" parent="gms_menu" action="action_productos" />
-
+       
 
         <!-- Acción para el menú Contactos -->
         <record id="action_contactos" model="ir.actions.act_window">
@@ -33,13 +66,7 @@
             <field name="view_mode">tree,form</field>
         </record>
 
-        <!-- submenú para Contactos -->
-        <menuitem id="gms_menu_contactos" name="Transportistas" parent="gms_menu" action="action_contactos" />
-
-          <!-- menú Camiones -->
-
-        <menuitem id="gms_menu_camiones" name="Camiones" parent="gms_menu" />
-
+       
 
         <!-- Acción para el menú Camiones -->
         <record id="action_camiones" model="ir.actions.act_window">
@@ -49,8 +76,7 @@
             <!-- Agrega más campos según tus necesidades -->
         </record>
 
-        <!-- Submenú para Camiones -->
-        <menuitem id="gms_menu_camiones_vista" name="Camiones" parent="gms_menu_camiones" action="action_camiones" />
+       
 
         <!-- Acción para la Disponibilidad de Camiones -->
         <record id="action_camiones_disponibilidad" model="ir.actions.act_window">
@@ -59,9 +85,6 @@
             <field name="view_mode">tree,form</field>
         </record>
 
-        <!-- Submenú para la Disponibilidad de Camiones -->
-        <menuitem id="gms_menu_camiones_disponibilidad" name="Disponibilidad de Camiones" parent="gms_menu_camiones" action="action_camiones_disponibilidad" />
-
 
 
         <!-- Acción para el menú Propiedades -->
@@ -69,33 +92,28 @@
             <field name="name">Propiedades</field>
             <field name="res_model">gms.propiedades</field>
             <field name="view_mode">tree,form</field>
-            <!-- Agrega más campos según tus necesidades -->
+           
         </record>
 
-        <!-- Submenú para Propiedades -->
-        <menuitem id="gms_menu_propiedades" name="Propiedades" parent="gms_menu" action="action_propiedades" />
-
+       
         <!-- Acción para el menú Rutas -->
         <record id="action_rutas" model="ir.actions.act_window">
             <field name="name">Rutas</field>
             <field name="res_model">gms.rutas</field>
             <field name="view_mode">tree,form</field>
-            <!-- Agrega más campos según tus necesidades -->
+           
         </record>
 
-          <!-- Submenú para Rutas -->
-        <menuitem id="gms_menu_rutas" name="Rutas" parent="gms_menu" action="action_rutas" />
-
+          
            <!-- Acción para el menú Viajes -->
         <record id="action_viajes" model="ir.actions.act_window">
             <field name="name">Viajes</field>
             <field name="res_model">gms.viaje</field>
             <field name="view_mode">tree,form</field>
-            <!-- Agrega más campos según tus necesidades -->
+            
         </record>
 
-        <!-- Submenú para Viajes -->
-        <menuitem id="gms_menu_viajes" name="Viajes" parent="gms_menu" action="action_viajes" />
+     
 
 
         <!-- Acción para ver el historial de camiones -->
@@ -105,8 +123,38 @@
             <field name="view_mode">tree,form</field>
         </record>
 
-        <!-- Menú para acceder al historial de camiones -->
-        <menuitem id="gms_menu_historial" name="Historial de Camiones" parent="gms_menu" action="action_gms_historial" />
+
+        <!-- Acción para el menú Gastos -->
+        <record id="action_gastos" model="ir.actions.act_window">
+            <field name="name">Gastos</field>
+            <field name="res_model">gms.gasto_viaje</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+      
+
+
+
+
+    <!-- Vista de Lista para Gastos -->
+    <record id="view_gms_gastos_tree" model="ir.ui.view">
+        <field name="name">gms.gasto_viaje.tree</field>
+        <field name="model">gms.gasto_viaje</field>
+        <field name="arch" type="xml">
+            <tree string="Gastos">
+                <field name="viaje_id"/>
+                <field name="producto_id"/>
+                <field name="precio_total"/>
+                <field name="proveedor_id"/>
+                <field name="purchase_order_id"/>
+                 <header>
+                    <button name="action_generate_purchase_order_from_gastos" string="Generar Orden de Compra" type="object" class="oe_highlight"/>
+                </header>
+                
+                
+            </tree>
+        </field>
+    </record>
 
 
      <!-- Vista List view de Disponibilidad de Camiones -->
@@ -344,10 +392,11 @@
                         </div>                        
                         <group>
                             <group>
+                                <field name="estado" invisible="1"/>
                                 <field name="fecha_viaje" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}"/>
                                 <field name="solicitante_id" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}"/>
                                 <field name="origen" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}"/>
-                                <field name="destino" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}" />
+                                <field name="destino" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}"/>
                                 <field name="camion_id"  attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}" />
                                 <field name="conductor_id" attrs="{'readonly': [('state', '=', 'cancelado')]}"/>
                             </group>   
@@ -355,8 +404,8 @@
 
 
                             <group>
-                                <field name="arribo"/>
-                                <field name="partida"/>
+                                <field name="arribo" attrs="{'readonly': [('estado', 'in', ['cancelado', 'terminado', 'liquidado'])]}"/>
+                                <field name="partida" attrs="{'readonly': [('estado', 'in', ['cancelado', 'liquidado'])]}"/>
                                 <field name="tipo_viaje" attrs="{'readonly': [('state', 'in', ['cancelado', 'coordinado', 'proceso', 'terminado', 'liquidado'])]}"/>
                                 <field name="numero_remito" attrs="{'readonly': [('state', 'in',['cancelado','terminado', 'liquidado'])]}"/>
                                 <field name="kilometros_flete" attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
@@ -524,6 +573,7 @@
                     <sheet>
                         <group>
                             <field name="nombre_ruta"/>
+                            <field name="gasto_viaje_id"/>
                             <field name="direccion_origen_id"/>
                             <field name="direccion_destino_id"/>
                             <field name="kilometros"/>
@@ -802,6 +852,3 @@
 
     </data>
 </odoo>
-
-
-
