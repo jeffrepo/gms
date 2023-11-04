@@ -25,17 +25,18 @@
         <!-- Submenú para Productos, dentro de Configuración -->
         <menuitem id="gms_menu_productos" name="Productos" parent="gms_menu_configuracion" action="action_productos" sequence="1"/>
 
-        <!-- Menú Camiones, dentro de Configuración -->
-        <menuitem id="gms_menu_camiones" name="Camiones" parent="gms_menu_configuracion" sequence="2"/>
-
-        <!-- Submenú para Camiones, dentro del menú Camiones -->
-        <menuitem id="gms_menu_camiones_vista" name="Camiones" parent="gms_menu_camiones" action="action_camiones" sequence="1"/>
+        <!-- Submenú para Camiones, dentro de Configuración -->
+        <menuitem id="gms_menu_camiones_vista" name="Camiones" parent="gms_menu_configuracion" action="action_camiones" sequence="2"/>
 
         <!-- Submenú para Propiedades, dentro de Configuración -->
         <menuitem id="gms_menu_propiedades" name="Propiedades" parent="gms_menu_configuracion" action="action_propiedades" sequence="3"/>
 
         <!-- Submenú para Rutas, dentro de Configuración -->
         <menuitem id="gms_menu_rutas" name="Rutas" parent="gms_menu_configuracion" action="action_rutas" sequence="4"/>
+
+        <!-- Submenú para Gastos, dentro de Configuración -->
+        <menuitem id="gms_menu_gastos" name="Gastos" parent="gms_menu_configuracion" action="action_gastos" sequence="5"/>
+
 
 
         
