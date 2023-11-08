@@ -12,7 +12,13 @@ class Camiones(models.Model):
     matricula = fields.Char(string='Matrícula', tracking="1")
     capacidad_kgs = fields.Float(string='Capacidad en Kgs', tracking="1")
     minimo_carga_kgs = fields.Float(string='Mínimo de Carga en Kgs', tracking="1")
-    transportista_id = fields.Many2one('res.partner', string='Transportista', tracking="1")
+    transportista_id = fields.Many2one(
+    'res.partner', 
+    string='Transportista', 
+    domain="[('transportista', '=', True), ('parent_id', '=', False)]", 
+    tracking="1"
+)
+
     conductor_id = fields.Many2one('res.partner', string='Chofer', required=True, tracking="1")
     disponible = fields.Boolean(string='Disponible', default=True, tracking="1")
     disponible_zafra = fields.Boolean(string="Zafra", tracking="1")
@@ -72,3 +78,16 @@ class Camiones(models.Model):
                 self.env['gms.camiones.disponibilidad'].create(disponibilidad_vals)
 
             camion.write({'disponible': True})
+
+
+
+
+    @api.onchange('transportista_id')
+    def _onchange_transportista_id(self):
+        res = {}
+        if self.transportista_id:
+            # Esto obtendrá todos los contactos cuyo padre es el transportista seleccionado
+            res['domain'] = {'conductor_id': [('parent_id', '=', self.transportista_id.id)]}
+        else:
+            res['domain'] = {'conductor_id': [('parent_id', '=', False)]} # Opcional, aquí podrías decidir qué mostrar si no hay transportista seleccionado
+        return res

@@ -69,7 +69,7 @@ class Viajes(models.Model):
 
     albaran_id = fields.Many2one('stock.picking', string="Albarán", tracking="1")
 
-    producto_transportado_id = fields.Many2one('product.product', string="Producto transportado", tracking="1")
+    producto_transportado_id = fields.Many2one('product.product', string="Producto transportado", readonly=True, tracking="1")
 
     peso_bruto = fields.Float(string="Peso bruto", tracking="1")
 
@@ -390,14 +390,38 @@ class Viajes(models.Model):
 
         if self.ruta_id:
             producto = self.ruta_id.gasto_viaje_id
-            # Crear la nueva línea
-            nuevo_gasto = {
-                'name': 'Flete',
-                'producto_id': producto.id,  # Asigna el ID del producto
-                'proveedor_id': self.transportista_id.id,
-                'estado_compra': 'no_comprado',
-                'precio_total': producto.standard_price * self.ruta_id.kilometros,  # Accede directamente al precio estándar
-                'es_de_ruta': True,
-            }
-            self.gastos_ids |= self.gastos_ids.new(nuevo_gasto)
+            if producto:  # Verifica si hay un producto asociado con la ruta
+                # Crear la nueva línea
+                nuevo_gasto = {
+                    'name': 'Flete',
+                    'producto_id': producto.id,  # Asigna el ID del producto
+                    'proveedor_id': self.transportista_id.id,
+                    'estado_compra': 'no_comprado',
+                    'precio_total': producto.standard_price * self.ruta_id.kilometros,  # Accede directamente al precio estándar
+                    'es_de_ruta': True,
+                }
+                self.gastos_ids |= self.gastos_ids.new(nuevo_gasto)
+            # Si no hay producto, no se crea la línea de gasto
+
  
+
+
+
+    
+    @api.model
+    def create(self, vals):
+        if vals.get('ruta_id'):
+            ruta = self.env['gms.rutas'].browse(vals['ruta_id'])
+            if ruta.direccion_origen_id.id != vals.get('origen') or ruta.direccion_destino_id.id != vals.get('destino'):
+                raise UserError("El origen y destino de la ruta deben ser iguales al del viaje.")
+        return super(Viajes, self).create(vals)
+
+    def write(self, vals):
+        # Si se actualiza la ruta, verificar que coincida con el origen y destino del viaje.
+        if vals.get('ruta_id'):
+            ruta = self.env['gms.rutas'].browse(vals['ruta_id'])
+            origen = vals.get('origen', self.origen.id)
+            destino = vals.get('destino', self.destino.id)
+            if ruta.direccion_origen_id.id != origen or ruta.direccion_destino_id.id != destino:
+                raise UserError("El origen y destino de la ruta deben ser iguales al del viaje.")
+        return super(Viajes, self).write(vals)

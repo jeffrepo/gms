@@ -10,12 +10,13 @@ class ResPartner(models.Model):
         'transportista_id', 
         string='Camiones', 
         tracking="1", 
-        domain=[('transportista_id', '=', False)]
+        domain="[('transportista_id', '=', id)]",readonly=True
     )
     tipo = fields.Selection([
         ('chacra', 'Chacra'),
         ('planta', 'Planta'),
         ('deposito', 'Deposito'),
+        ('chofer', 'Chofer'),
     ], string='Tipo')
 
     ubicacion_id = fields.Many2one('stock.location', string="Ubicación")
