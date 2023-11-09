@@ -18,13 +18,14 @@ class Agenda(models.Model):
 
     name = fields.Char(required=True, default=lambda self: _('New'), copy=False, readonly=True, tracking=True)
 
-    fecha = fields.Date(string='Fecha', required=True, tracking="1", default=fields.Date.today())
+    fecha = fields.Date(string='Fecha', required=True, readonly=True, tracking="1", default=fields.Date.today())
 
     fecha_viaje = fields.Date(string='Fecha de viaje', required=True, tracking="1")
 
     origen = fields.Many2one('res.partner', 
                              string='Origen', 
                              required=True, 
+                             readonly=True,
                              tracking="1", 
                              domain="['&',('tipo', '!=', False),('parent_id','=',solicitante_id)]", 
                              ondelete='cascade',context="{'default_parent_id': solicitante_id}") 
@@ -34,7 +35,7 @@ class Agenda(models.Model):
                               string='Destino', 
                               required=True, 
                               tracking="1", 
-                              domain="[('tipo', '!=', False)]")
+                              domain=lambda self: self._get_warehouse_partner_domain())
     
     transportista_id = fields.Many2one('res.partner', 
                                        string='Trasportista', 
@@ -57,6 +58,7 @@ class Agenda(models.Model):
     solicitante_id = fields.Many2one('res.partner', 
                                      string='Solicitante', 
                                      required=True, 
+                                     readonly=True, 
                                      tracking="1", 
                                      domain="[('tipo', '!=', 'chacras'), ('tipo', '!=', 'planta'), ('tipo', '=', False)]")
 
@@ -64,7 +66,7 @@ class Agenda(models.Model):
 
     picking_id = fields.Many2one('stock.picking', string='Stock Picking', required=True, readonly=True)
 
-    tipo_viaje = fields.Selection([('entrada', 'Entrada'), ('salida', 'Salida')], string="Tipo de Viaje", tracking="1")
+    tipo_viaje = fields.Selection([('entrada', 'Entrada'), ('salida', 'Salida')], string="Tipo de Viaje", readonly=True, tracking="1")
 
     albaran_id = fields.Many2one('stock.picking', string="Albarán", compute="_compute_albaran", store=True, readonly=True)
 
@@ -232,3 +234,13 @@ class Agenda(models.Model):
         else:
             raise UserError(_('No hay un albarán asociado a esta agenda.'))
         
+
+
+
+
+
+
+    def _get_warehouse_partner_domain(self):
+        warehouse_partners = self.env['stock.warehouse'].search([]).mapped('partner_id')
+        return [('id', 'in', warehouse_partners.ids)]
+    
