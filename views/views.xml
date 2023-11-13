@@ -16,11 +16,17 @@
         <!-- Submenú para la Disponibilidad de Camiones -->
         <menuitem id="gms_menu_camiones_disponibilidad" name="Disponibilidad de Camiones" parent="gms_menu" action="action_camiones_disponibilidad" sequence="5"/>
 
+        <!-- Submenú para Gastos -->
+        <menuitem id="gms_menu_gastos" name="Gastos" parent="gms_menu" action="action_gastos" sequence="6"/>
+
         <!-- Menú para acceder al historial de camiones -->
-        <menuitem id="gms_menu_historial" name="Historial de Camiones" parent="gms_menu" action="action_gms_historial" sequence="6"/>
+        <menuitem id="gms_menu_historial" name="Historial de Camiones" parent="gms_menu" action="action_gms_historial" sequence="7"/>
  
+        <!-- Menú para acceder a Ajustes -->
+        <menuitem id="gms_menu_ajustes" name="Ajustes" parent="gms_menu" action="gms.action_ajustes" sequence="8"/>
+
         <!-- Menú de Configuración -->
-        <menuitem id="gms_menu_configuracion" name="Configuración" parent="gms_menu" sequence="7"/>
+        <menuitem id="gms_menu_configuracion" name="Configuración" parent="gms_menu" sequence="9"/>
 
         <!-- Submenú para Productos, dentro de Configuración -->
         <menuitem id="gms_menu_productos" name="Productos" parent="gms_menu_configuracion" action="action_productos" sequence="1"/>
@@ -34,9 +40,6 @@
         <!-- Submenú para Rutas, dentro de Configuración -->
         <menuitem id="gms_menu_rutas" name="Rutas" parent="gms_menu_configuracion" action="action_rutas" sequence="4"/>
 
-        <!-- Submenú para Gastos, dentro de Configuración -->
-        <menuitem id="gms_menu_gastos" name="Gastos" parent="gms_menu_configuracion" action="action_gastos" sequence="5"/>
-
 
 
         
@@ -47,6 +50,7 @@
             <field name="res_model">gms.agenda</field>
             <field name="view_mode">tree,form</field>
             <field name="view_id" ref="view_gms_agenda_list"/>
+            <field name="context">{'create': False}</field>
         </record>
 
       
@@ -134,6 +138,13 @@
             <field name="view_mode">tree,form</field>
         </record>
 
+         <!-- Acción para el menú Ajuste -->      
+        <record id="action_ajustes" model="ir.actions.act_window">
+            <field name="name">Ajustes</field>
+            <field name="res_model">gms.ajustes</field>
+            <field name="view_mode">tree,form</field>
+            
+        </record>
       
 
 
@@ -395,12 +406,13 @@
                         </div>                        
                         <group>
                             <group>
+                                <field name="albaran_id" invisible="1"/>
                                 <field name="estado" invisible="1"/>
                                 <field name="fecha_viaje" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}"/>
                                 <field name="solicitante_id" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}"/>
                                 <field name="origen" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}"/>
                                 <field name="destino" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}"/>
-                                <field name="camion_id"  attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}" />
+                                <field name="camion_id" attrs="{'readonly': ['|', ('albaran_id', '!=', False), ('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}" />
                                 <field name="conductor_id" attrs="{'readonly': [('state', 'in', ['proceso', 'cancelado'])]}" />
                             </group>   
 
@@ -576,7 +588,7 @@
                     <sheet>
                         <group>
                             <field name="nombre_ruta"/>
-                            <field name="gasto_viaje_id"/>
+                            <!-- <field name="gasto_viaje_id"/> -->
                             <field name="direccion_origen_id"/>
                             <field name="direccion_destino_id"/>
                             <field name="kilometros"/>
@@ -852,6 +864,100 @@
                     </group>
                 </page>
             </notebook>
+        </field>
+    </record>
+
+
+
+        <!-- vista tree de ajustes -->
+   <record id="view_ajustes_tree" model="ir.ui.view">
+        <field name="name">ajustes.tree</field>
+        <field name="model">gms.ajustes</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name" string = "Número"/>
+                <field name="date_order"/>
+                <field name="partner_id"/>
+                <field name="state"/>
+                <field name="total"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- vista formulario de ajustes -->
+   <record id="view_ajustes_form" model="ir.ui.view">
+        <field name="name">ajustes.form</field>
+        <field name="model">gms.ajustes</field>
+        <field name="arch" type="xml">
+            <form string="Ajustes" class="o_gms_ajustes">
+                <header>
+                    <button name="action_confirm" string="Confirmar" type="object" class="btn-primary" attrs="{'invisible': [('state','!=','draft')]}"/>
+                    <button name="action_done" string="Hecho" type="object" class="btn-secondary" attrs="{'invisible': [('state','!=','confirmed')]}"/>
+                    <button name="action_cancel" string="Cancelar" type="object" class="btn-secondary" attrs="{'invisible': [('state','in',['done','cancelled'])]}"/>
+                    <button name="action_draft" string="Reiniciar a Borrador" type="object" class="btn-secondary" attrs="{'invisible': [('state','=','draft')]}"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                     <group name="sale_header">
+                        <group name="partner_details">
+                            <field name="partner_id"/>
+                            
+                        </group>
+                    </group>
+                     
+                    <notebook>
+                        <page string="Detalles del Ajuste">
+                            <group>
+                               
+                                <field name="date_order"/>
+                                
+                            </group>
+                        </page>
+                        <page string="Líneas de Ajuste">
+                            
+                        </page>
+                       
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+
+
+
+    <record id="view_res_config_settings_gms" model="ir.ui.view">
+        <field name="name">res.config.settings.view.gms</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('settings')]" position="inside">
+                <div class="app_settings_block" data-string="GMS Configuraciones" string="GMS" data-key="gms">
+                    <h2>Gastos de Viaje</h2>
+                    <div class="row mt16 o_settings_container">
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_right_pane">
+                                <label for="gasto_viaje_con_impuesto"/>
+                                <field name="gasto_viaje_con_impuesto"/>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_right_pane">
+                                <label for="gasto_viaje_sin_impuesto"/>
+                                <field name="gasto_viaje_sin_impuesto"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </xpath>
         </field>
     </record>
 

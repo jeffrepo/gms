@@ -15,7 +15,7 @@ class ResPartner(models.Model):
     tipo = fields.Selection([
         ('chacra', 'Chacra'),
         ('planta', 'Planta'),
-        ('deposito', 'Deposito'),
+        ('puerto', 'Puerto'),
         ('chofer', 'Chofer'),
     ], string='Tipo')
 

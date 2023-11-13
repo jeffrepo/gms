@@ -24,27 +24,34 @@ class PurchaseOrder(models.Model):
             order.agenda_count = len(order.agenda_ids)
 
     def button_schedule_trip(self):
-
         pickings = self.env['stock.picking'].search([('origin', '=', self.name), ('picking_type_id.code', '=', 'incoming')], limit=1)
 
         if not pickings:
-                # Aquí puedes manejar el caso en el que no se encuentra un movimiento de stock. Por ejemplo:
-                raise UserError('No se encontró un movimiento de stock para esta orden de compra.')
+            raise UserError('No se encontró un movimiento de stock para esta orden de compra.')
 
+        # Determinar el origen y el destino en función del tipo de movimiento de stock
+        if pickings.picking_type_id.code == 'incoming':
+            # Para albaranes de entrada, el origen es tu empresa y el destino el proveedor
+            origen = self.company_id.partner_id.id
+            destino = self.partner_id.id
+        else:
+                
+            origen = self.partner_id.id
+            destino = self.company_id.partner_id.id
 
         agenda_vals = {
             'fecha': fields.Date.today(),
             'fecha_viaje': fields.Date.today(),
             'solicitante_id': self.partner_id.id,  # Esto sería el proveedor.
-            'origen': self.partner_id.id,          # Proveedor: de donde viene la mercancía.
-            'destino': self.company_id.partner_id.id, # Tu empresa: a donde llegará la mercancía.
+            'origen': origen,
+            'destino': destino,
             'order_id': self.id,
             'picking_id': pickings.id,
             'tipo_viaje': 'entrada',
-
         }
         self.env['gms.agenda'].create(agenda_vals)
         return True
+
 
     def action_view_agenda(self):
         self.ensure_one()
