@@ -18,29 +18,36 @@ class StockPicking(models.Model):
 
    
     def button_schedule_trip(self):
-         # Verificar si ya hay una agenda con estados solicitud, proceso o confirmado
+        # Verificar si ya hay una agenda con estados solicitud, proceso o confirmado
         agendas = self.agenda_ids.filtered(lambda r: r.state in ['solicitud', 'proceso', 'confirmado'])
         if agendas:
             # Si hay, lanzar un mensaje de advertencia
             raise UserError('Ya existe una agenda en estado Solicitud, Proceso o Confirmado.')
         else:
-             # Obtener el cliente del pedido de venta
-            solicitante = self.sale_id.partner_id.id if self.sale_id else self.partner_id.id
+            # Determinar si es un viaje de entrada o salida
             tipo_viaje = 'entrada' if self.picking_type_id.code == 'incoming' else 'salida'
             _logger.info("Picking type code: %s", self.picking_type_id.code)
 
+            # Definir origen y destino basado en el tipo de viaje
+            if tipo_viaje == 'entrada':
+                origen = self.partner_id.id  # Proveedor
+                destino = self.picking_type_id.warehouse_id.partner_id.id  # Almacén
+            else:
+                origen = self.picking_type_id.warehouse_id.partner_id.id  # Almacén
+                destino = self.partner_id.id  # Cliente o destino final
 
             agenda_vals = {
                 'fecha': fields.Date.today(),
                 'fecha_viaje': fields.Date.today(),
-                'solicitante_id': solicitante,
-                'origen': self.picking_type_id.warehouse_id.partner_id.id,
-                'destino': self.partner_id.id,
+                'solicitante_id': self.partner_id.id,  # Proveedor o cliente
+                'origen': origen,
+                'destino': destino,
                 'picking_id': self.id,
                 'tipo_viaje': tipo_viaje,
             }
             agenda = self.env['gms.agenda'].create(agenda_vals)
         return True
+
 
     
     def action_view_agenda(self):

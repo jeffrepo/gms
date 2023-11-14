@@ -36,6 +36,9 @@
 
         <!-- Submenú para Rutas, dentro de Configuración -->
         <menuitem id="gms_menu_rutas" name="Rutas" parent="gms_menu_configuracion" action="action_rutas" sequence="4"/>
+          
+          <!-- Submenú para Ajuste, dentro de Configuración -->
+        <menuitem id="gms_menu_settings" name="Ajustes" parent="gms_menu_configuracion" action="action_res_config_settings_gms" sequence="5"/>
 
 
 
@@ -135,12 +138,16 @@
             <field name="view_mode">tree,form</field>
         </record>
 
-        <!-- <record id="action_ajustes" model="ir.actions.act_window">
-            <field name="name">Ajustes</field>
-            <field name="res_model">gms.ajustes</field>
-            <field name="view_mode">tree,form</field>
-            
-        </record> -->
+        <!-- accion para ver los ajustes -->
+        <record id="action_res_config_settings_gms" model="ir.actions.act_window">
+            <field name="name">Configuración de Balanza</field>
+            <field name="res_model">res.config.settings</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_res_config_settings_gms"/>
+            <field name="target">inline</field>
+        </record>
+
+
       
 
 
@@ -288,14 +295,15 @@
                         </div>
                         <group>
                             <group>
-                                <field name="fecha" attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado'])]}"/>
-                                <field name="fecha_viaje" attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado'])]}" />
-                                 <field name="tipo_viaje" attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado', 'solicitud'])]}"/>
-                                <field name="solicitante_id" attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado', 'solicitud'])]}"/>
-                                <field name="origen"  attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado'])]}"/>
-                                <field name="destino" attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado'])]}"/>
+
+                                <field name="fecha" attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado', 'proceso'])]}"/>                                <field name="fecha_viaje" attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado'])]}" />
+                                <field name="tipo_viaje" attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado', 'solicitud', 'proceso'])]}"/>
+                                <field name="solicitante_id" attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado', 'solicitud', 'proceso'])]}"/>
+                                <field name="origen"  attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado', 'proceso'])]}"/>
+                                <field name="destino" attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado', 'proceso'])]}"/>
                                 <field name="picking_id" string = " "  invisible="True"/>
-                               
+                                <field name="fecha_viaje" attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado', 'proceso'])]}" />
+
             
                             </group>
 
@@ -443,7 +451,7 @@
 
                             <group>
                             
-                                <field name="chacra"/>
+                                <!-- <field name="chacra"/> -->
                                 <field name="remito"/>
 
                             </group>  
