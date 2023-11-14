@@ -43,8 +43,8 @@ class Viajes(models.Model):
     origen = fields.Many2one('res.partner', 
                              string='Origen', 
                              tracking="1", 
-                             domain="['&',('tipo', '!=', False),('parent_id','=',solicitante_id)]")
-    
+                            domain="[('tipo', 'in', ['planta', 'chacra', 'puerto']), ('parent_id', '=', solicitante_id)]"
+    )
     destino = fields.Many2one('res.partner', string='Destino', tracking="1")
 
     camion_disponible_id = fields.Many2one('gms.camiones.disponibilidad', string='Camión Disponible', tracking="1")
@@ -53,7 +53,8 @@ class Viajes(models.Model):
 
     conductor_id = fields.Many2one('res.partner', string='Chofer', compute="_compute_conductor_transportista", tracking="1")
 
-    solicitante_id = fields.Many2one('res.partner', string='Solicitante', tracking="1")
+    solicitante_id = fields.Many2one('res.partner', string='Solicitante', tracking="1",
+                                 domain="[('tipo', 'not in', ['chacra', 'planta'])]")
     
     # nuevos campos 
     tipo_viaje = fields.Selection([('entrada', 'Entrada'), ('salida', 'Salida')], string="Tipo de Viaje", tracking="1")
@@ -352,14 +353,19 @@ class Viajes(models.Model):
     @api.onchange('kilogramos_a_liquidar')
     def _onchange_kilogramos_a_liquidar(self):
         if self.albaran_id:
-            # Obtener la primera línea del albarán (esto podría cambiar si hay múltiples líneas)
-            move_line = self.albaran_id.move_ids_without_package[0]
-            # Actualizar la demanda (product_uom_qty) de esa línea
-            move_line.write({
-                'quantity_done': self.kilogramos_a_liquidar
-            })
-        else:
-            raise UserError('Este viaje no tiene un albarán asociado.')
+            # Verifica si hay líneas de albarán antes de intentar acceder a ellas
+            if self.albaran_id.move_ids_without_package:
+                # Obtener la primera línea del albarán (esto podría cambiar si hay múltiples líneas)
+                move_line = self.albaran_id.move_ids_without_package[0]
+                # Actualizar la demanda (quantity_done) de esa línea
+                move_line.write({
+                    'quantity_done': self.kilogramos_a_liquidar
+                })
+            else:
+                
+                pass
+        # No se lanza error si no hay albarán asociado
+
         
 
 
@@ -425,3 +431,46 @@ class Viajes(models.Model):
             if ruta.direccion_origen_id.id != origen or ruta.direccion_destino_id.id != destino:
                 raise UserError("El origen y destino de la ruta deben ser iguales al del viaje.")
         return super(Viajes, self).write(vals)
+    
+    # solo debe mostrar contactos hijos del solicitante
+    @api.onchange('solicitante_id')
+    def _onchange_solicitante_id(self):
+        if self.solicitante_id:
+            return {'domain': {'origen': [('id', 'child_of', self.solicitante_id.id)]}}
+        return {'domain': {'origen': []}}
+
+    # silo_id debe llenarse con el campo destino del albarán
+    @api.onchange('albaran_id')
+    def _onchange_albaran_id(self):
+        if self.albaran_id:
+            self.silo_id = self.albaran_id.location_dest_id.id
+
+
+    # Impedir cambiar estados anteriores cuando hay un albarán asociado
+
+    def action_borrador(self):
+        if self.albaran_id:
+            raise UserError('No se puede regresar al estado anterior porque hay un albarán asociado.')
+        self.write({'state': 'coordinado'})
+
+
+
+
+
+    def determinar_y_asignar_gasto_viaje(self):
+        # Obtener los productos de gasto de los ajustes
+        config_params = self.env['ir.config_parameter'].sudo()
+        gasto_con_impuesto_id = int(config_params.get_param('gms.gasto_viaje_con_impuesto_id'))
+        gasto_sin_impuesto_id = int(config_params.get_param('gms.gasto_viaje_sin_impuesto_id'))
+
+        # Determinar si el destino es de tipo 'puerto'
+        es_destino_puerto = self.destino.tipo == 'puerto'
+
+        # Seleccionar el producto de gasto adecuado
+        producto_gasto_id = gasto_sin_impuesto_id if es_destino_puerto else gasto_con_impuesto_id
+
+        # Crear nuevo registro
+        self.env['gms.gasto_viaje'].create({
+            'producto_id': producto_gasto_id,
+            'viaje_id': self.id
+        })

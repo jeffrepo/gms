@@ -5,6 +5,7 @@
     'description': 'Módulo para Barraca Artigas Silveira',
     'author': '',
     'website': '',
+    'icon': '/gms/static/description/Balanza.png',
     'category': 'Uncategorized',
     'version': '0.1',
     'depends': ['base','product','sale','purchase','stock'],

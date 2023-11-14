@@ -1,5 +1,8 @@
 from odoo import models, fields, api
 from odoo.exceptions import UserError
+import logging
+
+_logger = logging.getLogger(__name__)
 
 class Camiones(models.Model):
     _name = 'gms.camiones'
@@ -19,7 +22,7 @@ class Camiones(models.Model):
     tracking="1"
 )
 
-    conductor_id = fields.Many2one('res.partner', string='Chofer', required=True, tracking="1")
+    conductor_id = fields.Many2one('res.partner', string='Chofer', required=True, tracking="1", domain=[('tipo', '=', 'chofer')])
     disponible = fields.Boolean(string='Disponible', default=True, tracking="1")
     disponible_zafra = fields.Boolean(string="Zafra", tracking="1")
      
@@ -91,3 +94,11 @@ class Camiones(models.Model):
         else:
             res['domain'] = {'conductor_id': [('parent_id', '=', False)]} # Opcional, aquí podrías decidir qué mostrar si no hay transportista seleccionado
         return res
+    
+
+
+
+    @api.model
+    def search(self, args, *kwargs):
+        _logger.info("Dominio actual para 'conductor_id': %s", self._fields['conductor_id'].domain)
+        return super(Camiones, self).search(args, *kwargs)

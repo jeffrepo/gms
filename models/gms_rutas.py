@@ -16,9 +16,9 @@ class GmsRutas(models.Model):
 
  
 
-    gasto_viaje_id = fields.Many2one(
-        'product.product', 
-        string='Gasto del Viaje', 
-        domain=[('detailed_type', '=', 'service')],
-        tracking="1"
-    )
+    # gasto_viaje_id = fields.Many2one(
+    #     'product.product', 
+    #     string='Gasto del Viaje', 
+    #     domain=[('detailed_type', '=', 'service')],
+    #     tracking="1"
+    # )
