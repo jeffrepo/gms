@@ -13,7 +13,6 @@
         'views/views.xml',
         'views/gms_viajes.xml',
         'views/gms_agenda.xml',
-        'views/gms_ajuste.xml',
         'security/ir.model.access.csv',
         'report/report_gms_viajes.xml',
         'views/report.xml',

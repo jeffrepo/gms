@@ -21,12 +21,9 @@
 
         <!-- Menú para acceder al historial de camiones -->
         <menuitem id="gms_menu_historial" name="Historial de Camiones" parent="gms_menu" action="action_gms_historial" sequence="7"/>
- 
-        <!-- Menú para acceder a Ajustes -->
-        <menuitem id="gms_menu_ajustes" name="Ajustes" parent="gms_menu" action="gms.action_ajustes" sequence="8"/>
 
         <!-- Menú de Configuración -->
-        <menuitem id="gms_menu_configuracion" name="Configuración" parent="gms_menu" sequence="9"/>
+        <menuitem id="gms_menu_configuracion" name="Configuración" parent="gms_menu" sequence="8"/>
 
         <!-- Submenú para Productos, dentro de Configuración -->
         <menuitem id="gms_menu_productos" name="Productos" parent="gms_menu_configuracion" action="action_productos" sequence="1"/>
@@ -138,13 +135,12 @@
             <field name="view_mode">tree,form</field>
         </record>
 
-         <!-- Acción para el menú Ajuste -->      
-        <record id="action_ajustes" model="ir.actions.act_window">
+        <!-- <record id="action_ajustes" model="ir.actions.act_window">
             <field name="name">Ajustes</field>
             <field name="res_model">gms.ajustes</field>
             <field name="view_mode">tree,form</field>
             
-        </record>
+        </record> -->
       
 
 
@@ -279,10 +275,10 @@
                             <button name="action_view_scheduled_trips"
                                 type="object"
                                 class="oe_stat_button"
-                                icon="fa-truck">
+                                icon="fa-truck"
+                                attrs="{'invisible': [('viaje_count', '=', 0)]}">  
                                 <field name="viaje_count" widget="statinfo" string="Viajes"/>
                             </button>
-    
                         </div>
                     
                         <div class="oe_title">
@@ -384,7 +380,8 @@
                             <button name="action_view_agenda"
                                     type="object"
                                     class="oe_stat_button"
-                                    icon="fa-calendar">
+                                    icon="fa-calendar"
+                                    attrs="{'invisible': [('agenda_count', '=', 0)]}">   
                                 <field name="agenda_count" widget="statinfo" string="Agenda"/>
                             </button>
                            
@@ -392,7 +389,8 @@
                             <button name="action_view_picking"
                                 type="object"
                                 class="oe_stat_button"
-                                icon="fa-archive">  
+                                icon="fa-archive"
+                                attrs="{'invisible': [('albaran_count', '=', 0)]}">   
                                 <field name="albaran_count" widget="statinfo" string="Albarán"/>
                             </button>
                         </div>
@@ -770,7 +768,7 @@
         <field name="inherit_id" ref="stock.view_picking_form"/>
         <field name="arch" type="xml">
             <header position="inside">
-                <!-- <button name="button_schedule_trip" string="Agendar viaje" type="object"/> -->
+                <button name="button_schedule_trip" string="Agendar viaje" type="object"/>
             </header>
 
             <div class="oe_button_box" name="button_box" position="inside">
@@ -778,7 +776,8 @@
                 <button name="action_view_agenda"
                         type="object"
                         class="oe_stat_button"
-                        icon="fa-calendar">
+                        icon="fa-calendar"
+                        attrs="{'invisible': [('agenda_count', '=', 0)]}"> 
                     <field name="agenda_count" widget="statinfo" string="Agenda"/>
                 </button>
             </div>
@@ -801,7 +800,8 @@
                     <button name="action_view_viajes"
                             type="object"
                             class="oe_stat_button"
-                            icon="fa-truck">
+                            icon="fa-truck"
+                            attrs="{'invisible': [('viaje_count', '=', 0)]}"> 
                         <field name="viaje_count" widget="statinfo" string="Viajes"/>
                     </button>
                 </div>
@@ -834,7 +834,8 @@
                  <button name="action_view_viajes"
                     type="object"
                     class="oe_stat_button"
-                    icon="fa-truck">
+                    icon="fa-truck"
+                    attrs="{'invisible': [('viaje_count', '=', 0)]}"> 
                 <field name="viaje_count" widget="statinfo" string="Viajes"/>
             </button>
 
@@ -869,7 +870,7 @@
 
 
 
-        <!-- vista tree de ajustes -->
+<!--        
    <record id="view_ajustes_tree" model="ir.ui.view">
         <field name="name">ajustes.tree</field>
         <field name="model">gms.ajustes</field>
@@ -884,7 +885,7 @@
         </field>
     </record>
 
-    <!-- vista formulario de ajustes -->
+    
    <record id="view_ajustes_form" model="ir.ui.view">
         <field name="name">ajustes.form</field>
         <field name="model">gms.ajustes</field>
@@ -929,7 +930,7 @@
                 </div>
             </form>
         </field>
-    </record>
+    </record> -->
 
 
 
@@ -939,20 +940,20 @@
         <field name="model">res.config.settings</field>
         <field name="inherit_id" ref="base.res_config_settings_view_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//div[hasclass('settings')]" position="inside">
-                <div class="app_settings_block" data-string="GMS Configuraciones" string="GMS" data-key="gms">
+           <xpath expr="//div[@class='settings']" position="inside">
+                <div class="app_settings_block" data-string="GMS Configuraciones" string="Balanza" data-key="gms">
                     <h2>Gastos de Viaje</h2>
                     <div class="row mt16 o_settings_container">
                         <div class="col-12 col-lg-6 o_setting_box">
                             <div class="o_setting_right_pane">
-                                <label for="gasto_viaje_con_impuesto"/>
-                                <field name="gasto_viaje_con_impuesto"/>
+                                <label for="gasto_viaje_con_impuesto_id"/>
+                                <field name="gasto_viaje_con_impuesto_id"/>
                             </div>
                         </div>
                         <div class="col-12 col-lg-6 o_setting_box">
                             <div class="o_setting_right_pane">
-                                <label for="gasto_viaje_sin_impuesto"/>
-                                <field name="gasto_viaje_sin_impuesto"/>
+                                <label for="gasto_viaje_sin_impuesto_id"/>
+                                <field name="gasto_viaje_sin_impuesto_id"/>
                             </div>
                         </div>
                     </div>

@@ -43,8 +43,8 @@ class Viajes(models.Model):
     origen = fields.Many2one('res.partner', 
                              string='Origen', 
                              tracking="1", 
-                             domain="['&',('tipo', '!=', False),('parent_id','=',solicitante_id)]")
-    
+                            domain="[('tipo', 'in', ['planta', 'chacra', 'puerto']), ('parent_id', '=', solicitante_id)]"
+    )
     destino = fields.Many2one('res.partner', string='Destino', tracking="1")
 
     camion_disponible_id = fields.Many2one('gms.camiones.disponibilidad', string='Camión Disponible', tracking="1")
@@ -452,3 +452,25 @@ class Viajes(models.Model):
         if self.albaran_id:
             raise UserError('No se puede regresar al estado anterior porque hay un albarán asociado.')
         self.write({'state': 'coordinado'})
+
+
+
+
+
+    def determinar_y_asignar_gasto_viaje(self):
+        # Obtener los productos de gasto de los ajustes
+        config_params = self.env['ir.config_parameter'].sudo()
+        gasto_con_impuesto_id = int(config_params.get_param('gms.gasto_viaje_con_impuesto_id'))
+        gasto_sin_impuesto_id = int(config_params.get_param('gms.gasto_viaje_sin_impuesto_id'))
+
+        # Determinar si el destino es de tipo 'puerto'
+        es_destino_puerto = self.destino.tipo == 'puerto'
+
+        # Seleccionar el producto de gasto adecuado
+        producto_gasto_id = gasto_sin_impuesto_id if es_destino_puerto else gasto_con_impuesto_id
+
+        # Crear nuevo registro
+        self.env['gms.gasto_viaje'].create({
+            'producto_id': producto_gasto_id,
+            'viaje_id': self.id
+        })
