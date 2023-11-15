@@ -395,19 +395,9 @@ class Viajes(models.Model):
         self.gastos_ids -= gastos_a_eliminar
 
         if self.ruta_id:
-            producto = self.ruta_id.gasto_viaje_id
-            if producto:  # Verifica si hay un producto asociado con la ruta
-                # Crear la nueva línea
-                nuevo_gasto = {
-                    'name': 'Flete',
-                    'producto_id': producto.id,  # Asigna el ID del producto
-                    'proveedor_id': self.transportista_id.id,
-                    'estado_compra': 'no_comprado',
-                    'precio_total': producto.standard_price * self.ruta_id.kilometros,  # Accede directamente al precio estándar
-                    'es_de_ruta': True,
-                }
-                self.gastos_ids |= self.gastos_ids.new(nuevo_gasto)
-            # Si no hay producto, no se crea la línea de gasto
+           
+            pass
+
 
  
 
@@ -444,6 +434,18 @@ class Viajes(models.Model):
     def _onchange_albaran_id(self):
         if self.albaran_id:
             self.silo_id = self.albaran_id.location_dest_id.id
+
+
+    @api.model
+    def create(self, vals):
+        # Crear el viaje como normalmente
+        viaje = super(Viajes, self).create(vals)
+
+        # Si hay un albarán asociado en la agenda, asignar su destino al silo del viaje
+        if viaje.agenda and viaje.agenda.picking_id and viaje.agenda.picking_id.location_dest_id:
+            viaje.silo_id = viaje.agenda.picking_id.location_dest_id.id
+
+        return viaje
 
 
     # Impedir cambiar estados anteriores cuando hay un albarán asociado
