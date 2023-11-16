@@ -121,7 +121,21 @@ class Viajes(models.Model):
 
     # secado_entrada_1 = fields.Selection([('si', 'Si'), ('no', 'No')], string="Secado entrada", tracking="1")
 
+
+
     
+    @api.model
+    def create(self, vals):
+        if vals.get('name', _('New')) == _('New'):
+            vals['name'] = self.env['ir.sequence'].next_by_code('gms.viaje')
+        record = super().create(vals)
+
+        if record.agenda:
+            record.message_post(body="Este viaje fue creado desde una agenda.",subtype_xmlid="mail.mt_note")
+
+        return record
+
+
 
     def write(self, vals):
         for record in self:
@@ -266,16 +280,7 @@ class Viajes(models.Model):
     def action_borrador(self):
         self.write({'state': 'borrador'})
 
-    @api.model
-    def create(self, vals):
-        if vals.get('name', _('New')) == _('New'):
-            vals['name'] = self.env['ir.sequence'].next_by_code('gms.viaje')
-        record = super().create(vals)
 
-        if record.agenda:
-            record.message_post(body="Este viaje fue creado desde una agenda.",subtype_xmlid="mail.mt_note")
-
-        return record
        
 
 
@@ -405,7 +410,7 @@ class Viajes(models.Model):
 
     
     @api.model
-    def create(self, vals):
+    def _post_create_actions(self, vals):
         if vals.get('ruta_id'):
             ruta = self.env['gms.rutas'].browse(vals['ruta_id'])
             if ruta.direccion_origen_id.id != vals.get('origen') or ruta.direccion_destino_id.id != vals.get('destino'):
@@ -437,7 +442,7 @@ class Viajes(models.Model):
 
 
     @api.model
-    def create(self, vals):
+    def create_post_create_actions01(self, vals):
         # Crear el viaje como normalmente
         viaje = super(Viajes, self).create(vals)
 
@@ -459,6 +464,17 @@ class Viajes(models.Model):
 
 
 
+    @api.model
+    def _post_create_actions02(self, vals):
+        # Crear el registro de viaje
+        new_record = super(Viajes, self).create(vals)
+
+        # Determinar y asignar el gasto del viaje si la ruta está definida
+        if 'ruta_id' in vals and vals['ruta_id']:
+            new_record.determinar_y_asignar_gasto_viaje()
+
+        return new_record
+
     def determinar_y_asignar_gasto_viaje(self):
         # Obtener los productos de gasto de los ajustes
         config_params = self.env['ir.config_parameter'].sudo()
@@ -471,8 +487,19 @@ class Viajes(models.Model):
         # Seleccionar el producto de gasto adecuado
         producto_gasto_id = gasto_sin_impuesto_id if es_destino_puerto else gasto_con_impuesto_id
 
-        # Crear nuevo registro
+        # Obtener el precio unitario del producto
+        producto = self.env['product.product'].browse(producto_gasto_id)
+        precio_coste = producto.standard_price  # o cualquier campo que represente el precio en tu modelo
+
+        # Crear nuevo registro de gasto de viaje
+        
         self.env['gms.gasto_viaje'].create({
+            'name': 'Flete',
             'producto_id': producto_gasto_id,
-            'viaje_id': self.id
+            'viaje_id': self.id,
+            'precio_total': precio_coste,
+            'proveedor_id': self.solicitante_id.id,
+            'estado_compra': 'no_comprado'
+
+            
         })

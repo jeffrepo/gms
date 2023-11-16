@@ -39,7 +39,7 @@ class StockPicking(models.Model):
             agenda_vals = {
                 'fecha': fields.Date.today(),
                 'fecha_viaje': fields.Date.today(),
-                'solicitante_id': self.partner_id.id,  # Proveedor o cliente
+                'solicitante_id': self.partner_id.id,
                 'origen': origen,
                 'destino': destino,
                 'picking_id': self.id,

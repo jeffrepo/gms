@@ -296,7 +296,7 @@
                         <group>
                             <group>
 
-                                <field name="fecha" attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado', 'proceso'])]}"/>                                <field name="fecha_viaje" attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado'])]}" />
+                                <field name="fecha" attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado', 'proceso'])]}"/>                              
                                 <field name="tipo_viaje" attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado', 'solicitud', 'proceso'])]}"/>
                                 <field name="solicitante_id" attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado', 'solicitud', 'proceso'])]}"/>
                                 <field name="origen"  attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado', 'proceso'])]}"/>
