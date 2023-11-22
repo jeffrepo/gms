@@ -59,3 +59,73 @@ class StockPicking(models.Model):
             'view_mode': 'tree,form',
             'domain': [('picking_id', '=', self.id)],
         }
+
+
+
+
+
+
+
+
+
+    viaje_ids = fields.One2many('gms.viaje', 'albaran_id', string='Viajes Relacionados')
+    viaje_count = fields.Integer(string='Número de Viajes', compute='_compute_viaje_count')
+
+    @api.depends('viaje_ids')
+    def _compute_viaje_count(self):
+        for picking in self:
+            picking.viaje_count = len(picking.viaje_ids)
+
+    def button_create_trip(self):
+        # Verificar si ya existe un viaje para este albarán
+        if self.viaje_ids:
+            raise UserError('Ya existe un viaje para este albarán.')
+        else:
+            # Abrir el asistente para seleccionar camión
+            return {
+                'name': 'Seleccionar Camión Disponible',
+                'type': 'ir.actions.act_window',
+                'res_model': 'gms.camion.seleccion.asistente',
+                'view_mode': 'form',
+                'view_id': self.env.ref('gms.view_camion_seleccion_asistente_form').id,
+                'target': 'new',
+                'context': {'default_albaran_id': self.id}
+            }
+        
+
+           
+    
+
+
+    def action_cancel(self):
+        _logger.info("Iniciando el proceso de cancelación del albarán")
+        
+        # Recorrer todos los viajes relacionados y cancelarlos
+        for viaje in self.viaje_ids:
+            _logger.info(f"Cancelando el viaje {viaje.name}")
+            viaje.action_cancel()
+
+            # Si hay un camión asociado, cambiar su estado a 'disponible'
+        if viaje.camion_disponible_id and viaje.camion_disponible_id.camion_id:
+            _logger.info(f"Cambiando el estado del camión {viaje.camion_disponible_id.camion_id.matricula} a disponible")
+            viaje.camion_disponible_id.write({'estado': 'disponible'})
+        else:
+            _logger.info("No hay camión asignado a este viaje")
+
+        # Llamada al método original
+        res = super(StockPicking, self).action_cancel()
+
+        _logger.info("Finalizado el proceso de cancelación del albarán")
+
+        return res
+
+
+    def action_view_trip(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Viajes',
+            'res_model': 'gms.viaje',
+            'view_mode': 'tree,form',
+            'domain': [('albaran_id', '=', self.id)],
+        }

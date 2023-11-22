@@ -9,12 +9,12 @@ class MedidaPropiedad(models.Model):
     _name = 'gms.medida.propiedad'
     _description = 'Medida de Propiedad'
 
-    viaje_id = fields.Many2one('gms.viaje', string='Viaje', ondelete='cascade' , readonly=True)
-    propiedad = fields.Many2one('gms.propiedades', string='Propiedad', domain="[('id', 'in', propiedades_disponibles_ids)]")
+    viaje_id = fields.Many2one('gms.viaje', string='Viaje', ondelete='cascade' , readonly=True, tracking="1")
+    propiedad = fields.Many2one('gms.propiedades', string='Propiedad', domain="[('id', 'in', propiedades_disponibles_ids)]", tracking="1")
 
     valor_medida = fields.Float(string='Valor Medida (%)')
-    parametro = fields.Float(string='Parámetro', compute='_compute_parametro')
-    merma_kg = fields.Float(string='Merma (kg)')
+    parametro = fields.Float(string='Parámetro', compute='_compute_parametro', tracking="1")
+    merma_kg = fields.Float(string='Merma (kg)' , readonly=True,  tracking="1")
 
   
 

@@ -99,6 +99,6 @@ class Camiones(models.Model):
 
 
     @api.model
-    def search(self, args, *kwargs):
+    def search(self, args, offset=0, limit=None, order=None, count=False):
         _logger.info("Dominio actual para 'conductor_id': %s", self._fields['conductor_id'].domain)
-        return super(Camiones, self).search(args, *kwargs)
+        return super(Camiones, self).search(args, offset=offset, limit=limit, order=order, count=count)

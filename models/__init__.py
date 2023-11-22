@@ -19,3 +19,4 @@ from . import gms_propiedades_lineas
 from . import gms_tolva
 from . import gms_ajustes
 from . import res_config_settings
+from . import gms_modelo_asistente
