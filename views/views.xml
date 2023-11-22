@@ -418,7 +418,7 @@
                             <group>
                             
                                 <field name="transportista_id" attrs="{'readonly': [('state', 'in', ['cancelado','proceso'])]}"/>
-                                <!-- <field name="ruta_id" attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])], 'required': [('state', '=', 'proceso')]}"/> -->
+                                <field name="ruta_id" attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])], 'required': [('state', '=', 'proceso')]}"/>
                                 <field name="producto_transportado_id" attrs="{'required': [('state', '=', 'coordinado')]}"/>
                                 <field name="pedido_venta_id"  attrs="{'invisible': 1, 'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
                                 <field name="pedido_compra_id"  attrs="{'invisible': 1, 'readonly': [('state', 'in',['cancelado','terminado', 'liquidado'])]}"/>
