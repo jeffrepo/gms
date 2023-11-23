@@ -110,10 +110,20 @@ class Agenda(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
+            if vals.get('tipo_viaje') == 'entrada' and 'solicitante_id' in vals:
+                # Buscar el primer subcontacto del solicitante
+                primer_subcontacto = self.env['res.partner'].search([
+                    ('parent_id', '=', vals['solicitante_id']),
+                    ('id', '!=', vals['solicitante_id'])
+                ], limit=1, order='id')
+                if primer_subcontacto:
+                    vals['origen'] = primer_subcontacto.id
             if vals.get('name', 'New') == 'New':
                 vals['name'] = self.env['ir.sequence'].next_by_code('gms.agenda')
         return super().create(vals_list)
+    
 
+    
     def action_cancel(self):
         self.write({'state': 'cancelado'})
 
@@ -163,6 +173,15 @@ class Agenda(models.Model):
         _logger.info("Producto transportado ID: %s", producto_transportado_id)
         _logger.info("Cantidad: %s", cantidad)
 
+        # Obtener el albarán asociado
+        albaran = self.env['stock.picking'].browse(self.picking_id.id)
+
+        # Asegurarse de que el albarán existe y tiene un destino
+        if albaran and albaran.location_dest_id:
+            silo_id = albaran.location_dest_id.id
+        else:
+            silo_id = None 
+
         # Llenar el registro gms.viaje
         dic_viaje = {
             'agenda': self.id,
@@ -179,7 +198,8 @@ class Agenda(models.Model):
             'producto_transportado_id': producto_transportado_id,
             'albaran_id': self.picking_id.id,
             'kilogramos_a_liquidar': cantidad,
-            'arribo': fields.Datetime.now()
+            'arribo': fields.Datetime.now(),
+            'silo_id': silo_id
         }
         if self.tipo_viaje == "entrada":
             dic_viaje['pedido_compra_id'] = self.picking_id.purchase_id.id
@@ -187,6 +207,15 @@ class Agenda(models.Model):
         if self.tipo_viaje == "salida":
             dic_viaje["pedido_venta_id"] = self.picking_id.sale_id.id
 
+        # Buscar una ruta que coincida con el origen y destino del viaje
+        ruta = self.env['gms.rutas'].search([
+            ('direccion_origen_id', '=', dic_viaje['origen']),
+            ('direccion_destino_id', '=', dic_viaje['destino'])
+        ], limit=1)
+
+        # Si se encuentra una ruta, asignarla al diccionario antes de crear el viaje
+        if ruta:
+            dic_viaje['ruta_id'] = ruta.id
 
         viaje = self.env['gms.viaje'].create(dic_viaje)
 
@@ -235,12 +264,24 @@ class Agenda(models.Model):
             raise UserError(_('No hay un albarán asociado a esta agenda.'))
         
 
-
-
-
-
-
     def _get_warehouse_partner_domain(self):
-        warehouse_partners = self.env['stock.warehouse'].search([]).mapped('partner_id')
-        return [('id', 'in', warehouse_partners.ids)]
-    
+          # Busca todos los almacenes y obtén los IDs de sus socios asociados
+        warehouse_partners = self.env['stock.warehouse'].search([]).mapped('partner_id').ids
+
+        # Busca todos los subcontactos (hijos) de esos socios
+        subcontactos = self.env['res.partner'].search([('parent_id', 'in', warehouse_partners)])
+
+        # Devuelve un dominio que incluya solo esos subcontactos
+        return [('id', 'in', subcontactos.ids)]
+
+   
+   
+
+    @api.onchange('tipo_viaje')
+    def _onchange_tipo_viaje(self):
+        # Si el tipo de viaje es 'salida', ajustar el dominio del campo destino
+        if self.tipo_viaje == 'salida':
+            return {'domain': {'destino': [('tipo', 'in', ['puerto', 'planta'])]}}
+        else:
+            # Restablecer el dominio original para otros tipos de viaje
+            return {'domain': {'destino': self._get_warehouse_partner_domain()}}

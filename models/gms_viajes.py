@@ -51,7 +51,7 @@ class Viajes(models.Model):
 
     camion_id = fields.Many2one('gms.camiones', string='Camion', required=True , tracking="1")
 
-    conductor_id = fields.Many2one('res.partner', string='Chofer', compute="_compute_conductor_transportista", tracking="1")
+    conductor_id = fields.Many2one('res.partner', string='Chofer', readonly=True, compute="_compute_conductor_transportista", tracking="1")
 
     solicitante_id = fields.Many2one('res.partner', string='Solicitante', tracking="1",
                                  domain="[('tipo', 'not in', ['chacra', 'planta'])]")
@@ -61,12 +61,17 @@ class Viajes(models.Model):
 
     numero_remito = fields.Char(string="Número de remito / Guía", tracking="1")
     
-    transportista_id = fields.Many2one('res.partner', string="Transportista", compute="_compute_conductor_transportista", tracking="1")
+    transportista_id = fields.Many2one('res.partner', string="Transportista", readonly=True, compute="_compute_conductor_transportista", tracking="1")
 
     ruta_id = fields.Many2one('gms.rutas', 
                           string="Ruta", 
                           domain="[('direccion_origen_id', '=', origen),('direccion_destino_id', '=', destino)]",
                           tracking="1")
+    
+
+   
+    
+    
 
     albaran_id = fields.Many2one('stock.picking', string="Albarán", tracking="1")
 
@@ -76,7 +81,7 @@ class Viajes(models.Model):
 
     tara = fields.Float(string="Tara", tracking="1")
 
-    peso_neto = fields.Float(string="Peso neto", compute="_compute_peso_neto", tracking="1",store=True)
+    peso_neto = fields.Float(string="Peso neto", readonly=True, compute="_compute_peso_neto", tracking="1",store=True)
     
     estado = fields.Char(string = "s")
 
@@ -95,7 +100,7 @@ class Viajes(models.Model):
 
     kilometros_flete = fields.Float(string="Kilómetros flete", tracking="1")
 
-    kilogramos_a_liquidar = fields.Float(string="Kilogramos a liquidar", compute="_compute_kilogramos_a_liquidar", store=True, tracking=True)
+    kilogramos_a_liquidar = fields.Float(string="Kilogramos a liquidar" , readonly=True, compute="_compute_kilogramos_a_liquidar", store=True, tracking=True)
 
     pedido_venta_id = fields.Many2one('sale.order', string="Pedido de venta", tracking="1", readonly=True)
 
@@ -109,7 +114,7 @@ class Viajes(models.Model):
 
     purchase_order_id= fields.Many2one('purchase.order')
 
-    medidas_propiedades_ids = fields.One2many('gms.medida.propiedad', 'viaje_id', string='Medidas de Propiedades')
+    medidas_propiedades_ids = fields.One2many('gms.medida.propiedad', 'viaje_id', string='Medidas de Propiedades', tracking="1")
 
     arribo = fields.Datetime(string="Arribo")
     partida = fields.Datetime(string="Partida")
@@ -117,17 +122,27 @@ class Viajes(models.Model):
     chacra = fields.Char(string='Chacra', tracking="1")
     remito = fields.Float(string='Remito', tracking="1")
 
+    firma = fields.Binary(string='Firma', tracking="1")
+
     # prelimpieza_entrada_1 = fields.Selection([('si', 'Si'), ('no', 'No')], string="Prelimpieza entrada", tracking="1")
 
     # secado_entrada_1 = fields.Selection([('si', 'Si'), ('no', 'No')], string="Secado entrada", tracking="1")
 
-    
 
-    def write(self, vals):
-        for record in self:
-            if vals.get('state') == 'terminado' and 'partida' not in vals:
-                vals['partida'] = fields.Datetime.now()
-        return super(Viajes, self).write(vals)
+
+    
+    @api.model
+    def create(self, vals):
+        if vals.get('name', _('New')) == _('New'):
+            vals['name'] = self.env['ir.sequence'].next_by_code('gms.viaje')
+        record = super().create(vals)
+
+        if record.agenda:
+            record.message_post(body="Este viaje fue creado desde una agenda.",subtype_xmlid="mail.mt_note")
+
+        return record
+
+
 
 
    
@@ -179,6 +194,11 @@ class Viajes(models.Model):
     def action_cancel(self):
         self.write({'state': 'cancelado'})
 
+        if self.camion_disponible_id:
+            self.camion_disponible_id.write({'estado': 'disponible'})
+
+        return True
+
     def action_terminado(self):
         self.write({'state': 'terminado'})
 
@@ -198,6 +218,12 @@ class Viajes(models.Model):
          # Actualiza el estado del camión a 'disponible' si existe
         self.camion_disponible_id.estado = "disponible"
         self.camion_disponible_id.fecha_hora_liberacion = fecha_hora_actual
+
+
+        fecha_hora_actual = fields.Datetime.now()
+            # Establece la fecha y hora de partida para el viaje
+        self.partida = fecha_hora_actual
+
         
 
         # # Buscar la ubicación 'Partners/Vendors'
@@ -266,16 +292,7 @@ class Viajes(models.Model):
     def action_borrador(self):
         self.write({'state': 'borrador'})
 
-    @api.model
-    def create(self, vals):
-        if vals.get('name', _('New')) == _('New'):
-            vals['name'] = self.env['ir.sequence'].next_by_code('gms.viaje')
-        record = super().create(vals)
 
-        if record.agenda:
-            record.message_post(body="Este viaje fue creado desde una agenda.",subtype_xmlid="mail.mt_note")
-
-        return record
        
 
 
@@ -405,7 +422,7 @@ class Viajes(models.Model):
 
     
     @api.model
-    def create(self, vals):
+    def _post_create_actions(self, vals):
         if vals.get('ruta_id'):
             ruta = self.env['gms.rutas'].browse(vals['ruta_id'])
             if ruta.direccion_origen_id.id != vals.get('origen') or ruta.direccion_destino_id.id != vals.get('destino'):
@@ -437,7 +454,7 @@ class Viajes(models.Model):
 
 
     @api.model
-    def create(self, vals):
+    def create_post_create_actions01(self, vals):
         # Crear el viaje como normalmente
         viaje = super(Viajes, self).create(vals)
 
@@ -457,22 +474,82 @@ class Viajes(models.Model):
 
 
 
-
-
+    
+    @api.onchange('ruta_id')
+    def _onchange_ruta_id(self):
+        if self.ruta_id:
+            # Lógica para determinar y asignar el gasto del viaje
+            self.determinar_y_asignar_gasto_viaje()
+    
     def determinar_y_asignar_gasto_viaje(self):
-        # Obtener los productos de gasto de los ajustes
+        # Asegúrate de que no se creen registros duplicados
+        if not self.gastos_ids.filtered(lambda g: g.producto_id.id == self._get_gasto_viaje_producto_id()):
+            # Obtener los productos de gasto de los ajustes
+            config_params = self.env['ir.config_parameter'].sudo()
+            gasto_con_impuesto_id = int(config_params.get_param('gms.gasto_viaje_con_impuesto_id'))
+            gasto_sin_impuesto_id = int(config_params.get_param('gms.gasto_viaje_sin_impuesto_id'))
+    
+            # Determinar si el destino es de tipo 'puerto'
+            es_destino_puerto = self.destino.tipo == 'puerto'
+    
+            # Seleccionar el producto de gasto adecuado
+            producto_gasto_id = gasto_sin_impuesto_id if es_destino_puerto else gasto_con_impuesto_id
+    
+            # Obtener el precio unitario del producto
+            producto = self.env['product.product'].browse(producto_gasto_id)
+            precio_coste = producto.standard_price  # o cualquier campo que represente el precio en tu modelo
+    
+            # Crear nuevo registro de gasto de viaje
+            self.env['gms.gasto_viaje'].create({
+                'name': 'Flete',
+                'producto_id': producto_gasto_id,
+                'viaje_id': self.id,
+                'precio_total': precio_coste,
+                'proveedor_id': self.transportista_id.id,
+                'estado_compra': 'no_comprado'
+            })
+    
+    def _get_gasto_viaje_producto_id(self):
+        # Este método auxiliar devuelve el ID del producto de gasto de viaje correspondiente
         config_params = self.env['ir.config_parameter'].sudo()
         gasto_con_impuesto_id = int(config_params.get_param('gms.gasto_viaje_con_impuesto_id'))
         gasto_sin_impuesto_id = int(config_params.get_param('gms.gasto_viaje_sin_impuesto_id'))
-
+    
         # Determinar si el destino es de tipo 'puerto'
         es_destino_puerto = self.destino.tipo == 'puerto'
-
+    
         # Seleccionar el producto de gasto adecuado
-        producto_gasto_id = gasto_sin_impuesto_id if es_destino_puerto else gasto_con_impuesto_id
+        return gasto_sin_impuesto_id if es_destino_puerto else gasto_con_impuesto_id
 
-        # Crear nuevo registro
-        self.env['gms.gasto_viaje'].create({
-            'producto_id': producto_gasto_id,
-            'viaje_id': self.id
-        })
+
+
+
+    @api.model
+    def createruta(self, vals):
+        # Crear el viaje como normalmente
+        new_viaje = super(Viajes, self).create(vals)
+
+        # Buscar una ruta que coincida con el origen y destino del viaje
+        ruta = self.env['gms.rutas'].search([
+            ('direccion_origen_id', '=', vals.get('origen')),
+            ('direccion_destino_id', '=', vals.get('destino'))
+        ], limit=1)
+
+        # Si se encuentra una ruta, asignarla al viaje
+        if ruta:
+            new_viaje.ruta_id = ruta.id
+        else:
+            # Si no se encuentra una ruta, dejar el campo 'ruta_id' en blanco
+            new_viaje.ruta_id = False
+
+        return new_viaje
+
+
+
+    # actualizar al chofer
+    @api.onchange('camion_id')
+    def _onchange_camion_id(self):
+        if self.camion_id:
+            self.conductor_id = self.camion_id.conductor_id.id
+        else:
+            self.conductor_id = False

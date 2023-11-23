@@ -1,46 +1,20 @@
 <odoo>
     <data>
 
-        <!-- menú principal para GMS -->
-        <menuitem id="gms_menu" name="Balanza" sequence="1"/>
-
-        <!-- Submenú para Agenda -->
-        <menuitem id="gms_menu_agenda" name="Agenda" parent="gms_menu" action="action_agenda" sequence="2"/>
-
-        <!-- Submenú para Viajes -->
-        <menuitem id="gms_menu_viajes" name="Viajes" parent="gms_menu" action="action_viajes" sequence="3"/>
-
-        <!-- Submenú para Contactos / Transportistas -->
-        <menuitem id="gms_menu_contactos" name="Transportistas" parent="gms_menu" action="action_contactos" sequence="4"/>
-
-        <!-- Submenú para la Disponibilidad de Camiones -->
-        <menuitem id="gms_menu_camiones_disponibilidad" name="Disponibilidad de Camiones" parent="gms_menu" action="action_camiones_disponibilidad" sequence="5"/>
-
-        <!-- Submenú para Gastos -->
-        <menuitem id="gms_menu_gastos" name="Gastos" parent="gms_menu" action="action_gastos" sequence="6"/>
-
-        <!-- Menú para acceder al historial de camiones -->
-        <menuitem id="gms_menu_historial" name="Historial de Camiones" parent="gms_menu" action="action_gms_historial" sequence="7"/>
-
-        <!-- Menú de Configuración -->
-        <menuitem id="gms_menu_configuracion" name="Configuración" parent="gms_menu" sequence="8"/>
-
-        <!-- Submenú para Productos, dentro de Configuración -->
-        <menuitem id="gms_menu_productos" name="Productos" parent="gms_menu_configuracion" action="action_productos" sequence="1"/>
-
-        <!-- Submenú para Camiones, dentro de Configuración -->
-        <menuitem id="gms_menu_camiones_vista" name="Camiones" parent="gms_menu_configuracion" action="action_camiones" sequence="2"/>
-
-        <!-- Submenú para Propiedades, dentro de Configuración -->
-        <menuitem id="gms_menu_propiedades" name="Propiedades" parent="gms_menu_configuracion" action="action_propiedades" sequence="3"/>
-
-        <!-- Submenú para Rutas, dentro de Configuración -->
-        <menuitem id="gms_menu_rutas" name="Rutas" parent="gms_menu_configuracion" action="action_rutas" sequence="4"/>
-          
-          <!-- Submenú para Ajuste, dentro de Configuración -->
-        <menuitem id="gms_menu_settings" name="Ajustes" parent="gms_menu_configuracion" action="action_res_config_settings_gms" sequence="5"/>
+        <!-- accion para ver los ajustes -->
+        <record id="action_res_config_settings_gms" model="ir.actions.act_window">
+            <field name="name">Configuración de Balanza</field>
+            <field name="res_model">res.config.settings</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_res_config_settings_gms"/>
+            <field name="target">inline</field>
+        </record>  
+        
 
 
+
+
+      
 
         
 
@@ -116,6 +90,7 @@
             <field name="name">Viajes</field>
             <field name="res_model">gms.viaje</field>
             <field name="view_mode">tree,form</field>
+            <field name="context">{'create': False}</field>
             
         </record>
 
@@ -146,6 +121,9 @@
             <field name="view_id" ref="view_res_config_settings_gms"/>
             <field name="target">inline</field>
         </record>
+
+
+
 
 
       
@@ -296,13 +274,13 @@
                         <group>
                             <group>
 
-                                <field name="fecha" attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado', 'proceso'])]}"/>                                <field name="fecha_viaje" attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado'])]}" />
+                                <field name="fecha" attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado', 'proceso'])]}"/>                                <field name="fecha_viaje" attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado', 'proceso'])]}" />
                                 <field name="tipo_viaje" attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado', 'solicitud', 'proceso'])]}"/>
                                 <field name="solicitante_id" attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado', 'solicitud', 'proceso'])]}"/>
                                 <field name="origen"  attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado', 'proceso'])]}"/>
                                 <field name="destino" attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado', 'proceso'])]}"/>
                                 <field name="picking_id" string = " "  invisible="True"/>
-                                <field name="fecha_viaje" attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado', 'proceso'])]}" />
+                                
 
             
                             </group>
@@ -418,7 +396,7 @@
                                 <field name="solicitante_id" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}"/>
                                 <field name="origen" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}"/>
                                 <field name="destino" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}"/>
-                                <field name="camion_id" attrs="{'readonly': ['|', ('albaran_id', '!=', False), ('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}" />
+                                <field name="camion_id" attrs="{'readonly': ['|', '&amp;', ('albaran_id', '!=', False), ('state', 'not in', ['coordinado']), ('state', 'in', ['proceso', 'terminado', 'liquidado', 'cancelado'])]}"/>
                                 <field name="conductor_id" attrs="{'readonly': [('state', 'in', ['proceso', 'cancelado'])]}" />
                             </group>   
 
@@ -430,7 +408,7 @@
                                 <field name="tipo_viaje" attrs="{'readonly': [('state', 'in', ['cancelado', 'coordinado', 'proceso', 'terminado', 'liquidado'])]}"/>
                                 <field name="numero_remito" attrs="{'readonly': [('state', 'in',['cancelado','terminado', 'liquidado'])]}"/>
                                 <field name="kilometros_flete" attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
-                                <field name="kilogramos_a_liquidar" attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
+                                <field name="kilogramos_a_liquidar" attrs="{'readonly': [('state', 'in', ['proceso','cancelado','terminado', 'liquidado'])]}"/>
                                 
                                 
 
@@ -441,7 +419,7 @@
                             
                                 <field name="transportista_id" attrs="{'readonly': [('state', 'in', ['cancelado','proceso'])]}"/>
                                 <field name="ruta_id" attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])], 'required': [('state', '=', 'proceso')]}"/>
-                                <field name="producto_transportado_id" attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])], 'required': [('state', '=', 'coordinado')]}"/>
+                                <field name="producto_transportado_id" attrs="{'required': [('state', '=', 'coordinado')]}"/>
                                 <field name="pedido_venta_id"  attrs="{'invisible': 1, 'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
                                 <field name="pedido_compra_id"  attrs="{'invisible': 1, 'readonly': [('state', 'in',['cancelado','terminado', 'liquidado'])]}"/>
                                  
@@ -482,7 +460,7 @@
                                     <field name="peso_neto"  attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
                                     <field name="peso_neto_destino" attrs="{'invisible': [('tipo_viaje', '!=', 'salida')], 'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}" />
                                     <field name="peso_producto_seco" attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
-                                    <field name="porcentaje_humedad_primer_muestra" attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
+                                    <!-- <field name="porcentaje_humedad_primer_muestra" attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/> -->
                                 </group>
                                 
                             </page>
@@ -501,7 +479,7 @@
 
 
                             <page string="Medidas de propiedades">
-                                <field name="medidas_propiedades_ids">
+                                <field name="medidas_propiedades_ids" attrs="{'readonly': [('state', 'in', ['cancelado', 'liquidado'])]}" >
                                     <tree>
                                         <field name="propiedad" widget='field' options="{'width': '25%', 'no_create': True}"/>
                                         <field name="valor_medida" widget='field' options="{'width': '25%'}"/>
@@ -512,6 +490,13 @@
                                 </field>
                             </page>
 
+
+                            <page string="Información">
+                                <group string="INFORMACION">
+                                    <field name="firma" widget="signature" options="{'width': 500, 'height': 300}"/>
+                                </group>
+                                
+                            </page>
 
                         </notebook>
 
@@ -777,6 +762,10 @@
         <field name="arch" type="xml">
             <header position="inside">
                 <button name="button_schedule_trip" string="Agendar viaje" type="object"/>
+
+                 <button name="button_create_trip" string="Crear viaje" type="object"
+                    attrs="{'invisible': [('viaje_count', '>', 0)]}"/>
+
             </header>
 
             <div class="oe_button_box" name="button_box" position="inside">
@@ -788,6 +777,16 @@
                         attrs="{'invisible': [('agenda_count', '=', 0)]}"> 
                     <field name="agenda_count" widget="statinfo" string="Agenda"/>
                 </button>
+
+                <button name="action_view_trip"
+                    type="object"
+                    class="oe_stat_button"
+                    icon="fa-truck"
+                    attrs="{'invisible': [('viaje_count', '=', 0)]}">
+                <field name="viaje_count" widget="statinfo" string="Viajes"/>
+            </button>
+
+                
             </div>
         </field>
     </record>
@@ -971,5 +970,72 @@
     </record>
 
 
+
+
+
+
+        <!-- Vista Form view de Asistente de Selección de Camión -->
+        <record id="view_camion_seleccion_asistente_form" model="ir.ui.view">
+            <field name="name">camion.seleccion.asistente.form</field>
+            <field name="model">gms.camion.seleccion.asistente</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group>
+                        <field name="camion_disponible_id"/>
+                    </group>
+                    <footer>
+                        <button string="Confirmar" class="btn-primary" type="object" name="confirmar_seleccion"/>
+                        <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+
+
+
+
+
+
+        <!-- menú principal para GMS -->
+        <menuitem id="gms_menu" name="Balanza" sequence="1"/>
+
+        <!-- Submenú para Agenda -->
+        <menuitem id="gms_menu_agenda" name="Agenda" parent="gms_menu" action="action_agenda" sequence="2"/>
+
+        <!-- Submenú para Viajes -->
+        <menuitem id="gms_menu_viajes" name="Viajes" parent="gms_menu" action="action_viajes" sequence="3"/>
+
+        <!-- Submenú para Contactos / Transportistas -->
+        <menuitem id="gms_menu_contactos" name="Transportistas" parent="gms_menu" action="action_contactos" sequence="4"/>
+
+        <!-- Submenú para la Disponibilidad de Camiones -->
+        <menuitem id="gms_menu_camiones_disponibilidad" name="Disponibilidad de Camiones" parent="gms_menu" action="action_camiones_disponibilidad" sequence="5"/>
+
+        <!-- Submenú para Gastos -->
+        <menuitem id="gms_menu_gastos" name="Gastos" parent="gms_menu" action="action_gastos" sequence="6"/>
+
+        <!-- Menú para acceder al historial de camiones -->
+        <menuitem id="gms_menu_historial" name="Historial de Camiones" parent="gms_menu" action="action_gms_historial" sequence="7"/>
+
+        <!-- Menú de Configuración -->
+        <menuitem id="gms_menu_configuracion" name="Configuración" parent="gms_menu" sequence="8"/>
+
+        <!-- Submenú para Productos, dentro de Configuración -->
+        <menuitem id="gms_menu_productos" name="Productos" parent="gms_menu_configuracion" action="action_productos" sequence="1"/>
+
+        <!-- Submenú para Camiones, dentro de Configuración -->
+        <menuitem id="gms_menu_camiones_vista" name="Camiones" parent="gms_menu_configuracion" action="action_camiones" sequence="2"/>
+
+        <!-- Submenú para Propiedades, dentro de Configuración -->
+        <menuitem id="gms_menu_propiedades" name="Propiedades" parent="gms_menu_configuracion" action="action_propiedades" sequence="3"/>
+
+        <!-- Submenú para Rutas, dentro de Configuración -->
+        <menuitem id="gms_menu_rutas" name="Rutas" parent="gms_menu_configuracion" action="action_rutas" sequence="4"/>
+          
+          <!-- Submenú para Ajuste, dentro de Configuración -->
+        <menuitem id="gms_menu_settings" name="Ajustes" parent="gms_menu_configuracion" action="gms.action_res_config_settings_gms" sequence="5"/>
+
+        
     </data>
 </odoo>

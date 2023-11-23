@@ -10,8 +10,20 @@ class GmsRutas(models.Model):
 
     follower_ids = fields.Many2many('res.users', string='Followers', tracking ="1")
     nombre_ruta = fields.Char(string='Nombre de la ruta', tracking ="1")
-    direccion_origen_id = fields.Many2one('res.partner', string='Origen', required=True, tracking="1")
-    direccion_destino_id = fields.Many2one('res.partner', string='Destino', required=True, tracking="1")
+    direccion_origen_id = fields.Many2one(
+        'res.partner', 
+        string='Origen', 
+        required=True, 
+        tracking="1", 
+        domain="[('tipo', 'in', ['chacra', 'planta'])]"
+    )
+    direccion_destino_id = fields.Many2one(
+        'res.partner', 
+        string='Destino', 
+        required=True, 
+        tracking="1", 
+        domain="[('tipo', 'in', ['puerto', 'planta'])]"
+    )
     kilometros = fields.Float(string='Kilómetros', tracking ="1")
 
  
