@@ -1,6 +1,17 @@
 <odoo>
     <data>
 
+        <!-- Vista de lista para el modelo Balanza -->
+        <record id="view_gms_balanza_list" model="ir.ui.view">
+            <field name="name">gms.balanza.tree</field>
+            <field name="model">gms.balanza</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="direccion_servidor"/>
+                </tree>
+            </field>
+        </record>
 
       
 
