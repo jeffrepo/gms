@@ -1,26 +1,19 @@
-
 from odoo import api, fields, models, _
 
 class SaleOrder(models.Model):
     _inherit = "sale.order"
 
-    viaje_ids = fields.One2many('gms.viaje', compute='_compute_viajes')
-    viaje_count = fields.Integer(string='Viajes', compute='_compute_viajes')
+    viaje_ids = fields.One2many('gms.viaje', 'sale_order_id', string='Viajes')
+    viaje_count = fields.Integer(string='Número de Viajes', compute='_compute_viaje_count')
 
-    @api.depends('name')
-    def _compute_viajes(self):
+    @api.depends('viaje_ids')
+    def _compute_viaje_count(self):
         for order in self:
-            viajes = self.env['gms.viaje'].search([('pedido_venta_id', '=', order.id)])
-            order.viaje_ids = viajes
-            order.viaje_count = len(viajes)
-
-
-
-
+            order.viaje_count = len(order.viaje_ids)
 
     def action_view_viajes(self):
         self.ensure_one()
-        domain = [('pedido_venta_id', '=', self.id)]
+        domain = [('sale_order_id', '=', self.id)]  # Cambio aquí para que coincida con el campo relacional
         return {
             'name': _('Viajes asociados al Pedido'),
             'view_mode': 'tree,form',

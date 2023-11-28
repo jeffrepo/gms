@@ -13,6 +13,8 @@ access_gms_tolva,gms.tolva,model_gms_tolva,,1,1,1,1
 access_gms_ajustes,gms.ajustes,model_gms_ajustes,base.group_user,1,1,1,1
 access_res_config_settings,res.config.settings,model_res_config_settings,base.group_user,1,1,1,1
 access_gms_camion_seleccion_asistente,gms.camion.seleccion.asistente,model_gms_camion_seleccion_asistente,base.group_user,1,1,1,1
+access_gms_balanza,gms.balanza,model_gms_balanza,base.group_user,1,1,1,1
+
 
 
 

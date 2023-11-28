@@ -1,7 +1,9 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 import datetime
+import paramiko
 import logging
+import requests
 _logger = logging.getLogger(__name__)
 
 
@@ -87,7 +89,7 @@ class Viajes(models.Model):
 
     peso_neto_destino = fields.Float(string="Peso neto destino", tracking="1")
 
-    peso_producto_seco = fields.Float(string="Peso producto seco", tracking="1")
+    peso_producto_seco = fields.Float(string="Peso producto seco", tracking="1" , readonly=True)
 
     porcentaje_humedad_primer_muestra = fields.Float(string="Porcentaje humedad primer muestra", tracking="1")
 
@@ -123,6 +125,11 @@ class Viajes(models.Model):
     remito = fields.Float(string='Remito', tracking="1")
 
     firma = fields.Binary(string='Firma', tracking="1")
+
+    sale_order_id = fields.Many2one('sale.order', string='Orden de Venta')
+    purchase_order_id = fields.Many2one('purchase.order', string='Orden de Compra')
+
+    balanza_id = fields.Many2one('gms.balanza', string='Balanza')
 
     # prelimpieza_entrada_1 = fields.Selection([('si', 'Si'), ('no', 'No')], string="Prelimpieza entrada", tracking="1")
 
@@ -176,12 +183,11 @@ class Viajes(models.Model):
 
     state = fields.Selection([
         ('cancelado', 'Cancelado'),
-        ('borrador', 'Borrador'),
         ('coordinado', 'Coordinado'),
         ('proceso', 'Proceso'),
         ('terminado', 'Terminado'),
         ('liquidado', 'Liquidado')
-    ], string='Estado', default='borrador', required=True)
+    ], string='Estado', default='coordinado', required=True)
 
 
     gastos_ids = fields.One2many('gms.gasto_viaje', 'viaje_id', string='Gastos')
@@ -553,3 +559,45 @@ class Viajes(models.Model):
             self.conductor_id = self.camion_id.conductor_id.id
         else:
             self.conductor_id = False
+
+
+
+
+
+    def leer_datos_balanza(self):
+        url = 'https://run.mocky.io/v3/53fbe5f3-e56d-474a-974f-6beec5116b94'
+        respuesta = requests.get(url)
+        if respuesta.status_code == 200:
+            return respuesta.json()
+        else:
+            raise Exception('Error al leer los datos de la balanza')
+
+
+    def accion_leer_balanza(self):
+        for record in self:
+            try:
+                datos_balanza = self.leer_datos_balanza()
+                record.peso_bruto = datos_balanza['peso']
+            except Exception as e:
+                _logger.error("Error al leer datos de la balanza: %s", e)
+                raise UserError("No se pudo leer la balanza: %s" % e)
+            
+
+
+  
+
+def leer_peso_balanza(self):
+    if not self.balanza_id:
+        raise UserError("Selecciona una balanza primero.")
+    
+    balanza = self.balanza_id
+    # Aquí va la lógica para conectarse a la balanza y leer el peso
+   
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh.connect(balanza.direccion_servidor, username=balanza.usuario, password=balanza.contrasena)
+    
+    stdin, stdout, stderr = ssh.exec_command('obtener_peso')
+    peso = stdout.read()
+    ssh.close()
+    return float(peso)

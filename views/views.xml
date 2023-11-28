@@ -1,6 +1,32 @@
 <odoo>
     <data>
 
+        <!-- Vista de lista para el modelo Balanza -->
+        <record id="view_gms_balanza_list" model="ir.ui.view">
+            <field name="name">gms.balanza.tree</field>
+            <field name="model">gms.balanza</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="direccion_servidor"/>
+                </tree>
+            </field>
+        </record>
+
+      
+
+        <!-- Acción de ventana para el modelo Balanza -->
+       <record id="action_balanzas" model="ir.actions.act_window">
+            <field name="name">Balanzas</field>
+            <field name="res_model">gms.balanza</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="view_gms_balanza_list"/>
+        </record>
+
+
+
+
+
         <!-- accion para ver los ajustes -->
         <record id="action_res_config_settings_gms" model="ir.actions.act_window">
             <field name="name">Configuración de Balanza</field>
@@ -452,15 +478,16 @@
                                 </field>
                             </page>
 
-                            <page string="Mediciones">
-                                <group string="Mediciones">
+                            <page string="Balanza">
+                                <group string="pesaje">
                             
                                     <field name="peso_bruto"  attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
                                     <field name="tara"  attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
-                                    <field name="peso_neto"  attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
+                                    <field name="peso_neto"/>
                                     <field name="peso_neto_destino" attrs="{'invisible': [('tipo_viaje', '!=', 'salida')], 'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}" />
                                     <field name="peso_producto_seco" attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
-                                    <!-- <field name="porcentaje_humedad_primer_muestra" attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/> -->
+                                    <field name="balanza_id"/> 
+                                    <button string="Leer Balanza" type="object" name="accion_leer_balanza" class="oe_highlight"/>
                                 </group>
                                 
                             </page>
@@ -485,7 +512,10 @@
                                         <field name="valor_medida" widget='field' options="{'width': '25%'}"/>
                                         <field name="parametro" widget='field' options="{'width': '25%'}"/>
                                         <field name="merma_kg" widget='field' options="{'width': '25%'}"/>
+                                        <field name="propiedades_disponibles_ids" invisible="1"/>
                                         
+                                        
+
                                     </tree>
                                 </field>
                             </page>
@@ -761,10 +791,14 @@
         <field name="inherit_id" ref="stock.view_picking_form"/>
         <field name="arch" type="xml">
             <header position="inside">
-                <button name="button_schedule_trip" string="Agendar viaje" type="object"/>
+                <field name="show_button_schedule_trip" invisible="1"/>
+                <field name="show_button_create_trip" invisible="1"/>
 
-                 <button name="button_create_trip" string="Crear viaje" type="object"
-                    attrs="{'invisible': [('viaje_count', '>', 0)]}"/>
+                <button name="button_schedule_trip" type="object" string="Agendar"
+                attrs="{'invisible': [('show_button_schedule_trip', '=', False)]}"/>
+
+                <button name="button_create_trip" type="object" string="Crear viaje"
+                attrs="{'invisible': [('show_button_create_trip', '=', False)]}"/>
 
             </header>
 
@@ -992,6 +1026,44 @@
         </record>
 
 
+        
+        <!-- Vista de lista para el modelo Balanza -->
+        <record id="view_gms_balanza_list" model="ir.ui.view">
+            <field name="name">gms.balanza.tree</field>
+            <field name="model">gms.balanza</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="direccion_servidor"/>
+                </tree>
+            </field>
+        </record>
+
+
+        <!-- Vista de formulario para el modelo Balanza -->
+        <record id="view_gms_balanza_form" model="ir.ui.view">
+            <field name="name">gms.balanza.form</field>
+            <field name="model">gms.balanza</field>
+            <field name="arch" type="xml">
+                <form string="Balanza">
+                    <sheet>
+                        <group>
+                            <field name="name" string="Nombre"/>
+                            <field name="direccion_servidor" string="Dirección del Servidor"/>
+                            <field name="usuario" string="Usuario"/>
+                            <field name="contrasena" string="Contraseña"/>
+                           
+                        </group>
+                    </sheet>
+                     <div class="oe_chatter">
+                        <field name="message_follower_ids"/>
+                        <field name="activity_ids"/>
+                        <field name="message_ids"/>
+                    </div>
+                </form>
+            </field>
+        </record>
+
 
 
 
@@ -1035,6 +1107,11 @@
           
           <!-- Submenú para Ajuste, dentro de Configuración -->
         <menuitem id="gms_menu_settings" name="Ajustes" parent="gms_menu_configuracion" action="gms.action_res_config_settings_gms" sequence="5"/>
+
+         <!-- Submenú para Balanzas, dentro de Configuración -->
+        <menuitem id="gms_menu_balanzas" name="Balanzas" parent="gms_menu_configuracion" action="action_balanzas" sequence="6"/>
+
+
 
         
     </data>
