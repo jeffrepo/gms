@@ -1,19 +1,6 @@
 <odoo>
     <data>
 
-        <!-- Vista de lista para el modelo Balanza -->
-        <record id="view_gms_balanza_list" model="ir.ui.view">
-            <field name="name">gms.balanza.tree</field>
-            <field name="model">gms.balanza</field>
-            <field name="arch" type="xml">
-                <tree>
-                    <field name="name"/>
-                    <field name="direccion_servidor"/>
-                </tree>
-            </field>
-        </record>
-
-      
 
         <!-- Acción de ventana para el modelo Balanza -->
        <record id="action_balanzas" model="ir.actions.act_window">
@@ -474,6 +461,7 @@
                                         <field name="precio_total"/>
                                         <field name="estado_compra"/>
                                         <field name="purchase_order_id" widget="many2one_button"/>
+                                    
                                     </tree>
                                 </field>
                             </page>
@@ -488,6 +476,7 @@
                                     <field name="peso_producto_seco" attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
                                     <field name="balanza_id"/> 
                                     <button string="Leer Balanza" type="object" name="accion_leer_balanza" class="oe_highlight"/>
+                                    
                                 </group>
                                 
                             </page>
@@ -507,15 +496,12 @@
 
                             <page string="Medidas de propiedades">
                                 <field name="medidas_propiedades_ids" attrs="{'readonly': [('state', 'in', ['cancelado', 'liquidado'])]}" >
-                                    <tree>
+                                    <tree editable="bottom">
                                         <field name="propiedad" widget='field' options="{'width': '25%', 'no_create': True}"/>
                                         <field name="valor_medida" widget='field' options="{'width': '25%'}"/>
                                         <field name="parametro" widget='field' options="{'width': '25%'}"/>
                                         <field name="merma_kg" widget='field' options="{'width': '25%'}"/>
                                         <field name="propiedades_disponibles_ids" invisible="1"/>
-                                        
-                                        
-
                                     </tree>
                                 </field>
                             </page>

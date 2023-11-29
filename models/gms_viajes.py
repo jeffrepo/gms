@@ -134,9 +134,8 @@ class Viajes(models.Model):
     # prelimpieza_entrada_1 = fields.Selection([('si', 'Si'), ('no', 'No')], string="Prelimpieza entrada", tracking="1")
 
     # secado_entrada_1 = fields.Selection([('si', 'Si'), ('no', 'No')], string="Secado entrada", tracking="1")
-
-
-
+   
+   
     
     @api.model
     def create(self, vals):
@@ -488,7 +487,7 @@ class Viajes(models.Model):
             self.determinar_y_asignar_gasto_viaje()
     
     def determinar_y_asignar_gasto_viaje(self):
-        # Asegúrate de que no se creen registros duplicados
+        # no se creen registros duplicados
         if not self.gastos_ids.filtered(lambda g: g.producto_id.id == self._get_gasto_viaje_producto_id()):
             # Obtener los productos de gasto de los ajustes
             config_params = self.env['ir.config_parameter'].sudo()
@@ -531,7 +530,7 @@ class Viajes(models.Model):
 
 
     @api.model
-    def createruta(self, vals):
+    def create(self, vals):
         # Crear el viaje como normalmente
         new_viaje = super(Viajes, self).create(vals)
 
@@ -544,12 +543,24 @@ class Viajes(models.Model):
         # Si se encuentra una ruta, asignarla al viaje
         if ruta:
             new_viaje.ruta_id = ruta.id
-        else:
-            # Si no se encuentra una ruta, dejar el campo 'ruta_id' en blanco
-            new_viaje.ruta_id = False
+
+        # Asignar los gastos de viaje
+        new_viaje.determinar_y_asignar_gasto_viaje()
 
         return new_viaje
 
+
+
+    def write(self, vals):
+        # Actualiza el viaje como siempre
+        result = super(Viajes, self).write(vals)
+
+        # Asigna los gastos de viaje si se actualizó la ruta
+        if 'ruta_id' in vals:
+            for viaje in self:
+                viaje.determinar_y_asignar_gasto_viaje()
+
+        return result
 
 
     # actualizar al chofer
@@ -601,3 +612,9 @@ def leer_peso_balanza(self):
     peso = stdout.read()
     ssh.close()
     return float(peso)
+
+
+
+
+
+    
