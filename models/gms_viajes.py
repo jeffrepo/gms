@@ -137,21 +137,8 @@ class Viajes(models.Model):
    
    
     
-    @api.model
-    def create(self, vals):
-        if vals.get('name', _('New')) == _('New'):
-            vals['name'] = self.env['ir.sequence'].next_by_code('gms.viaje')
-        record = super().create(vals)
+    
 
-        if record.agenda:
-            record.message_post(body="Este viaje fue creado desde una agenda.",subtype_xmlid="mail.mt_note")
-
-        return record
-
-
-
-
-   
     def _compute_albaran_count(self):
         for record in self:
             record.albaran_count = 1 if record.albaran_id else 0
@@ -531,9 +518,23 @@ class Viajes(models.Model):
 
     @api.model
     def create(self, vals):
-        # Crear el viaje como normalmente
-        new_viaje = super(Viajes, self).create(vals)
+        # Generar el nombre del viaje si es necesario
+        if vals.get('name', _('New')) == _('New'):
+            vals['name'] = self.env['ir.sequence'].next_by_code('gms.viaje')
 
+        # Crear el viaje
+        record = super().create(vals)
+
+        # Registrar un mensaje si el viaje fue creado desde una agenda
+        if record.agenda:
+            record.message_post(body="Este viaje fue creado desde una agenda.",subtype_xmlid="mail.mt_note")
+
+        # Asignar la ruta y los gastos del viaje
+        self._asignar_ruta_y_gastos(record, vals)
+
+        return record
+
+    def _asignar_ruta_y_gastos(self, record, vals):
         # Buscar una ruta que coincida con el origen y destino del viaje
         ruta = self.env['gms.rutas'].search([
             ('direccion_origen_id', '=', vals.get('origen')),
@@ -542,12 +543,11 @@ class Viajes(models.Model):
 
         # Si se encuentra una ruta, asignarla al viaje
         if ruta:
-            new_viaje.ruta_id = ruta.id
+            record.ruta_id = ruta.id
 
         # Asignar los gastos de viaje
-        new_viaje.determinar_y_asignar_gasto_viaje()
+        record.determinar_y_asignar_gasto_viaje()
 
-        return new_viaje
 
 
 
