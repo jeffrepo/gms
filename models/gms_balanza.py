@@ -12,3 +12,4 @@ class Balanza(models.Model):
     direccion_servidor = fields.Char('Dirección del Servidor', required=True)
     usuario = fields.Char('Usuario')
     contrasena = fields.Char('Contraseña')
+    puerto = fields.Char('Puerto')

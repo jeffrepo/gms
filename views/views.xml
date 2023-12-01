@@ -468,14 +468,16 @@
 
                             <page string="Balanza">
                                 <group string="pesaje">
-                            
+
+                                    <field name="balanza_id"/> 
                                     <field name="peso_bruto"  attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
                                     <field name="tara"  attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
                                     <field name="peso_neto"/>
                                     <field name="peso_neto_destino" attrs="{'invisible': [('tipo_viaje', '!=', 'salida')], 'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}" />
                                     <field name="peso_producto_seco" attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
-                                    <field name="balanza_id"/> 
-                                    <button string="Leer Balanza" type="object" name="accion_leer_balanza" class="oe_highlight"/>
+                                    
+                                    <button string="Peso bruto" type="object" name="accion_leer_balanza" class="oe_highlight"/> 
+                                    <button string="Calcular Tara" type="object" name="accion_calcular_tara" class="btn-primary"/>
                                     
                                 </group>
                                 
@@ -1035,6 +1037,7 @@
                     <sheet>
                         <group>
                             <field name="name" string="Nombre"/>
+                            <field name="puerto" string="Puerto"/>
                             <field name="direccion_servidor" string="Dirección del Servidor"/>
                             <field name="usuario" string="Usuario"/>
                             <field name="contrasena" string="Contraseña"/>

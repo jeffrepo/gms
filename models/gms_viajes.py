@@ -4,6 +4,9 @@ import datetime
 import paramiko
 import logging
 import requests
+import asyncio
+from asyncvnc import Client
+import serial
 _logger = logging.getLogger(__name__)
 
 
@@ -574,47 +577,51 @@ class Viajes(models.Model):
 
 
 
+    def obtener_peso_vnc(self, direccion_servidor, puerto, usuario, contrasena):
+        
+        try:
+            # Inicializar la conexión serie
+            with serial.Serial(puerto, baudrate=9600, timeout=10) as ser:
+                # Leer línea de datos desde la balanza
+                datos_peso = ser.readline().decode('ascii').strip()
+                # Convertir los datos leídos a número, si es posible
+                peso = float(datos_peso)
+                return peso
+        except Exception as e:
+            # Manejo de errores
+            _logger.error("Error al leer la balanza: %s", e)
+            raise UserError(f"Error al leer la balanza: {e}")
 
-    def leer_datos_balanza(self):
-        url = 'https://run.mocky.io/v3/53fbe5f3-e56d-474a-974f-6beec5116b94'
-        respuesta = requests.get(url)
-        if respuesta.status_code == 200:
-            return respuesta.json()
-        else:
-            raise Exception('Error al leer los datos de la balanza')
+    def leer_peso_balanza(self):
+        if not self.balanza_id:
+            raise UserError("Selecciona una balanza primero.")
 
+        # Obtener la configuración de la balanza seleccionada
+        balanza = self.balanza_id
+        puerto = balanza.puerto if balanza.puerto else 'COM1'  # Asumiendo COM1 como puerto por defecto
+        direccion_servidor = balanza.direccion_servidor  # No se usa en este contexto
+        usuario = balanza.usuario  # No se usa en este contexto
+        contrasena = balanza.contrasena  # No se usa en este contexto
+
+        # Leer el peso de la balanza
+        try:
+            peso = self.obtener_peso_vnc(direccion_servidor, puerto, usuario, contrasena)
+            return peso
+        except Exception as e:
+            raise UserError(f"No se pudo leer el peso de la balanza: {e}")
 
     def accion_leer_balanza(self):
-        for record in self:
-            try:
-                datos_balanza = self.leer_datos_balanza()
-                record.peso_bruto = datos_balanza['peso']
-            except Exception as e:
-                _logger.error("Error al leer datos de la balanza: %s", e)
-                raise UserError("No se pudo leer la balanza: %s" % e)
-            
-
-
-  
-
-def leer_peso_balanza(self):
-    if not self.balanza_id:
-        raise UserError("Selecciona una balanza primero.")
-    
-    balanza = self.balanza_id
-    # Aquí va la lógica para conectarse a la balanza y leer el peso
-   
-    ssh = paramiko.SSHClient()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(balanza.direccion_servidor, username=balanza.usuario, password=balanza.contrasena)
-    
-    stdin, stdout, stderr = ssh.exec_command('obtener_peso')
-    peso = stdout.read()
-    ssh.close()
-    return float(peso)
+        self.ensure_one()
+        try:
+            peso = self.leer_peso_balanza()
+            self.write({'peso_bruto': peso})
+        except Exception as e:
+            _logger.error("Error al leer datos de la balanza: %s", e)
+            raise UserError(f"No se pudo leer la balanza: {e}")
+        
 
 
 
-
-
-    
+    def accion_calcular_tara(self):
+       
+        raise UserError(_('Esta es una acción de prueba para calcular la tara.'))
