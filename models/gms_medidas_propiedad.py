@@ -20,7 +20,7 @@ class MedidaPropiedad(models.Model):
 
   
 
-    propiedades_disponibles_ids = fields.Many2many('gms.propiedades', compute='_compute_propiedades_disponibles', store=False)
+    propiedades_disponibles_ids = fields.Many2many('gms.propiedades', compute='_compute_propiedades_disponibles', store=False,)
 
     @api.depends('viaje_id')
     def _compute_propiedades_disponibles(self):
