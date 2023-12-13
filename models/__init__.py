@@ -21,3 +21,4 @@ from . import gms_ajustes
 from . import res_config_settings
 from . import gms_modelo_asistente
 from . import gms_balanza
+from . import account_move

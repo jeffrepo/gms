@@ -31,7 +31,7 @@ class StockPicking(models.Model):
             # Definir origen y destino basado en el tipo de viaje
             if tipo_viaje == 'entrada':
                 origen = self.partner_id.id  # Proveedor
-                destino = self.picking_type_id.warehouse_id.partner_id.id  # Almacén
+                destino = self.picking_type_id.warehouse_id.partner_id.id  
             else:
                 origen = self.picking_type_id.warehouse_id.partner_id.id  # Almacén
                 destino = self.partner_id.id  # Cliente o destino final
@@ -212,3 +212,31 @@ class StockPicking(models.Model):
             record.show_button_schedule_trip = not (agenda_exists or viaje_exists)
             record.show_button_create_trip = not (agenda_exists or viaje_exists)
             _logger.info(f"Record {record.id}: show_button_schedule_trip = {record.show_button_schedule_trip}, show_button_create_trip = {record.show_button_create_trip}")
+
+
+
+    def button_validate(self):
+        if self.picking_type_id.code == 'incoming' and self.viaje_ids:
+            viaje_confirmado = any(viaje.state == 'confirmado' for viaje in self.viaje_ids)
+            if not viaje_confirmado:
+                raise UserError("No se puede validar el albarán hasta que el viaje esté confirmado.")
+        return super(StockPicking, self).button_validate()
+
+
+
+    def write(self, vals):
+        if 'state' in vals and self.viaje_ids:
+            raise UserError("No se puede cambiar el albarán que tiene viajes asociados.")
+        return super(StockPicking, self).write(vals)
+
+
+    @api.model
+    def create(self, vals):
+        # Solo para albaranes de entrada (compras)
+        if vals.get('picking_type_id'):
+            picking_type = self.env['stock.picking.type'].browse(vals['picking_type_id'])
+            if picking_type.code == 'incoming':
+                # Establecer 'owner_id' igual a 'partner_id'
+                vals['owner_id'] = vals.get('partner_id')
+        return super(StockPicking, self).create(vals)
+

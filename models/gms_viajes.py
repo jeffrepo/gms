@@ -88,7 +88,7 @@ class Viajes(models.Model):
 
     peso_neto = fields.Float(string="Peso neto", readonly=True, compute="_compute_peso_neto", tracking="1",store=True)
     
-    estado = fields.Char(string = "s")
+    estado = fields.Char(string = "s" , tracking=True)
 
     peso_neto_destino = fields.Float(string="Peso neto destino", tracking="1")
 
@@ -113,26 +113,32 @@ class Viajes(models.Model):
 
     observaciones = fields.Text(string="Observaciones", tracking="1")
 
-    albaran_count = fields.Integer(string="Número de Albaranes", compute="_compute_albaran_count")
+    albaran_count = fields.Integer(string="Número de Albaranes", compute="_compute_albaran_count" , tracking=True)
 
-    albaran_id = fields.Many2one('stock.picking', string="Albarán")
+    albaran_id = fields.Many2one('stock.picking', string="Albarán" , tracking=True)
 
-    purchase_order_id= fields.Many2one('purchase.order')
+    purchase_order_id= fields.Many2one('purchase.order', tracking=True)
 
     medidas_propiedades_ids = fields.One2many('gms.medida.propiedad', 'viaje_id', string='Medidas de Propiedades', tracking="1")
 
-    arribo = fields.Datetime(string="Arribo")
-    partida = fields.Datetime(string="Partida")
+    arribo = fields.Datetime(string="Arribo", tracking=True)
+    partida = fields.Datetime(string="Partida", tracking=True)
 
     chacra = fields.Char(string='Chacra', tracking="1")
     remito = fields.Float(string='Remito', tracking="1")
 
     firma = fields.Binary(string='Firma', tracking="1")
 
-    sale_order_id = fields.Many2one('sale.order', string='Orden de Venta')
-    purchase_order_id = fields.Many2one('purchase.order', string='Orden de Compra')
+    sale_order_id = fields.Many2one('sale.order', string='Orden de Venta' , tracking=True)
+    purchase_order_id = fields.Many2one('purchase.order', string='Orden de Compra' , tracking=True)
 
-    balanza_id = fields.Many2one('gms.balanza', string='Balanza')
+    balanza_id = fields.Many2one('gms.balanza', string='Balanza' , tracking=True)
+    
+    humedad = fields.Float(string='Humedad' , tracking=True)
+    
+    ph = fields.Float(string='PH' , tracking=True)
+    
+    proteina = fields.Float(string='Proteína'  , tracking=True)
 
     # prelimpieza_entrada_1 = fields.Selection([('si', 'Si'), ('no', 'No')], string="Prelimpieza entrada", tracking="1")
 
@@ -179,7 +185,7 @@ class Viajes(models.Model):
     ], string='Estado', default='coordinado', required=True)
 
 
-    gastos_ids = fields.One2many('gms.gasto_viaje', 'viaje_id', string='Gastos')
+    gastos_ids = fields.One2many('gms.gasto_viaje', 'viaje_id', string='Gastos' , tracking=True)
 
 
     def action_proceso(self):
@@ -218,6 +224,12 @@ class Viajes(models.Model):
         fecha_hora_actual = fields.Datetime.now()
             # Establece la fecha y hora de partida para el viaje
         self.partida = fecha_hora_actual
+
+
+        if self.tipo_viaje == 'entrada':
+            self.enviar_sms_solicitante()
+
+       
 
         
 
@@ -577,51 +589,96 @@ class Viajes(models.Model):
 
 
 
-    def obtener_peso_vnc(self, direccion_servidor, puerto, usuario, contrasena):
-        
-        try:
-            # Inicializar la conexión serie
-            with serial.Serial(puerto, baudrate=9600, timeout=10) as ser:
-                # Leer línea de datos desde la balanza
-                datos_peso = ser.readline().decode('ascii').strip()
-                # Convertir los datos leídos a número, si es posible
-                peso = float(datos_peso)
-                return peso
-        except Exception as e:
-            # Manejo de errores
-            _logger.error("Error al leer la balanza: %s", e)
-            raise UserError(f"Error al leer la balanza: {e}")
-
-    def leer_peso_balanza(self):
-        if not self.balanza_id:
-            raise UserError("Selecciona una balanza primero.")
-
-        # Obtener la configuración de la balanza seleccionada
+    def leer_peso_balanza_archivo(self):
         balanza = self.balanza_id
-        puerto = balanza.puerto if balanza.puerto else 'COM1'  # Asumiendo COM1 como puerto por defecto
-        direccion_servidor = balanza.direccion_servidor  # No se usa en este contexto
-        usuario = balanza.usuario  # No se usa en este contexto
-        contrasena = balanza.contrasena  # No se usa en este contexto
-
-        # Leer el peso de la balanza
+        if not balanza:
+            raise UserError("Selecciona una balanza primero.")
+    
+       
+        archivo_datos = '/Users/balanza/datos_balanza.txt'
+    
         try:
-            peso = self.obtener_peso_vnc(direccion_servidor, puerto, usuario, contrasena)
-            return peso
+            # Conectar vía SSH al servidor
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.connect(balanza.direccion_servidor, username=balanza.usuario, password=balanza.contrasena)
+    
+            # Comando para obtener la última línea del archivo de datos
+            comando_ssh = f"tail -n 1 {archivo_datos}"
+            stdin, stdout, stderr = ssh.exec_command(comando_ssh)
+            ultima_linea = stdout.read().decode().strip()
+    
+            ssh.close()
+    
+            if ultima_linea:
+                peso = float(ultima_linea.split(' - Peso: ')[1])
+                return peso
+            else:
+                raise UserError("No se recibieron datos de la balanza.")
         except Exception as e:
+            _logger.error(f"Error al leer los datos de la balanza: {e}")
             raise UserError(f"No se pudo leer el peso de la balanza: {e}")
-
+    
     def accion_leer_balanza(self):
         self.ensure_one()
         try:
-            peso = self.leer_peso_balanza()
+            peso = self.leer_peso_balanza_archivo()
             self.write({'peso_bruto': peso})
         except Exception as e:
             _logger.error("Error al leer datos de la balanza: %s", e)
             raise UserError(f"No se pudo leer la balanza: {e}")
-        
 
 
 
     def accion_calcular_tara(self):
        
         raise UserError(_('Esta es una acción de prueba para calcular la tara.'))
+
+
+
+    def action_set_to_proceso(self):
+        self.ensure_one()
+        if self.state == 'terminado' and self.albaran_id and self.albaran_id.state != 'done':
+            self.state = 'proceso'
+        else:
+            raise UserError("El viaje no puede pasar a estado 'Proceso' bajo las condiciones actuales.")
+
+
+
+    def enviar_sms_solicitante(self):
+        try:
+            # Formatear el mensaje
+            mensaje_sms = "AS Agro - ({}) {}-{} - Kg {} - H: {}; PH: {}; P: {}; - M: {} - R: {}".format(
+                self.name,  # ID del viaje
+                self.origen.name if self.origen else '',  # Origen
+                self.producto_transportado_id.name if self.producto_transportado_id else '',  # Producto
+                self.peso_neto,  # KG Netos
+                self.humedad,  # Humedad
+                self.ph,  # PH
+                self.proteina,  # Proteína
+                self.camion_id.matricula if self.camion_id else '',  # Matrícula del camión
+                self.numero_remito  # Número de remito
+            )
+    
+            # Obtener el número de teléfono del solicitante
+            telefono_solicitante = self.solicitante_id.mobile or self.solicitante_id.phone
+            if not telefono_solicitante:
+                raise UserError("El solicitante no tiene un número de teléfono registrado.")
+    
+            # Crear y enviar el SMS
+            sms_values = {
+                'number': telefono_solicitante,
+                'body': mensaje_sms,
+            }
+            sms = self.env['sms.sms'].create(sms_values)
+            sms.send()
+            _logger.info(f"SMS enviado a {telefono_solicitante}: {mensaje_sms}")
+            self.message_post(body=f"SMS enviado a {telefono_solicitante}: {mensaje_sms}")
+    
+        except Exception as e:
+            error_message = f"Error al enviar SMS: {e}"
+            _logger.error(error_message)
+            self.message_post(body=error_message, message_type='comment', subtype_xmlid='mail.mt_comment')
+    
+    
+

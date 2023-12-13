@@ -21,6 +21,8 @@ class ResPartner(models.Model):
 
     ubicacion_id = fields.Many2one('stock.location', string="Ubicación")
 
+    link = fields.Char(string='Link Google Maps')
+
  
    
 
