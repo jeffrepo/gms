@@ -2,146 +2,11 @@
     <data>
 
 
-        <!-- Acción de ventana para el modelo Balanza -->
-       <record id="action_balanzas" model="ir.actions.act_window">
-            <field name="name">Balanzas</field>
-            <field name="res_model">gms.balanza</field>
-            <field name="view_mode">tree,form</field>
-            <field name="view_id" ref="view_gms_balanza_list"/>
-        </record>
-
-
-
-
-
-        <!-- accion para ver los ajustes -->
-        <record id="action_res_config_settings_gms" model="ir.actions.act_window">
-            <field name="name">Configuración de Balanza</field>
-            <field name="res_model">res.config.settings</field>
-            <field name="view_mode">form</field>
-            <field name="view_id" ref="view_res_config_settings_gms"/>
-            <field name="target">inline</field>
-        </record>  
+        <!-- menú principal para GMS -->
+        <menuitem id="gms_menu" name="Balanza" sequence="1"/>
         
-
-
-
-
-      
-
-        
-
-         <!-- Acción para el menú Agenda -->
-        <record id="action_agenda" model="ir.actions.act_window">
-            <field name="name">Agenda</field>
-            <field name="res_model">gms.agenda</field>
-            <field name="view_mode">tree,form</field>
-            <field name="view_id" ref="view_gms_agenda_list"/>
-            <field name="context">{'create': False}</field>
-        </record>
-
-      
-
-        <!-- Acción para el menú Producto -->
-        <record id="action_productos" model="ir.actions.act_window">
-            <field name="name">Productos</field>
-            <field name="res_model">product.template</field>
-            <field name="view_mode">tree,form</field>
-        </record>
-
-       
-
-        <!-- Acción para el menú Contactos -->
-        <record id="action_contactos" model="ir.actions.act_window">
-            <field name="name">Contactos</field>
-            <field name="res_model">res.partner</field>
-            <field name="view_mode">tree,form</field>
-        </record>
-
-       
-
-        <!-- Acción para el menú Camiones -->
-        <record id="action_camiones" model="ir.actions.act_window">
-            <field name="name">Camiones</field>
-            <field name="res_model">gms.camiones</field>
-            <field name="view_mode">tree,form</field>
-            <!-- Agrega más campos según tus necesidades -->
-        </record>
-
-       
-
-        <!-- Acción para la Disponibilidad de Camiones -->
-        <record id="action_camiones_disponibilidad" model="ir.actions.act_window">
-            <field name="name">Disponibilidad de Camiones</field>
-            <field name="res_model">gms.camiones.disponibilidad</field>
-            <field name="view_mode">tree,form</field>
-            <field name="context">{'create': False}</field>
-        </record>
-
-
-
-        <!-- Acción para el menú Propiedades -->
-        <record id="action_propiedades" model="ir.actions.act_window">
-            <field name="name">Propiedades</field>
-            <field name="res_model">gms.propiedades</field>
-            <field name="view_mode">tree,form</field>
-           
-        </record>
-
-       
-        <!-- Acción para el menú Rutas -->
-        <record id="action_rutas" model="ir.actions.act_window">
-            <field name="name">Rutas</field>
-            <field name="res_model">gms.rutas</field>
-            <field name="view_mode">tree,form</field>
-           
-        </record>
-
-          
-           <!-- Acción para el menú Viajes -->
-        <record id="action_viajes" model="ir.actions.act_window">
-            <field name="name">Viajes</field>
-            <field name="res_model">gms.viaje</field>
-            <field name="view_mode">tree,form</field>
-            <field name="context">{'create': False}</field>
-            
-        </record>
-
-     
-
-
-        <!-- Acción para ver el historial de camiones -->
-        <record model="ir.actions.act_window" id="action_gms_historial">
-            <field name="name">Historial de Camiones</field>
-            <field name="res_model">gms.historial</field>
-            <field name="view_mode">tree,form</field>
-            <field name="context">{'create': False}</field>
-        </record>
-
-
-        <!-- Acción para el menú Gastos -->
-        <record id="action_gastos" model="ir.actions.act_window">
-            <field name="name">Gastos</field>
-            <field name="res_model">gms.gasto_viaje</field>
-            <field name="view_mode">tree,form</field>
-        </record>
-
-        <!-- accion para ver los ajustes -->
-        <record id="action_res_config_settings_gms" model="ir.actions.act_window">
-            <field name="name">Configuración de Balanza</field>
-            <field name="res_model">res.config.settings</field>
-            <field name="view_mode">form</field>
-            <field name="view_id" ref="view_res_config_settings_gms"/>
-            <field name="target">inline</field>
-        </record>
-
-
-
-
-
-      
-
-
+        <!-- Menú de Configuración -->
+        <menuitem id="gms_menu_configuracion" name="Configuración" parent="gms_menu" sequence="8"/>
 
 
     <!-- Vista de Lista para Gastos -->
@@ -368,6 +233,7 @@
                         <button name="action_liquidado" string="Liquidado" type="object" states="terminado" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'terminado')]}"/>
                         <button name="action_proceso" string="Proceso" type="object" states="terminado" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'terminado')]}"/>
                          <field name="state" widget="statusbar" statusbar_visible="borrador,coordinado,proceso,terminado,cancelado,liquidado"/>
+                    
                     </header>
 
                     
@@ -431,11 +297,14 @@
                             <group>
                             
                                 <field name="transportista_id" attrs="{'readonly': [('state', 'in', ['cancelado','proceso'])]}"/>
-                                <field name="ruta_id" attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])], 'required': [('state', '=', 'proceso')]}"/>
+                                <field name="ruta_id" attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])], 'required':[('state', '=', 'proceso')]}"/>
+                              
                                 <field name="producto_transportado_id" attrs="{'required': [('state', '=', 'coordinado')]}"/>
                                 <field name="pedido_venta_id"  attrs="{'invisible': 1, 'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
                                 <field name="pedido_compra_id"  attrs="{'invisible': 1, 'readonly': [('state', 'in',['cancelado','terminado', 'liquidado'])]}"/>
-                                 
+                                <field name="humedad"/>
+                                <field name="ph"/>
+                                <field name="proteina"/>
 
                             </group>  
 
@@ -497,7 +366,7 @@
 
 
                             <page string="Medidas de propiedades">
-                                <field name="medidas_propiedades_ids" attrs="{'readonly': [('state', 'in', ['cancelado', 'liquidado'])]}" >
+                                <field name="medidas_propiedades_ids" attrs="{'readonly': [('state', 'in', ['cancelado', 'liquidado','terminado'])]}" >
                                     <tree editable="bottom">
                                         <field name="propiedad" widget='field' options="{'width': '25%', 'no_create': True}"/>
                                         <field name="valor_medida" widget='field' options="{'width': '25%'}"/>
@@ -693,6 +562,7 @@
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='title']" position="after">
                     <field name="tipo"/>
+                    <field name="link"/> 
                 </xpath>
                 <notebook position="inside">
                     <page string="Transportistas" name="transportista_page">
@@ -717,6 +587,7 @@
            <field name="arch" type="xml">
                <xpath expr="//form/sheet/notebook/page/field/form/sheet/group/group/field[@name='name']" position="after">
                    <field name="tipo" />
+                   <field name="link"/>
                </xpath>    
                <!-- <field name="name" position="after">
                    <field name="tipo" />
@@ -1053,14 +924,142 @@
             </field>
         </record>
 
+        <!-- Acción de ventana para el modelo Balanza -->
+       <record id="action_balanzas" model="ir.actions.act_window">
+            <field name="name">Balanzas</field>
+            <field name="res_model">gms.balanza</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="view_gms_balanza_list"/>
+        </record>
 
 
 
 
 
-        <!-- menú principal para GMS -->
-        <menuitem id="gms_menu" name="Balanza" sequence="1"/>
+        <!-- accion para ver los ajustes -->
+        <record id="action_res_config_settings_gms" model="ir.actions.act_window">
+            <field name="name">Configuración de Balanza</field>
+            <field name="res_model">res.config.settings</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_res_config_settings_gms"/>
+            <field name="target">inline</field>
+        </record>  
+        
 
+
+
+
+      
+
+        
+
+         <!-- Acción para el menú Agenda -->
+        <record id="action_agenda" model="ir.actions.act_window">
+            <field name="name">Agenda</field>
+            <field name="res_model">gms.agenda</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="view_gms_agenda_list"/>
+            <field name="context">{'create': False}</field>
+        </record>
+
+      
+
+        <!-- Acción para el menú Producto -->
+        <record id="action_productos" model="ir.actions.act_window">
+            <field name="name">Productos</field>
+            <field name="res_model">product.template</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+       
+
+        <!-- Acción para el menú Contactos -->
+        <record id="action_contactos" model="ir.actions.act_window">
+            <field name="name">Contactos</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+       
+
+        <!-- Acción para el menú Camiones -->
+        <record id="action_camiones" model="ir.actions.act_window">
+            <field name="name">Camiones</field>
+            <field name="res_model">gms.camiones</field>
+            <field name="view_mode">tree,form</field>
+            <!-- Agrega más campos según tus necesidades -->
+        </record>
+
+       
+
+        <!-- Acción para la Disponibilidad de Camiones -->
+        <record id="action_camiones_disponibilidad" model="ir.actions.act_window">
+            <field name="name">Disponibilidad de Camiones</field>
+            <field name="res_model">gms.camiones.disponibilidad</field>
+            <field name="view_mode">tree,form</field>
+            <field name="context">{'create': False}</field>
+        </record>
+
+
+
+        <!-- Acción para el menú Propiedades -->
+        <record id="action_propiedades" model="ir.actions.act_window">
+            <field name="name">Propiedades</field>
+            <field name="res_model">gms.propiedades</field>
+            <field name="view_mode">tree,form</field>
+           
+        </record>
+
+       
+        <!-- Acción para el menú Rutas -->
+        <record id="action_rutas" model="ir.actions.act_window">
+            <field name="name">Rutas</field>
+            <field name="res_model">gms.rutas</field>
+            <field name="view_mode">tree,form</field>
+           
+        </record>
+
+          
+           <!-- Acción para el menú Viajes -->
+        <record id="action_viajes" model="ir.actions.act_window">
+            <field name="name">Viajes</field>
+            <field name="res_model">gms.viaje</field>
+            <field name="view_mode">tree,form</field>
+            <field name="context">{'create': False}</field>
+            
+        </record>
+
+     
+
+
+        <!-- Acción para ver el historial de camiones -->
+        <record model="ir.actions.act_window" id="action_gms_historial">
+            <field name="name">Historial de Camiones</field>
+            <field name="res_model">gms.historial</field>
+            <field name="view_mode">tree,form</field>
+            <field name="context">{'create': False}</field>
+        </record>
+
+
+        <!-- Acción para el menú Gastos -->
+        <record id="action_gastos" model="ir.actions.act_window">
+            <field name="name">Gastos</field>
+            <field name="res_model">gms.gasto_viaje</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- accion para ver los ajustes -->
+        <record id="action_res_config_settings_gms" model="ir.actions.act_window">
+            <field name="name">Configuración de Balanza</field>
+            <field name="res_model">res.config.settings</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_res_config_settings_gms"/>
+            <field name="target">inline</field>
+        </record>
+
+
+
+        
         <!-- Submenú para Agenda -->
         <menuitem id="gms_menu_agenda" name="Agenda" parent="gms_menu" action="action_agenda" sequence="2"/>
 
@@ -1079,8 +1078,7 @@
         <!-- Menú para acceder al historial de camiones -->
         <menuitem id="gms_menu_historial" name="Historial de Camiones" parent="gms_menu" action="action_gms_historial" sequence="7"/>
 
-        <!-- Menú de Configuración -->
-        <menuitem id="gms_menu_configuracion" name="Configuración" parent="gms_menu" sequence="8"/>
+
 
         <!-- Submenú para Productos, dentro de Configuración -->
         <menuitem id="gms_menu_productos" name="Productos" parent="gms_menu_configuracion" action="action_productos" sequence="1"/>
@@ -1096,9 +1094,13 @@
           
           <!-- Submenú para Ajuste, dentro de Configuración -->
         <menuitem id="gms_menu_settings" name="Ajustes" parent="gms_menu_configuracion" action="gms.action_res_config_settings_gms" sequence="5"/>
-
+        
          <!-- Submenú para Balanzas, dentro de Configuración -->
         <menuitem id="gms_menu_balanzas" name="Balanzas" parent="gms_menu_configuracion" action="action_balanzas" sequence="6"/>
+
+
+
+
 
 
 
