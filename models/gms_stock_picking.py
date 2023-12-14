@@ -225,8 +225,10 @@ class StockPicking(models.Model):
 
 
     def write(self, vals):
-        if 'state' in vals and self.viaje_ids:
-            raise UserError("No se puede cambiar el albarán que tiene viajes asociados.")
+        # Antes de permitir la actualización, verificar si hay viajes asociados
+        for record in self:
+            if record.viaje_ids and any(vals.get(key) for key in vals if key != 'state'):
+                raise UserError("No se puede modificar un albarán que tiene viajes asociados.")
         return super(StockPicking, self).write(vals)
 
 

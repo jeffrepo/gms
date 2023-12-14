@@ -102,8 +102,8 @@ class Agenda(models.Model):
     @api.onchange('camion_disponible_id')
     def _onchange_camion_disponible_id(self):
         if self.camion_disponible_id:
-            self.transportista_id = self.camion_disponible_id.transportista_id.id
-            self.conductor_id = self.camion_disponible_id.conductor_id.id
+            self.transportista_id = self.camion_disponible_id.camion_id.transportista_id.id
+            self.conductor_id = self.camion_disponible_id.camion_id.conductor_id.id
             self.camion_id = self.camion_disponible_id.camion_id.id
             
 
@@ -293,7 +293,7 @@ class Agenda(models.Model):
 
     def enviar_notificaciones_sms(self):
         _logger.info("Iniciando envío de notificaciones SMS para la agenda %s", self.name)
-    
+
         # Notificación al Camionero
         if self.camion_disponible_id and self.camion_disponible_id.conductor_id:
             mensaje_camionero = "Detalles de la agenda: {} - Origen: {} - Destino: {} - Link Origen: {} - Link Destino: {}".format(
@@ -303,7 +303,7 @@ class Agenda(models.Model):
                 self.origen.link if self.origen and self.origen.link else 'No disponible',
                 self.destino.link if self.destino and self.destino.link else 'No disponible'
             )
-            telefono_camionero = self.camion_disponible_id.conductor_id.mobile or self.camion_disponible_id.conductor_id.phone
+            telefono_camionero = self.camion_disponible_id.conductor_id.mobile
             if telefono_camionero:
                 _logger.info("Enviando SMS al camionero: %s", telefono_camionero)
                 try:
@@ -316,9 +316,10 @@ class Agenda(models.Model):
                     _logger.error("Error al enviar SMS al camionero: %s", e)
                     self.message_post(body=f"Error al enviar SMS al camionero ({telefono_camionero}): {e}")
             else:
-                mensaje_error = "No se pudo enviar SMS al camionero: no hay número de teléfono disponible"
+                mensaje_error = f"No se pudo enviar SMS al camionero {self.camion_disponible_id.conductor_id.name} porque no hay número de teléfono móvil disponible"
                 _logger.warning(mensaje_error)
                 self.message_post(body=mensaje_error)
+
     
         # Notificación al Solicitante
         if self.solicitante_id:
