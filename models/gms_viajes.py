@@ -291,7 +291,12 @@ class Viajes(models.Model):
 
                 
     def action_liquidado(self):
-        self.write({'state': 'liquidado'})  
+        for viaje in self:
+            if viaje.albaran_id and viaje.albaran_id.state != 'done':
+                raise UserError("No se puede pasar el viaje a estado 'Liquidado' hasta que el albarán esté confirmado.")
+            else:
+                viaje.write({'state': 'liquidado'})
+       
         
     def action_coordinado(self):
         self.write({'state': 'coordinado'})
@@ -454,10 +459,12 @@ class Viajes(models.Model):
         return {'domain': {'origen': []}}
 
     # silo_id debe llenarse con el campo destino del albarán
-    @api.onchange('albaran_id')
-    def _onchange_albaran_id(self):
-        if self.albaran_id:
-            self.silo_id = self.albaran_id.location_dest_id.id
+    @api.onchange('silo_id')
+    def _onchange_silo_id(self):
+        if self.albaran_id and self.silo_id:
+            # Actualizar la ubicación destino del albarán con la del silo seleccionado
+            self.albaran_id.write({'location_dest_id': self.silo_id.id})
+            _logger.info(f"Ubicación destino del albarán {self.albaran_id.name} actualizada a {self.silo_id.name}")
 
 
     @api.model
@@ -502,19 +509,29 @@ class Viajes(models.Model):
             # Seleccionar el producto de gasto adecuado
             producto_gasto_id = gasto_sin_impuesto_id if es_destino_puerto else gasto_con_impuesto_id
     
-            # Obtener el precio unitario del producto
+            # Obtener el producto de gasto
             producto = self.env['product.product'].browse(producto_gasto_id)
-            precio_coste = producto.standard_price  # o cualquier campo que represente el precio en tu modelo
+    
+            # Obtener el precio unitario del producto
+            precio_unitario = producto.standard_price
+    
+            # Calcular el precio total multiplicando por los kilómetros de la ruta
+            precio_total = precio_unitario * self.ruta_id.kilometros if self.ruta_id else 0
+            
+            # Obtener la moneda de compra del proveedor
+            moneda_proveedor_id = self.transportista_id.property_purchase_currency_id.id if self.transportista_id else False
     
             # Crear nuevo registro de gasto de viaje
             self.env['gms.gasto_viaje'].create({
                 'name': 'Flete',
                 'producto_id': producto_gasto_id,
                 'viaje_id': self.id,
-                'precio_total': precio_coste,
+                'precio_total': precio_total,
                 'proveedor_id': self.transportista_id.id,
+                'moneda_id': moneda_proveedor_id,
                 'estado_compra': 'no_comprado'
             })
+
     
     def _get_gasto_viaje_producto_id(self):
         # Este método auxiliar devuelve el ID del producto de gasto de viaje correspondiente
@@ -536,18 +553,27 @@ class Viajes(models.Model):
         # Generar el nombre del viaje si es necesario
         if vals.get('name', _('New')) == _('New'):
             vals['name'] = self.env['ir.sequence'].next_by_code('gms.viaje')
-
+    
+        # Si 'ruta_id' está presente en 'vals', actualizar 'kilometros_flete' según la ruta
+        if 'ruta_id' in vals:
+            ruta = self.env['gms.rutas'].browse(vals['ruta_id'])
+            vals['kilometros_flete'] = ruta.kilometros
+        else:
+            # En caso de que no haya ruta, se podría establecer un valor por defecto o dejarlo en blanco.
+            vals['kilometros_flete'] = 0.0
+    
         # Crear el viaje
         record = super().create(vals)
-
+    
         # Registrar un mensaje si el viaje fue creado desde una agenda
         if record.agenda:
-            record.message_post(body="Este viaje fue creado desde una agenda.",subtype_xmlid="mail.mt_note")
-
+            record.message_post(body="Este viaje fue creado desde una agenda.", subtype_xmlid="mail.mt_note")
+    
         # Asignar la ruta y los gastos del viaje
         self._asignar_ruta_y_gastos(record, vals)
-
+    
         return record
+
 
     def _asignar_ruta_y_gastos(self, record, vals):
         # Buscar una ruta que coincida con el origen y destino del viaje
@@ -647,38 +673,26 @@ class Viajes(models.Model):
 
     def enviar_sms_solicitante(self):
         try:
-            # Formatear el mensaje
-            mensaje_sms = "AS Agro - ({}) {}-{} - Kg {} - H: {}; PH: {}; P: {}; - M: {} - R: {}".format(
-                self.name,  # ID del viaje
-                self.origen.name if self.origen else '',  # Origen
-                self.producto_transportado_id.name if self.producto_transportado_id else '',  # Producto
-                self.peso_neto,  # KG Netos
-                self.humedad,  # Humedad
-                self.ph,  # PH
-                self.proteina,  # Proteína
-                self.camion_id.matricula if self.camion_id else '',  # Matrícula del camión
-                self.numero_remito  # Número de remito
-            )
-    
+            # Preparar el mensaje con detalles del viaje y las propiedades con sus mermas
+            mensaje_sms = "Detalles del viaje: {}\n".format(self.name)
+            for medida in self.medidas_propiedades_ids:
+                mensaje_sms += "{}: {}\n".format(medida.propiedad.cod, medida.merma_kg)
+
             # Obtener el número de teléfono del solicitante
             telefono_solicitante = self.solicitante_id.mobile or self.solicitante_id.phone
-            if not telefono_solicitante:
+            if telefono_solicitante:
+                _logger.info("Enviando SMS al solicitante: %s", telefono_solicitante)
+                self.env['sms.sms'].create({
+                    'number': telefono_solicitante,
+                    'body': mensaje_sms
+                }).send()
+                self.message_post(body=f"SMS enviado al solicitante ({telefono_solicitante}): {mensaje_sms}")
+            else:
                 raise UserError("El solicitante no tiene un número de teléfono registrado.")
-    
-            # Crear y enviar el SMS
-            sms_values = {
-                'number': telefono_solicitante,
-                'body': mensaje_sms,
-            }
-            sms = self.env['sms.sms'].create(sms_values)
-            sms.send()
-            _logger.info(f"SMS enviado a {telefono_solicitante}: {mensaje_sms}")
-            self.message_post(body=f"SMS enviado a {telefono_solicitante}: {mensaje_sms}")
-    
+        
         except Exception as e:
             error_message = f"Error al enviar SMS: {e}"
             _logger.error(error_message)
             self.message_post(body=error_message, message_type='comment', subtype_xmlid='mail.mt_comment')
-    
-    
+        
 

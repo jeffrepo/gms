@@ -323,7 +323,15 @@ class Agenda(models.Model):
     
         # Notificación al Solicitante
         if self.solicitante_id:
-            mensaje_solicitante = "Detalles de su agenda: {}".format(self.name)
+            mensaje_solicitante = "Detalles de la agenda: {} - Matricula: {} - Camión: {} - Origen: {} - Destino: {} - Link Origen: {} - Link Destino: {}".format(
+                self.name,
+                self.camion_id.matricula if self.camion_id else "-",
+                self.camion_id.matricula if self.camion_id else "-",
+                self.origen.name if self.origen else "-",
+                self.destino.name if self.destino else "-",
+                self.origen.link if self.origen and self.origen.link else "No disponible",
+                self.destino.link if self.destino and self.destino.link else "https://www.google.com/maps"
+            )
             telefono_solicitante = self.solicitante_id.mobile or self.solicitante_id.phone
             if telefono_solicitante:
                 _logger.info("Enviando SMS al solicitante: %s", telefono_solicitante)
