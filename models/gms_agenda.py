@@ -64,13 +64,13 @@ class Agenda(models.Model):
 
     viaje_count = fields.Integer(string="Número de viajes", compute="_compute_viaje_count", tracking="1")
 
-    picking_id = fields.Many2one('stock.picking', string='Stock Picking', required=True, readonly=True)
+    picking_id = fields.Many2one('stock.picking', string='Stock Picking', required=True, readonly=True, tracking=True)
 
     tipo_viaje = fields.Selection([('entrada', 'Entrada'), ('salida', 'Salida')], string="Tipo de Viaje", readonly=True, tracking="1")
 
-    albaran_id = fields.Many2one('stock.picking', string="Albarán", compute="_compute_albaran", store=True, readonly=True)
+    albaran_id = fields.Many2one('stock.picking', string="Albarán", compute="_compute_albaran", store=True, readonly=True , tracking=True)
 
-    order_id = fields.Many2one('purchase.order', string='Orden de Compra')
+    order_id = fields.Many2one('purchase.order', string='Orden de Compra', tracking=True)
 
     @api.depends('name')
     def _compute_albaran(self):
@@ -95,15 +95,15 @@ class Agenda(models.Model):
         ('proceso', 'Proceso'),
         ('confirmado', 'Confirmado'),
         ('cancelado', 'Cancelado')
-    ], string='Estado', default='solicitud', required=True)
+    ], string='Estado', default='solicitud', required=True, tracking=True)
 
     follower_ids = fields.Many2many('res.users', string='Followers')
 
     @api.onchange('camion_disponible_id')
     def _onchange_camion_disponible_id(self):
         if self.camion_disponible_id:
-            self.transportista_id = self.camion_disponible_id.transportista_id.id
-            self.conductor_id = self.camion_disponible_id.conductor_id.id
+            self.transportista_id = self.camion_disponible_id.camion_id.transportista_id.id
+            self.conductor_id = self.camion_disponible_id.camion_id.conductor_id.id
             self.camion_id = self.camion_disponible_id.camion_id.id
             
 
@@ -154,6 +154,9 @@ class Agenda(models.Model):
                     raise UserError("No se puede confirmar: La fecha de viaje es mayor a 1 día desde la fecha actual.")
 
     def action_confirm(self):
+        
+         # Enviar notificaciones por SMS
+        self.enviar_notificaciones_sms()
        
         self._check_fecha_viaje()
         
@@ -232,6 +235,7 @@ class Agenda(models.Model):
             })
 
         self.write({'state': 'confirmado'})
+        
 
 
 
@@ -285,3 +289,64 @@ class Agenda(models.Model):
         else:
             # Restablecer el dominio original para otros tipos de viaje
             return {'domain': {'destino': self._get_warehouse_partner_domain()}}
+
+
+    def enviar_notificaciones_sms(self):
+        _logger.info("Iniciando envío de notificaciones SMS para la agenda %s", self.name)
+
+        # Notificación al Camionero
+        if self.camion_disponible_id and self.camion_disponible_id.conductor_id:
+            mensaje_camionero = "Detalles de la agenda: {} - Origen: {} - Destino: {} - Link Origen: {} - Link Destino: {}".format(
+                self.name,
+                self.origen.display_name if self.origen else '',
+                self.destino.display_name if self.destino else '',
+                self.origen.link if self.origen and self.origen.link else 'No disponible',
+                self.destino.link if self.destino and self.destino.link else 'No disponible'
+            )
+            telefono_camionero = self.camion_disponible_id.conductor_id.mobile
+            if telefono_camionero:
+                _logger.info("Enviando SMS al camionero: %s", telefono_camionero)
+                try:
+                    self.env['sms.sms'].create({
+                        'number': telefono_camionero,
+                        'body': mensaje_camionero
+                    }).send()
+                    self.message_post(body=f"SMS enviado al camionero ({telefono_camionero}): {mensaje_camionero}")
+                except Exception as e:
+                    _logger.error("Error al enviar SMS al camionero: %s", e)
+                    self.message_post(body=f"Error al enviar SMS al camionero ({telefono_camionero}): {e}")
+            else:
+                mensaje_error = f"No se pudo enviar SMS al camionero {self.camion_disponible_id.conductor_id.name} porque no hay número de teléfono móvil disponible"
+                _logger.warning(mensaje_error)
+                self.message_post(body=mensaje_error)
+
+    
+        # Notificación al Solicitante
+        if self.solicitante_id:
+            mensaje_solicitante = "Detalles de la agenda: {} - Matricula: {} - Camión: {} - Origen: {} - Destino: {} - Link Origen: {} - Link Destino: {}".format(
+                self.name,
+                self.camion_id.matricula if self.camion_id else "-",
+                self.camion_id.matricula if self.camion_id else "-",
+                self.origen.name if self.origen else "-",
+                self.destino.name if self.destino else "-",
+                self.origen.link if self.origen and self.origen.link else "No disponible",
+                self.destino.link if self.destino and self.destino.link else "https://www.google.com/maps"
+            )
+            telefono_solicitante = self.solicitante_id.mobile or self.solicitante_id.phone
+            if telefono_solicitante:
+                _logger.info("Enviando SMS al solicitante: %s", telefono_solicitante)
+                try:
+                    self.env['sms.sms'].create({
+                        'number': telefono_solicitante,
+                        'body': mensaje_solicitante
+                    }).send()
+                    self.message_post(body=f"SMS enviado al solicitante ({telefono_solicitante}): {mensaje_solicitante}")
+                except Exception as e:
+                    _logger.error("Error al enviar SMS al solicitante: %s", e)
+                    self.message_post(body=f"Error al enviar SMS al solicitante ({telefono_solicitante}): {e}")
+            else:
+                mensaje_error = "No se pudo enviar SMS al solicitante: no hay número de teléfono disponible"
+                _logger.warning(mensaje_error)
+                self.message_post(body=mensaje_error)
+    
+        _logger.info("Finalizado el envío de notificaciones SMS para la agenda %s", self.name)

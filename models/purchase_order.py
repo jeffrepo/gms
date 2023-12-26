@@ -79,3 +79,11 @@ class PurchaseOrder(models.Model):
         gastos_viaje = self.env['gms.gasto_viaje'].search([('purchase_order_id', 'in', self.ids)])
         gastos_viaje.write({'estado_compra': 'no_comprado'})
         return super(PurchaseOrder, self).unlink()
+
+
+
+    def write(self, vals):
+        for record in self:
+            if record.viaje_ids and vals.get('state') not in ['draft', 'cancel']:
+                raise UserError("No se pueden modificar órdenes de compra que tienen viajes asociados.")
+        return super(PurchaseOrder, self).write(vals)

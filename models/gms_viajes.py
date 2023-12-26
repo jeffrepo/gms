@@ -88,7 +88,7 @@ class Viajes(models.Model):
 
     peso_neto = fields.Float(string="Peso neto", readonly=True, compute="_compute_peso_neto", tracking="1",store=True)
     
-    estado = fields.Char(string = "s")
+    estado = fields.Char(string = "s" , tracking=True)
 
     peso_neto_destino = fields.Float(string="Peso neto destino", tracking="1")
 
@@ -113,26 +113,32 @@ class Viajes(models.Model):
 
     observaciones = fields.Text(string="Observaciones", tracking="1")
 
-    albaran_count = fields.Integer(string="Número de Albaranes", compute="_compute_albaran_count")
+    albaran_count = fields.Integer(string="Número de Albaranes", compute="_compute_albaran_count" , tracking=True)
 
-    albaran_id = fields.Many2one('stock.picking', string="Albarán")
+    albaran_id = fields.Many2one('stock.picking', string="Albarán" , tracking=True)
 
-    purchase_order_id= fields.Many2one('purchase.order')
+    purchase_order_id= fields.Many2one('purchase.order', tracking=True)
 
     medidas_propiedades_ids = fields.One2many('gms.medida.propiedad', 'viaje_id', string='Medidas de Propiedades', tracking="1")
 
-    arribo = fields.Datetime(string="Arribo")
-    partida = fields.Datetime(string="Partida")
+    arribo = fields.Datetime(string="Arribo", tracking=True)
+    partida = fields.Datetime(string="Partida", tracking=True)
 
     chacra = fields.Char(string='Chacra', tracking="1")
     remito = fields.Float(string='Remito', tracking="1")
 
     firma = fields.Binary(string='Firma', tracking="1")
 
-    sale_order_id = fields.Many2one('sale.order', string='Orden de Venta')
-    purchase_order_id = fields.Many2one('purchase.order', string='Orden de Compra')
+    sale_order_id = fields.Many2one('sale.order', string='Orden de Venta' , tracking=True)
+    purchase_order_id = fields.Many2one('purchase.order', string='Orden de Compra' , tracking=True)
 
-    balanza_id = fields.Many2one('gms.balanza', string='Balanza')
+    balanza_id = fields.Many2one('gms.balanza', string='Balanza' , tracking=True)
+    
+    humedad = fields.Float(string='Humedad' , tracking=True)
+    
+    ph = fields.Float(string='PH' , tracking=True)
+    
+    proteina = fields.Float(string='Proteína'  , tracking=True)
 
     # prelimpieza_entrada_1 = fields.Selection([('si', 'Si'), ('no', 'No')], string="Prelimpieza entrada", tracking="1")
 
@@ -179,7 +185,7 @@ class Viajes(models.Model):
     ], string='Estado', default='coordinado', required=True)
 
 
-    gastos_ids = fields.One2many('gms.gasto_viaje', 'viaje_id', string='Gastos')
+    gastos_ids = fields.One2many('gms.gasto_viaje', 'viaje_id', string='Gastos' , tracking=True)
 
 
     def action_proceso(self):
@@ -218,6 +224,12 @@ class Viajes(models.Model):
         fecha_hora_actual = fields.Datetime.now()
             # Establece la fecha y hora de partida para el viaje
         self.partida = fecha_hora_actual
+
+
+        if self.tipo_viaje == 'entrada':
+            self.enviar_sms_solicitante()
+
+       
 
         
 
@@ -279,7 +291,12 @@ class Viajes(models.Model):
 
                 
     def action_liquidado(self):
-        self.write({'state': 'liquidado'})  
+        for viaje in self:
+            if viaje.albaran_id and viaje.albaran_id.state != 'done':
+                raise UserError("No se puede pasar el viaje a estado 'Liquidado' hasta que el albarán esté confirmado.")
+            else:
+                viaje.write({'state': 'liquidado'})
+       
         
     def action_coordinado(self):
         self.write({'state': 'coordinado'})
@@ -442,10 +459,12 @@ class Viajes(models.Model):
         return {'domain': {'origen': []}}
 
     # silo_id debe llenarse con el campo destino del albarán
-    @api.onchange('albaran_id')
-    def _onchange_albaran_id(self):
-        if self.albaran_id:
-            self.silo_id = self.albaran_id.location_dest_id.id
+    @api.onchange('silo_id')
+    def _onchange_silo_id(self):
+        if self.albaran_id and self.silo_id:
+            # Actualizar la ubicación destino del albarán con la del silo seleccionado
+            self.albaran_id.write({'location_dest_id': self.silo_id.id})
+            _logger.info(f"Ubicación destino del albarán {self.albaran_id.name} actualizada a {self.silo_id.name}")
 
 
     @api.model
@@ -490,19 +509,29 @@ class Viajes(models.Model):
             # Seleccionar el producto de gasto adecuado
             producto_gasto_id = gasto_sin_impuesto_id if es_destino_puerto else gasto_con_impuesto_id
     
-            # Obtener el precio unitario del producto
+            # Obtener el producto de gasto
             producto = self.env['product.product'].browse(producto_gasto_id)
-            precio_coste = producto.standard_price  # o cualquier campo que represente el precio en tu modelo
+    
+            # Obtener el precio unitario del producto
+            precio_unitario = producto.standard_price
+    
+            # Calcular el precio total multiplicando por los kilómetros de la ruta
+            precio_total = precio_unitario * self.ruta_id.kilometros if self.ruta_id else 0
+            
+            # Obtener la moneda de compra del proveedor
+            moneda_proveedor_id = self.transportista_id.property_purchase_currency_id.id if self.transportista_id else False
     
             # Crear nuevo registro de gasto de viaje
             self.env['gms.gasto_viaje'].create({
                 'name': 'Flete',
                 'producto_id': producto_gasto_id,
                 'viaje_id': self.id,
-                'precio_total': precio_coste,
+                'precio_total': precio_total,
                 'proveedor_id': self.transportista_id.id,
+                'moneda_id': moneda_proveedor_id,
                 'estado_compra': 'no_comprado'
             })
+
     
     def _get_gasto_viaje_producto_id(self):
         # Este método auxiliar devuelve el ID del producto de gasto de viaje correspondiente
@@ -524,18 +553,27 @@ class Viajes(models.Model):
         # Generar el nombre del viaje si es necesario
         if vals.get('name', _('New')) == _('New'):
             vals['name'] = self.env['ir.sequence'].next_by_code('gms.viaje')
-
+    
+        # Si 'ruta_id' está presente en 'vals', actualizar 'kilometros_flete' según la ruta
+        if 'ruta_id' in vals:
+            ruta = self.env['gms.rutas'].browse(vals['ruta_id'])
+            vals['kilometros_flete'] = ruta.kilometros
+        else:
+            # En caso de que no haya ruta, se podría establecer un valor por defecto o dejarlo en blanco.
+            vals['kilometros_flete'] = 0.0
+    
         # Crear el viaje
         record = super().create(vals)
-
+    
         # Registrar un mensaje si el viaje fue creado desde una agenda
         if record.agenda:
-            record.message_post(body="Este viaje fue creado desde una agenda.",subtype_xmlid="mail.mt_note")
-
+            record.message_post(body="Este viaje fue creado desde una agenda.", subtype_xmlid="mail.mt_note")
+    
         # Asignar la ruta y los gastos del viaje
         self._asignar_ruta_y_gastos(record, vals)
-
+    
         return record
+
 
     def _asignar_ruta_y_gastos(self, record, vals):
         # Buscar una ruta que coincida con el origen y destino del viaje
@@ -577,51 +615,84 @@ class Viajes(models.Model):
 
 
 
-    def obtener_peso_vnc(self, direccion_servidor, puerto, usuario, contrasena):
-        
-        try:
-            # Inicializar la conexión serie
-            with serial.Serial(puerto, baudrate=9600, timeout=10) as ser:
-                # Leer línea de datos desde la balanza
-                datos_peso = ser.readline().decode('ascii').strip()
-                # Convertir los datos leídos a número, si es posible
-                peso = float(datos_peso)
-                return peso
-        except Exception as e:
-            # Manejo de errores
-            _logger.error("Error al leer la balanza: %s", e)
-            raise UserError(f"Error al leer la balanza: {e}")
-
-    def leer_peso_balanza(self):
-        if not self.balanza_id:
-            raise UserError("Selecciona una balanza primero.")
-
-        # Obtener la configuración de la balanza seleccionada
+    def leer_peso_balanza_archivo(self):
         balanza = self.balanza_id
-        puerto = balanza.puerto if balanza.puerto else 'COM1'  # Asumiendo COM1 como puerto por defecto
-        direccion_servidor = balanza.direccion_servidor  # No se usa en este contexto
-        usuario = balanza.usuario  # No se usa en este contexto
-        contrasena = balanza.contrasena  # No se usa en este contexto
-
-        # Leer el peso de la balanza
+        if not balanza:
+            raise UserError("Selecciona una balanza primero.")
+    
+       
+        archivo_datos = '/Users/balanza/datos_balanza.txt'
+    
         try:
-            peso = self.obtener_peso_vnc(direccion_servidor, puerto, usuario, contrasena)
-            return peso
+            # Conectar vía SSH al servidor
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.connect(balanza.direccion_servidor, username=balanza.usuario, password=balanza.contrasena)
+    
+            # Comando para obtener la última línea del archivo de datos
+            comando_ssh = f"tail -n 1 {archivo_datos}"
+            stdin, stdout, stderr = ssh.exec_command(comando_ssh)
+            ultima_linea = stdout.read().decode().strip()
+    
+            ssh.close()
+    
+            if ultima_linea:
+                peso = float(ultima_linea.split(' - Peso: ')[1])
+                return peso
+            else:
+                raise UserError("No se recibieron datos de la balanza.")
         except Exception as e:
+            _logger.error(f"Error al leer los datos de la balanza: {e}")
             raise UserError(f"No se pudo leer el peso de la balanza: {e}")
-
+    
     def accion_leer_balanza(self):
         self.ensure_one()
         try:
-            peso = self.leer_peso_balanza()
+            peso = self.leer_peso_balanza_archivo()
             self.write({'peso_bruto': peso})
         except Exception as e:
             _logger.error("Error al leer datos de la balanza: %s", e)
             raise UserError(f"No se pudo leer la balanza: {e}")
-        
 
 
 
     def accion_calcular_tara(self):
        
         raise UserError(_('Esta es una acción de prueba para calcular la tara.'))
+
+
+
+    def action_set_to_proceso(self):
+        self.ensure_one()
+        if self.state == 'terminado' and self.albaran_id and self.albaran_id.state != 'done':
+            self.state = 'proceso'
+        else:
+            raise UserError("El viaje no puede pasar a estado 'Proceso' bajo las condiciones actuales.")
+
+
+
+    def enviar_sms_solicitante(self):
+        try:
+            # Preparar el mensaje con detalles del viaje y las propiedades con sus mermas
+            mensaje_sms = "Detalles del viaje: {}\n".format(self.name)
+            for medida in self.medidas_propiedades_ids:
+                mensaje_sms += "{}: {}\n".format(medida.propiedad.cod, medida.merma_kg)
+
+            # Obtener el número de teléfono del solicitante
+            telefono_solicitante = self.solicitante_id.mobile or self.solicitante_id.phone
+            if telefono_solicitante:
+                _logger.info("Enviando SMS al solicitante: %s", telefono_solicitante)
+                self.env['sms.sms'].create({
+                    'number': telefono_solicitante,
+                    'body': mensaje_sms
+                }).send()
+                self.message_post(body=f"SMS enviado al solicitante ({telefono_solicitante}): {mensaje_sms}")
+            else:
+                raise UserError("El solicitante no tiene un número de teléfono registrado.")
+        
+        except Exception as e:
+            error_message = f"Error al enviar SMS: {e}"
+            _logger.error(error_message)
+            self.message_post(body=error_message, message_type='comment', subtype_xmlid='mail.mt_comment')
+        
+

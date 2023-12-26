@@ -8,7 +8,7 @@
     'icon': '/gms/static/description/Balanza.png',
     'category': 'Uncategorized',
     'version': '0.1',
-    'depends': ['base','product','sale','purchase','stock'],
+    'depends': ['base','product','sale','purchase','stock', 'account'],
     'data': [
         'views/views.xml',
         'views/gms_viajes.xml',
