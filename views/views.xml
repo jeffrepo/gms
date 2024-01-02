@@ -19,6 +19,7 @@
                 <field name="producto_id"/>
                 <field name="precio_total"/>
                 <field name="proveedor_id"/>
+                <field name="proveedor_id"/>
                 <field name="purchase_order_id"/>
                  <header>
                     <button name="action_generate_purchase_order_from_gastos" string="Generar Orden de Compra" type="object" class="oe_highlight"/>
@@ -857,6 +858,29 @@
                             <div class="o_setting_right_pane">
                                 <label for="gasto_viaje_sin_impuesto_id"/>
                                 <field name="gasto_viaje_sin_impuesto_id"/>
+                            </div>
+                        </div>
+                    </div>
+                     <div class="row mt16 o_settings_container">
+                        <!-- Producto Secado -->
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_right_pane">
+                                <label for="producto_secado_id"/>
+                                <field name="producto_secado_id"/>
+                            </div>
+                        </div>
+                        <!-- Producto Pre Limpieza -->
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_right_pane">
+                                <label for="producto_pre_limpieza_id"/>
+                                <field name="producto_pre_limpieza_id"/>
+                            </div>
+                        </div>
+                        <!-- Producto Flete Puerto -->
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_right_pane">
+                                <label for="producto_flete_puerto_id"/>
+                                <field name="producto_flete_puerto_id"/>
                             </div>
                         </div>
                     </div>
