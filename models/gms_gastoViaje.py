@@ -15,6 +15,8 @@ class GastosViaje(models.Model):
     purchase_order_line_id = fields.Many2one('purchase.order.line', string='Línea de Orden de Compra', readonly=True)
     es_de_ruta = fields.Boolean(string='Es de Ruta', default=False)
 
+    moneda_id = fields.Many2one('res.currency', string='Moneda')
+
     proveedor_id = fields.Many2one('res.partner', string='Proveedor', 
                                    domain=[('supplier_rank', '>', 0)], 
                                    help="Este es el proveedor del gasto.")

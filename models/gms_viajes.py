@@ -230,71 +230,104 @@ class Viajes(models.Model):
             self.enviar_sms_solicitante()
 
        
-
+        if self.tipo_viaje in ['entrada', 'salida']:
+            # Obtener los productos de configuración
+            config = self.env['res.config.settings'].default_get([])
+            producto_secado_id = config.get('producto_secado_id')
+            producto_pre_limpieza_id = config.get('producto_pre_limpieza_id')
+            producto_flete_puerto_id = config.get('producto_flete_puerto_id')
+    
+            # Obtener la moneda de compra del proveedor
+            moneda_proveedor_id = self.transportista_id.property_purchase_currency_id.id 
+            
+            # Obtener el valor de medida para humedad
+            valor_medida = 0  
+            for medida in self.medidas_propiedades_ids:
+                valor_medida = medida.valor_medida  
         
+            # Buscar la coincidencia en gms.datos_humedad para calcular el precio total del secado
+            datos_humedad = self.env['gms.datos_humedad'].search([('humedad', '=', valor_medida)], limit=1)
+            tarifa_humedad = datos_humedad.tarifa if datos_humedad else 0  
+            precio_total_secado = (tarifa_humedad/1000) * self.peso_neto if tarifa_humedad else 0
+    
+            # Para el producto de Pre Limpieza
+            producto_pre_limpieza = self.env['product.product'].browse(producto_pre_limpieza_id)
+            precio_total_pre_limpieza = self.peso_neto * producto_pre_limpieza.lst_price if producto_pre_limpieza else 0
+    
+            # Obtener el valor de kilometros_flete para calcular el precio total del flete puerto
+            kilometros_flete = self.kilometros_flete 
+        
+            # Buscar coincidencia en gms.datos_flete
+            datos_flete = self.env['gms.datos_flete'].search([('flete_km', '=', kilometros_flete)], limit=1)
+            tarifa_flete = datos_flete.tarifa if datos_flete else 0  
+        
+            # Calcular el precio_total_flete
+            precio_total_flete = tarifa_flete * kilometros_flete if tarifa_flete else 0
+    
+            # Crear las líneas de gasto si los productos están configurados
+            if producto_secado_id:
+                self.env['gms.gasto_viaje'].create({
+                    'name': 'Secado',
+                    'producto_id': producto_secado_id,
+                    'precio_total': precio_total_secado, 
+                    'viaje_id': self.id,
+                    'estado_compra': 'no_comprado',
+                    'moneda_id': moneda_proveedor_id
+                })
+    
+            if producto_pre_limpieza_id:
+                self.env['gms.gasto_viaje'].create({
+                    'name': 'Pre Limpieza',
+                    'producto_id': producto_pre_limpieza_id,
+                    'precio_total': precio_total_pre_limpieza,  
+                    'viaje_id': self.id,
+                    'estado_compra': 'no_comprado',
+                    'moneda_id': moneda_proveedor_id
+                })
+    
+            if producto_flete_puerto_id:
+                self.env['gms.gasto_viaje'].create({
+                    'name': 'Flete Puerto',
+                    'producto_id': producto_flete_puerto_id,
+                    'precio_total': precio_total_flete,  
+                    'viaje_id': self.id,
+                    'estado_compra': 'no_comprado',
+                    'moneda_id': moneda_proveedor_id
+                })
 
-        # # Buscar la ubicación 'Partners/Vendors'
-        # location_supplier_id = self.env['stock.location'].search([('usage', '=', 'supplier')], limit=1).id
-
-        # # Buscar la ubicación 'Partners/Customers'
-        # location_customer_id = self.env['stock.location'].search([('usage', '=', 'customer')], limit=1).id
-
-        # if not location_supplier_id or not location_customer_id:
-        #     raise UserError("No se encontraron las ubicaciones necesarias para crear el albarán.")
-
-        # if self.tipo_viaje == 'entrada':
-        #     location_id = location_supplier_id
-        #     location_dest_id = self.silo_id.id  
-        #     owner = self.solicitante_id
-
-        #     # Buscar el tipo de operación "recepción" con el silo correspondiente
-        #     picking_type = self.env['stock.picking.type'].search([
-        #         ('code', '=', 'incoming'),
-        #         ('default_location_dest_id', '=', self.silo_id.id)
-        #     ], limit=1)
-        # else:  # salida
-        #     location_id = self.silo_id.id
-        #     location_dest_id = location_customer_id
-
-        #     # Buscar el tipo de operación "entrega" con el silo correspondiente
-        #     picking_type = self.env['stock.picking.type'].search([
-        #         ('code', '=', 'outgoing'),
-        #         ('default_location_src_id', '=', self.silo_id.id)
-        #     ], limit=1)
-
-        # if not picking_type:
-        #     raise UserError("No se encontró el tipo de operación necesario para crear el albarán.")
-
-        # # Crear el albarán
-        # picking_vals = {
-        #     'location_id': location_id,
-        #     'location_dest_id': location_dest_id,
-        #     'origin': self.name,
-        #     'picking_type_id': picking_type.id,
-        #     'owner_id': owner.id if self.tipo_viaje == 'entrada' else False
-        # }   
-
-        # picking = self.env['stock.picking'].create(picking_vals)
-
-        # # Agregar las líneas al albarán
-        # picking.move_ids_without_package = [(0, 0, {
-        #     'name': self.producto_transportado_id.name,
-        #     'product_id': self.producto_transportado_id.id,
-        #     'product_uom_qty': self.kilogramos_a_liquidar,
-        #     'product_uom': self.producto_transportado_id.uom_id.id,
-        #     'location_id': location_id,
-        #     'location_dest_id': location_dest_id,
-        # })]
-
-        # self.albaran_id = picking
+       
 
 
                 
     def action_liquidado(self):
+        AccountPayment = self.env['account.payment']
         for viaje in self:
             if viaje.albaran_id and viaje.albaran_id.state != 'done':
                 raise UserError("No se puede pasar el viaje a estado 'Liquidado' hasta que el albarán esté confirmado.")
             else:
+                # Sumar el total de los gastos
+                total_gastos = sum(gasto.precio_total for gasto in viaje.gastos_ids)
+    
+                # Preparar valores comunes para el pago
+                payment_vals = {
+                    'partner_id': viaje.transportista_id.id if viaje.tipo_viaje == 'entrada' else viaje.solicitante_id.id,
+                    'amount': total_gastos,
+                    'partner_type': 'supplier' if viaje.tipo_viaje == 'entrada' else 'customer',
+                    'journal_id': self.env['account.journal'].search([('type', '=', 'bank')], limit=1).id,
+                }
+    
+                # Diferenciar entre entrada y salida para el payment_type
+                if viaje.tipo_viaje == 'entrada':
+                    payment_vals['payment_type'] = 'outbound'
+                else:  # asumiendo 'salida' u otro caso
+                    payment_vals['payment_type'] = 'inbound'
+    
+                # Crear un pago si hay un monto total a pagar
+                if total_gastos > 0:
+                    payment_method_id = self.env.ref('account.account_payment_method_manual_out').id if viaje.tipo_viaje == 'entrada' else self.env.ref('account.account_payment_method_manual_in').id
+                    payment_vals['payment_method_id'] = payment_method_id
+                    AccountPayment.create(payment_vals)
+    
                 viaje.write({'state': 'liquidado'})
        
         

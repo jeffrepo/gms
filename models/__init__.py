@@ -22,3 +22,5 @@ from . import res_config_settings
 from . import gms_modelo_asistente
 from . import gms_balanza
 from . import account_move
+from . import gms_datos_humedad
+from . import gms_datos_flete
