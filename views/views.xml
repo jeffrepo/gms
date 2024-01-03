@@ -967,6 +967,77 @@
                 </xpath>
             </field>
         </record>
+        
+          <!-- vista tree humedad -->
+        <record id="view_datos_humedad_tree" model="ir.ui.view">
+            <field name="name">gms.datos_humedad.tree</field>
+            <field name="model">gms.datos_humedad</field>
+            <field name="arch" type="xml">
+                <tree string="Datos de Humedad">
+                    <field name="humedad"/>
+                    <field name="tarifa"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- vista from humedad -->
+        <record id="view_datos_humedad_form" model="ir.ui.view">
+            <field name="name">gms.datos_humedad.form</field>
+            <field name="model">gms.datos_humedad</field>
+            <field name="arch" type="xml">
+                <form string="Datos de Humedad">
+                    <sheet>
+                        <group>
+                            <field name="humedad"/>
+                            <field name="tarifa"/>
+                        </group>
+                    </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids"/>
+                        <field name="activity_ids"/>
+                        <field name="message_ids"/>
+                    </div> 
+                </form>
+            </field>
+        </record>
+        
+         <!-- vista tree flete -->
+        <record id="view_datos_flete_tree" model="ir.ui.view">
+            <field name="name">gms.datos_flete.tree</field>
+            <field name="model">gms.datos_flete</field>
+            <field name="arch" type="xml">
+                <tree string="Datos de Flete">
+                    <field name="flete_km"/>
+                    <field name="tarifa"/>
+                </tree>
+            </field>
+        </record>
+
+
+         <!-- vista from flete -->
+        <record id="view_datos_flete_form" model="ir.ui.view">
+            <field name="name">gms.datos_flete.form</field>
+            <field name="model">gms.datos_flete</field>
+            <field name="arch" type="xml">
+                <form string="Datos de Flete">
+                    <sheet>
+                        <group>
+                            <field name="flete_km"/>
+                            <field name="tarifa"/>
+                        </group>
+                    </sheet>
+                     <div class="oe_chatter">
+                        <field name="message_follower_ids"/>
+                        <field name="activity_ids"/>
+                        <field name="message_ids"/>
+                    </div> 
+                </form>
+            </field>
+        </record>
+
+
+
+
 
         <!-- Acción de ventana para el modelo Balanza -->
        <record id="action_balanzas" model="ir.actions.act_window">
@@ -1073,6 +1144,22 @@
             
         </record>
 
+
+        <!-- Acción para abrir la vista de Datos de Humedad -->
+        <record id="action_datos_humedad" model="ir.actions.act_window">
+            <field name="name">Datos de Humedad</field>
+            <field name="res_model">gms.datos_humedad</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        
+        <!-- Acción para abrir la vista de Datos de Flete -->
+        <record id="action_datos_flete" model="ir.actions.act_window">
+            <field name="name">Datos de Flete</field>
+            <field name="res_model">gms.datos_flete</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+
      
 
 
@@ -1141,6 +1228,12 @@
         
          <!-- Submenú para Balanzas, dentro de Configuración -->
         <menuitem id="gms_menu_balanzas" name="Balanzas" parent="gms_menu_configuracion" action="action_balanzas" sequence="6"/>
+        <!-- Submenú para Datos de Humedad, dentro de Configuración -->
+        <menuitem id="gms_menu_datos_humedad" name="Datos de Humedad" parent="gms_menu_configuracion" action="action_datos_humedad" sequence="7"/>
+        
+        <!-- Submenú para Datos de Flete, dentro de Configuración -->
+        <menuitem id="gms_menu_datos_flete" name="Datos de Flete" parent="gms_menu_configuracion" action="action_datos_flete" sequence="8"/>
+
 
 
 
