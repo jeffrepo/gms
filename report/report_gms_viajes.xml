@@ -3,51 +3,23 @@
     <data>
         <template id="report_viaje_template">
             <t t-call="web.html_container">
+             <t t-set="data_report_margin_top" t-value="1"/>
+            <t t-set="data_report_header_spacing" t-value="1"/>
                 <t t-foreach="docs" t-as="o">
-                    <div class="page">
+                    <div class="page" style="font-size:12px">
                         <style>
-                           .page {
+                            .page {
                                 margin-top: 0px;
-                            }
-                            * {
-                                margin: 0;
-                                padding: 0;
-                            }
-                            .container {
-                                display: flex;
-                                flex-direction: column;
-                                height: 100%;
                             }
                             body {
                                 font-family: 'Arial', sans-serif;
-                                font-size: 12px; 
-                            }
-                            .header-content {
-                                display: flex;
-                                justify-content: space-between;
-                                align-items: center;
-                                margin-bottom: 15px;
-                            }
-                            .company-info, .tipo-viaje-numero {
-                                display: flex;
-                                align-items: center;
                             }
                             .company-info {
                                 width: 60%;
                             }
-                            .tipo-viaje-numero {
-                                margin-top: 75px;  
-                            }
-                            .tipo-viaje-numero div {
-                                margin-right: 15px;
-                            }
                             .main-content {
                                 display: flex;
                                 justify-content: space-between;
-                            }
-                            .additional-fields {
-                                margin-top: 5px;
-                                margin-right: 150px;
                             }
                             .footer-content {
                                 display: flex;
@@ -60,277 +32,463 @@
                                 background-color: black; 
                                 margin-bottom: 3px; 
                             }
-                            .company-info {
-                                width: 60%;
-                                flex-wrap: wrap;
-                            }
                             .logo-section {
                                 width: 100%; 
                                 display: flex;
                                 justify-content: start;
                                 align-items: center;
                             }
-                            .contact-section {
-                                margin-top: 10px;
-                                margin-right: 15px;
+                            
+                            div.div_encabezado{
+                              margin-top: 0px;
                             }
-                            .highlighted-text {
-                                font-size:  20px;
-                                font-weight: bold;
+                            div.alineado_izquierda{
+                              margin:auto;
+                              margin-top:1px;
+                              width:40%;
+                              float:left;
                             }
-                            .blod-text{
-                                font-weight: bold;
+                            div.alineado_derecha{
+                              margin:auto;
+                              margin-top:1px;
+                              width:60%;
+                              float:right;
                             }
                         </style>
+
+                        <!--Original-->
+                        
                         <body>
                           <header class="header-content">
                                 <div class="company-info">
                                     <div class="logo-section">
                                         <img src="ruta_al_logo" alt="Logo" style="width: 80px; margin-right: 10px;"/>
-                                        <div>
+                                        <div style="font-size:8px">
                                             <span>Tel.: 4540 4135 - Cel.: 098 530 081</span><br/>
                                             <span>balanza@artigasilveira.com</span>
                                         </div>
                                     </div>
-                                    <div class="contact-section">
-                                        <span class="blod-text">ARTIGAS SILVEIRA S.A.</span><br/>
-                                        <span class="blod-text">RUT: <span t-field="o.solicitante_id.vat"/></span>
-                                    </div>
                                 </div>
-                                <div class="tipo-viaje-numero">
-                                    <div>
-                                        <span class="highlighted-text" >Tipo de Pesaje:</span><span t-field="o.tipo_viaje"/><br/>
-                                        <span class="blod-text" >Arribo: </span><span t-field="o.arribo"/><br/>
-                                        <span class="blod-text">Partida: </span><span t-field="o.partida"/>
-                                    </div>
-                                    <div>
-                                        <span  class="highlighted-text">Numero:</span><span t-esc="o.name[-4:]"/><br/>
-                                        <span class="blod-text">Bruto: </span><span t-field="o.peso_bruto"/><br/>
-                                        <span class="blod-text">Tara: </span><span t-field="o.tara"/><br/>
-                                        <span class="blod-text">Neto: </span><span t-field="o.peso_neto"/>
-                                    </div>
-                                </div>
-                            </header>
-
-                            <div class="main-content">
-                                <div class="content">
-                                    <div class="content-row">
-                                        <span class="blod-text">Producto: </span><span t-field="o.producto_transportado_id.name"/><br/>
-                                        <span class="blod-text">Vehiculo: </span><span t-field="o.camion_id.matricula"/>
-                                    </div>
-                                    <div class="content-row">
-                                        <span  class="blod-text">Chofer: </span><span t-field="o.conductor_id.name"/><br/>
-                                        <span  class="blod-text">Transportista: </span><span t-field="o.transportista_id.name"/>
-                                    </div>
-                                   <div>
-                                        <br/>
-                                        <span class="blod-text">Propiedades adicionales:</span>
-                                        <table>
-                                            <thead>
-                                                <tr>
-                                                    <th class="blod-text">Propiedad</th>
-                                                    <th class="blod-text">Valor</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <t t-foreach="o.medidas_propiedades_ids" t-as="medida">
-                                                    <tr>
-                                                        <td><span t-field="medida.propiedad.name"/></td>
-                                                        <td><span t-field="medida.parametro"/></td>
-                                                    </tr>
-                                                </t>
-                                            </tbody>
+                              
+                                <div class="div_encabezado">
+                                <div class="alineado_izquierda">
+                                        <table style="font-size:15px; width:85%;">
+                                            <tr>
+                                                <td><center><strong><span class="blod-text">ARTIGAS SILVEIRA S.A.</span></strong></center></td>
+                                            </tr>
+                                            <tr>
+                                                <td><center><strong><span class="blod-text">RUT: <span t-field="o.solicitante_id.vat"/></span></strong></center></td>
+                                            </tr>
                                         </table>
-                                    </div>
+                                </div>
+                                <div class="alineado_derecha">
+                                    <table style="width:100%">
+                                        <tr style="font-size:19px">
+                                            <td colspan="2" style="width:50%"><strong><span>Tipo Pesaje: </span></strong><span t-field="o.tipo_viaje"/></td>
+                                            <td colspan="2"><strong><span>Numero: </span></strong><span t-esc="o.name[-4:]"/></td>
+                                        </tr>
+                                    </table>
+                                    <table style="font-size:14px; width:70%;">
+                                        <tr>
+                                            <td><strong><span >Arribo: </span></strong></td>
+                                            <td style="padding-left:5px;"><span t-field="o.arribo"/></td>
+                                            <td><strong><span>Bruto: </span></strong></td>
+                                            <td style="padding-left:5px;"><span t-field="o.peso_bruto"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong><span>Partida: </span></strong></td>
+                                            <td style="padding-left:5px;"><span t-field="o.partida"/></td>
+                                            <td><strong><span>Tara: </span></strong></td>
+                                            <td style="padding-left:5px;"><span t-field="o.tara"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td></td>
+                                            <td style="padding-left:5px;"></td>
+                                            <td><strong><span>Neto: </span></strong></td>
+                                            <td style="padding-left:5px;"><span t-field="o.peso_neto"/></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                </div>
+                              
+                            <div class="clearfix"/>
+                            <div class="break" style="height:10px"/>
+                              
+                            </header>
+                            
+                            <div class="main-content">
+                                <div class="alineado_izquierda">
+                                    <br/><br/>
+                                    <table style="font-size:14px">
+                                        <tr>
+                                            <td><b>Producto: </b><span t-field="o.producto_transportado_id.name"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td><b>Vehiculo: </b><span t-field="o.camion_id.matricula"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td><b>Chofer: </b><span t-field="o.conductor_id.name"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td><b>Transportista: </b><span t-field="o.transportista_id.name"/></td>
+                                        </tr>
+                                    </table>
+                                    <br/><br/>
+                                        <table style="font-size:14px; text-align:right;" align="right">
+                                            <tr>
+                                                <th colspan="2" style="padding-right:5px"><b>Propiedades adicionales:</b></th>
+                                            </tr>
+                                            <tr>
+                                                <th><b>Propiedad</b></th>
+                                                <th style="padding-right:5px"><b>Valor</b></th>
+                                            </tr>
+                                            <t t-foreach="o.medidas_propiedades_ids" t-as="medida">
+                                                <tr>
+                                                    <td><span t-field="medida.propiedad.name"/></td>
+                                                    <td style="padding-right:5px"><span t-field="medida.parametro"/></td>
+                                                </tr>
+                                            </t>
+                                        </table>
+                                </div>
+                                <div class="alineado_derecha">
+                                    <table style="font-size:14px">
+                                        <tr>
+                                            <td><b>Origen: </b><span t-field="o.origen"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td><b>Destino: </b><span t-field="o.destino"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td><b>Operador: </b><span t-field="o.solicitante_id.name"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td><b>Chacra: </b><span t-field="o.chacra"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td><b>Remito: </b><span t-field="o.remito"/></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <div class="clearfix"/>
+                            <div class="break" style="height:1px"/>
 
-                                    <div>
-                                       <span  class="blod-text"> Observaciones:</span> <span t-field="o.observaciones"/>
-                                    </div>
-                                </div>
-                                <div class="additional-fields">
-                                    <span  class="blod-text">Origen: </span><span t-field="o.origen"/><br/>
-                                    <span  class="blod-text">Destino: </span><span t-field="o.destino"/><br/>
-                                    <span  class="blod-text">Operador: </span><span t-field="o.solicitante_id.name"/><br/>
-                                    <span  class="blod-text">Chacra: </span><span t-field="o.chacra"/><br/>
-                                    <span  class="blod-text">Remito: </span><span t-field="o.remito"/>
-                                </div>
+                            <br/><br/>
+                            
+                            <div class="footer_content" style="font-size:14px">
+                                <table style="width: 100%; font-size:14px">
+                                    <tr>
+                                        <td style="width: 40%"><b>Observaciones: </b></td>
+                                        <td style="width: 15%"></td>
+                                        <td style="width: 30%"></td>
+                                        <td style="width: 15%"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span t-field="o.observaciones"/></td>
+                                        <td></td>
+                                        <td style="border-top: 1px solid black; text-align: center">Conformidad transportista</td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td style="text-align: right">Original</td>
+                                    </tr>
+                                </table>
+                                <hr style="color: gray"/>
                             </div>
-                            <div class="footer-content">
-                                <div>
-                                    <div class="signature-line"></div>
-                                    <span>Conformidad transportista</span>
-                                </div>
-                                <span>Original</span>
-                            </div>
-                            <hr style="border-top: 1px solid #000; margin: 10px 0;"/>
                         </body>
 
-                           <body>
-                          <header class="header-content">
-                                <div class="company-info">
-                                    <div class="logo-section">
-                                        <img src="ruta_al_logo" alt="Logo" style="width: 80px; margin-right: 10px;"/>
-                                        <div>
-                                            <span>Tel.: 4540 4135 - Cel.: 098 530 081</span><br/>
-                                            <span>balanza@artigasilveira.com</span>
-                                        </div>
-                                    </div>
-                                    <div class="contact-section">
-                                        <span class="blod-text">ARTIGAS SILVEIRA S.A.</span><br/>
-                                        <span class="blod-text">RUT: <span t-field="o.solicitante_id.vat"/></span>
-                                    </div>
-                                </div>
-                                <div class="tipo-viaje-numero">
-                                    <div>
-                                        <span class="highlighted-text" >Tipo de Pesaje:</span><span t-field="o.tipo_viaje"/><br/>
-                                        <span class="blod-text" >Arribo: </span><span t-field="o.arribo"/><br/>
-                                        <span class="blod-text">Partida: </span><span t-field="o.partida"/>
-                                    </div>
-                                    <div>
-                                        <span  class="highlighted-text">Numero:</span><span t-esc="o.name[-4:]"/><br/>
-                                        <span class="blod-text">Bruto: </span><span t-field="o.peso_bruto"/><br/>
-                                        <span class="blod-text">Tara: </span><span t-field="o.tara"/><br/>
-                                        <span class="blod-text">Neto: </span><span t-field="o.peso_neto"/>
-                                    </div>
-                                </div>
-                            </header>
-
-                            <div class="main-content">
-                                <div class="content">
-                                    <div class="content-row">
-                                        <span class="blod-text">Producto: </span><span t-field="o.producto_transportado_id.name"/><br/>
-                                        <span class="blod-text">Vehiculo: </span><span t-field="o.camion_id.matricula"/>
-                                    </div>
-                                    <div class="content-row">
-                                        <span  class="blod-text">Chofer: </span><span t-field="o.conductor_id.name"/><br/>
-                                        <span  class="blod-text">Transportista: </span><span t-field="o.transportista_id.name"/>
-                                    </div>
-                                   <div>
-                                        <br/>
-                                        <span class="blod-text">Propiedades adicionales:</span>
-                                        <table>
-                                            <thead>
-                                                <tr>
-                                                    <th class="blod-text">Propiedad</th>
-                                                    <th class="blod-text">Valor</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <t t-foreach="o.medidas_propiedades_ids" t-as="medida">
-                                                    <tr>
-                                                        <td><span t-field="medida.propiedad.name"/></td>
-                                                        <td><span t-field="medida.parametro"/></td>
-                                                    </tr>
-                                                </t>
-                                            </tbody>
-                                        </table>
-                                    </div>
-
-                                    <div>
-                                       <span  class="blod-text"> Observaciones:</span> <span t-field="o.observaciones"/>
-                                    </div>
-                                </div>
-                                <div class="additional-fields">
-                                    <span  class="blod-text">Origen: </span><span t-field="o.origen"/><br/>
-                                    <span  class="blod-text">Destino: </span><span t-field="o.destino"/><br/>
-                                    <span  class="blod-text">Operador: </span><span t-field="o.solicitante_id.name"/><br/>
-                                    <span  class="blod-text">Chacra: </span><span t-field="o.chacra"/><br/>
-                                    <span  class="blod-text">Remito: </span><span t-field="o.remito"/>
-                                </div>
-                            </div>
-                            <div class="footer-content">
-                                <div>
-                                    <div class="signature-line"></div>
-                                    <span>Conformidad transportista</span>
-                                </div>
-                                <span>Original</span>
-                            </div>
-
-                            <hr style="border-top: 1px solid #000; margin: 10px 0;"/>
-                        </body>
-
-
+                        <!--Transportista-->
+                        
                         <body>
                           <header class="header-content">
                                 <div class="company-info">
                                     <div class="logo-section">
                                         <img src="ruta_al_logo" alt="Logo" style="width: 80px; margin-right: 10px;"/>
-                                        <div>
+                                        <div style="font-size:8px">
                                             <span>Tel.: 4540 4135 - Cel.: 098 530 081</span><br/>
                                             <span>balanza@artigasilveira.com</span>
                                         </div>
                                     </div>
-                                    <div class="contact-section">
-                                        <span class="blod-text">ARTIGAS SILVEIRA S.A.</span><br/>
-                                        <span class="blod-text">RUT: <span t-field="o.solicitante_id.vat"/></span>
-                                    </div>
                                 </div>
-                                <div class="tipo-viaje-numero">
-                                    <div>
-                                        <span class="highlighted-text" >Tipo de Pesaje:</span><span t-field="o.tipo_viaje"/><br/>
-                                        <span class="blod-text" >Arribo: </span><span t-field="o.arribo"/><br/>
-                                        <span class="blod-text">Partida: </span><span t-field="o.partida"/>
-                                    </div>
-                                    <div>
-                                        <span  class="highlighted-text">Numero:</span><span t-esc="o.name[-4:]"/><br/>
-                                        <span class="blod-text">Bruto: </span><span t-field="o.peso_bruto"/><br/>
-                                        <span class="blod-text">Tara: </span><span t-field="o.tara"/><br/>
-                                        <span class="blod-text">Neto: </span><span t-field="o.peso_neto"/>
-                                    </div>
-                                </div>
-                            </header>
-
-                            <div class="main-content">
-                                <div class="content">
-                                    <div class="content-row">
-                                        <span class="blod-text">Producto: </span><span t-field="o.producto_transportado_id.name"/><br/>
-                                        <span class="blod-text">Vehiculo: </span><span t-field="o.camion_id.matricula"/>
-                                    </div>
-                                    <div class="content-row">
-                                        <span  class="blod-text">Chofer: </span><span t-field="o.conductor_id.name"/><br/>
-                                        <span  class="blod-text">Transportista: </span><span t-field="o.transportista_id.name"/>
-                                    </div>
-                                   <div>
-                                        <br/>
-                                        <span class="blod-text">Propiedades adicionales:</span>
-                                        <table>
-                                            <thead>
-                                                <tr>
-                                                    <th class="blod-text">Propiedad</th>
-                                                    <th class="blod-text">Valor</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <t t-foreach="o.medidas_propiedades_ids" t-as="medida">
-                                                    <tr>
-                                                        <td><span t-field="medida.propiedad.name"/></td>
-                                                        <td><span t-field="medida.parametro"/></td>
-                                                    </tr>
-                                                </t>
-                                            </tbody>
+                              
+                                <div class="div_encabezado">
+                                <div class="alineado_izquierda">
+                                        <table style="font-size:15px; width:85%;">
+                                            <tr>
+                                                <td><center><strong><span class="blod-text">ARTIGAS SILVEIRA S.A.</span></strong></center></td>
+                                            </tr>
+                                            <tr>
+                                                <td><center><strong><span class="blod-text">RUT: <span t-field="o.solicitante_id.vat"/></span></strong></center></td>
+                                            </tr>
                                         </table>
-                                    </div>
+                                </div>
+                                <div class="alineado_derecha">
+                                    <table style="width:100%">
+                                        <tr style="font-size:19px">
+                                            <td colspan="2" style="width:50%"><strong><span>Tipo Pesaje: </span></strong><span t-field="o.tipo_viaje"/></td>
+                                            <td colspan="2"><strong><span>Numero: </span></strong><span t-esc="o.name[-4:]"/></td>
+                                        </tr>
+                                    </table>
+                                    <table style="font-size:14px; width:70%;">
+                                        <tr>
+                                            <td><strong><span >Arribo: </span></strong></td>
+                                            <td style="padding-left:5px;"><span t-field="o.arribo"/></td>
+                                            <td><strong><span>Bruto: </span></strong></td>
+                                            <td style="padding-left:5px;"><span t-field="o.peso_bruto"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong><span>Partida: </span></strong></td>
+                                            <td style="padding-left:5px;"><span t-field="o.partida"/></td>
+                                            <td><strong><span>Tara: </span></strong></td>
+                                            <td style="padding-left:5px;"><span t-field="o.tara"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td></td>
+                                            <td style="padding-left:5px;"></td>
+                                            <td><strong><span>Neto: </span></strong></td>
+                                            <td style="padding-left:5px;"><span t-field="o.peso_neto"/></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                </div>
+                              
+                            <div class="clearfix"/>
+                            <div class="break" style="height:10px"/>
+                              
+                            </header>
+                            
+                            <div class="main-content">
+                                <div class="alineado_izquierda">
+                                    <br/><br/>
+                                    <table style="font-size:14px">
+                                        <tr>
+                                            <td><b>Producto: </b><span t-field="o.producto_transportado_id.name"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td><b>Vehiculo: </b><span t-field="o.camion_id.matricula"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td><b>Chofer: </b><span t-field="o.conductor_id.name"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td><b>Transportista: </b><span t-field="o.transportista_id.name"/></td>
+                                        </tr>
+                                    </table>
+                                    <br/><br/>
+                                        <table style="font-size:14px; text-align:right;" align="right">
+                                            <tr>
+                                                <th colspan="2" style="padding-right:5px"><b>Propiedades adicionales:</b></th>
+                                            </tr>
+                                            <tr>
+                                                <th><b>Propiedad</b></th>
+                                                <th style="padding-right:5px"><b>Valor</b></th>
+                                            </tr>
+                                            <t t-foreach="o.medidas_propiedades_ids" t-as="medida">
+                                                <tr>
+                                                    <td><span t-field="medida.propiedad.name"/></td>
+                                                    <td style="padding-right:5px"><span t-field="medida.parametro"/></td>
+                                                </tr>
+                                            </t>
+                                        </table>
+                                </div>
+                                <div class="alineado_derecha">
+                                    <table style="font-size:14px">
+                                        <tr>
+                                            <td><b>Origen: </b><span t-field="o.origen"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td><b>Destino: </b><span t-field="o.destino"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td><b>Operador: </b><span t-field="o.solicitante_id.name"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td><b>Chacra: </b><span t-field="o.chacra"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td><b>Remito: </b><span t-field="o.remito"/></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <div class="clearfix"/>
+                            <div class="break" style="height:1px"/>
 
-                                    <div>
-                                       <span  class="blod-text"> Observaciones:</span> <span t-field="o.observaciones"/>
+                            <br/><br/>
+                            
+                            <div class="footer_content" style="font-size:14px">
+                                <table style="width: 100%; font-size:14px">
+                                    <tr>
+                                        <td style="width: 40%"><b>Observaciones: </b></td>
+                                        <td style="width: 15%"></td>
+                                        <td style="width: 30%"></td>
+                                        <td style="width: 15%"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span t-field="o.observaciones"/></td>
+                                        <td></td>
+                                        <td style="border-top: 1px solid black; text-align: center">Conformidad transportista</td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td style="text-align: right">Transportista</td>
+                                    </tr>
+                                </table>
+                                <hr style="color: gray"/>
+                            </div>
+                        </body>
+
+                        <!--Copia Archivo-->
+                        
+                        <body>
+                          <header class="header-content">
+                                <div class="company-info">
+                                    <div class="logo-section">
+                                        <img src="ruta_al_logo" alt="Logo" style="width: 80px; margin-right: 10px;"/>
+                                        <div style="font-size:8px">
+                                            <span>Tel.: 4540 4135 - Cel.: 098 530 081</span><br/>
+                                            <span>balanza@artigasilveira.com</span>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="additional-fields">
-                                    <span  class="blod-text">Origen: </span><span t-field="o.origen"/><br/>
-                                    <span  class="blod-text">Destino: </span><span t-field="o.destino"/><br/>
-                                    <span  class="blod-text">Operador: </span><span t-field="o.solicitante_id.name"/><br/>
-                                    <span  class="blod-text">Chacra: </span><span t-field="o.chacra"/><br/>
-                                    <span  class="blod-text">Remito: </span><span t-field="o.remito"/>
+                              
+                                <div class="div_encabezado">
+                                <div class="alineado_izquierda">
+                                        <table style="font-size:15px; width:85%;">
+                                            <tr>
+                                                <td><center><strong><span class="blod-text">ARTIGAS SILVEIRA S.A.</span></strong></center></td>
+                                            </tr>
+                                            <tr>
+                                                <td><center><strong><span class="blod-text">RUT: <span t-field="o.solicitante_id.vat"/></span></strong></center></td>
+                                            </tr>
+                                        </table>
+                                </div>
+                                <div class="alineado_derecha">
+                                    <table style="width:100%">
+                                        <tr style="font-size:19px">
+                                            <td colspan="2" style="width:50%"><strong><span>Tipo Pesaje: </span></strong><span t-field="o.tipo_viaje"/></td>
+                                            <td colspan="2"><strong><span>Numero: </span></strong><span t-esc="o.name[-4:]"/></td>
+                                        </tr>
+                                    </table>
+                                    <table style="font-size:14px; width:70%;">
+                                        <tr>
+                                            <td><strong><span >Arribo: </span></strong></td>
+                                            <td style="padding-left:5px;"><span t-field="o.arribo"/></td>
+                                            <td><strong><span>Bruto: </span></strong></td>
+                                            <td style="padding-left:5px;"><span t-field="o.peso_bruto"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong><span>Partida: </span></strong></td>
+                                            <td style="padding-left:5px;"><span t-field="o.partida"/></td>
+                                            <td><strong><span>Tara: </span></strong></td>
+                                            <td style="padding-left:5px;"><span t-field="o.tara"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td></td>
+                                            <td style="padding-left:5px;"></td>
+                                            <td><strong><span>Neto: </span></strong></td>
+                                            <td style="padding-left:5px;"><span t-field="o.peso_neto"/></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                </div>
+                              
+                            <div class="clearfix"/>
+                            <div class="break" style="height:10px"/>
+                              
+                            </header>
+                            
+                            <div class="main-content">
+                                <div class="alineado_izquierda">
+                                    <br/><br/>
+                                    <table style="font-size:14px">
+                                        <tr>
+                                            <td><b>Producto: </b><span t-field="o.producto_transportado_id.name"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td><b>Vehiculo: </b><span t-field="o.camion_id.matricula"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td><b>Chofer: </b><span t-field="o.conductor_id.name"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td><b>Transportista: </b><span t-field="o.transportista_id.name"/></td>
+                                        </tr>
+                                    </table>
+                                    <br/><br/>
+                                        <table style="font-size:14px; text-align:right;" align="right">
+                                            <tr>
+                                                <th colspan="2" style="padding-right:5px"><b>Propiedades adicionales:</b></th>
+                                            </tr>
+                                            <tr>
+                                                <th><b>Propiedad</b></th>
+                                                <th style="padding-right:5px"><b>Valor</b></th>
+                                            </tr>
+                                            <t t-foreach="o.medidas_propiedades_ids" t-as="medida">
+                                                <tr>
+                                                    <td><span t-field="medida.propiedad.name"/></td>
+                                                    <td style="padding-right:5px"><span t-field="medida.parametro"/></td>
+                                                </tr>
+                                            </t>
+                                        </table>
+                                </div>
+                                <div class="alineado_derecha">
+                                    <table style="font-size:14px">
+                                        <tr>
+                                            <td><b>Origen: </b><span t-field="o.origen"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td><b>Destino: </b><span t-field="o.destino"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td><b>Operador: </b><span t-field="o.solicitante_id.name"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td><b>Chacra: </b><span t-field="o.chacra"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td><b>Remito: </b><span t-field="o.remito"/></td>
+                                        </tr>
+                                    </table>
                                 </div>
                             </div>
-                            <div class="footer-content">
-                                <div>
-                                    <div class="signature-line"></div>
-                                    <span>Conformidad transportista</span>
-                                </div>
-                                <span>Copia</span>
+                            
+                            <div class="clearfix"/>
+                            <div class="break" style="height:1px"/>
+
+                            <br/><br/>
+                            
+                            <div class="footer_content" style="font-size:14px">
+                                <table style="width: 100%; font-size:14px">
+                                    <tr>
+                                        <td style="width: 40%"><b>Observaciones: </b></td>
+                                        <td style="width: 15%"></td>
+                                        <td style="width: 30%"></td>
+                                        <td style="width: 15%"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span t-field="o.observaciones"/></td>
+                                        <td></td>
+                                        <td style="border-top: 1px solid black; text-align: center">Conformidad transportista</td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td style="text-align: right">Copia archivo</td>
+                                    </tr>
+                                </table>
+                                <hr style="color: gray"/>
                             </div>
-                            <hr style="border-top: 1px solid #000; margin: 10px 0;"/>
                         </body>
                         
                     </div>
