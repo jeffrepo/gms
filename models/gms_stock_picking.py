@@ -217,19 +217,20 @@ class StockPicking(models.Model):
 
     def button_validate(self):
         if self.picking_type_id.code == 'incoming' and self.viaje_ids:
-            viaje_confirmado = any(viaje.state == 'confirmado' for viaje in self.viaje_ids)
+            viaje_confirmado = any(viaje.state == 'terminado' for viaje in self.viaje_ids)
             if not viaje_confirmado:
                 raise UserError("No se puede validar el albarán hasta que el viaje esté confirmado.")
+         # Sumar el total de los productos en el albarán
+            total_albaran = sum(move.quantity_done  for move in self.move_ids_without_package)
+            
+            # Sumar el total de los viajes asociados
+            total_viaje = sum(viaje.kilogramos_a_liquidar for viaje in self.viaje_ids)
+
+            if total_albaran != total_viaje:
+                raise UserError("El total del albarán no coincide con el total del viaje.")
+
         return super(StockPicking, self).button_validate()
 
-
-
-    def write(self, vals):
-        # Antes de permitir la actualización, verificar si hay viajes asociados
-        for record in self:
-            if record.viaje_ids and any(vals.get(key) for key in vals if key != 'state'):
-                raise UserError("No se puede modificar un albarán que tiene viajes asociados.")
-        return super(StockPicking, self).write(vals)
 
 
     @api.model
