@@ -139,12 +139,13 @@ class Viajes(models.Model):
     ph = fields.Float(string='PH' , tracking=True)
     
     proteina = fields.Float(string='Proteína'  , tracking=True)
-
+    
+    factura_id = fields.Many2one('account.move', string='Factura Asociada')
+    
     # prelimpieza_entrada_1 = fields.Selection([('si', 'Si'), ('no', 'No')], string="Prelimpieza entrada", tracking="1")
 
     # secado_entrada_1 = fields.Selection([('si', 'Si'), ('no', 'No')], string="Secado entrada", tracking="1")
-   
-   
+
     
     
 
@@ -300,7 +301,7 @@ class Viajes(models.Model):
 
                 
     def action_liquidado(self):
-        AccountPayment = self.env['account.payment']
+        Invoice = self.env['account.move']
         for viaje in self:
             if viaje.albaran_id and viaje.albaran_id.state != 'done':
                 raise UserError("No se puede pasar el viaje a estado 'Liquidado' hasta que el albarán esté confirmado.")
@@ -308,28 +309,48 @@ class Viajes(models.Model):
                 # Sumar el total de los gastos
                 total_gastos = sum(gasto.precio_total for gasto in viaje.gastos_ids)
     
-                # Preparar valores comunes para el pago
-                payment_vals = {
-                    'partner_id': viaje.transportista_id.id if viaje.tipo_viaje == 'entrada' else viaje.solicitante_id.id,
-                    'amount': total_gastos,
-                    'partner_type': 'supplier' if viaje.tipo_viaje == 'entrada' else 'customer',
-                    'journal_id': self.env['account.journal'].search([('type', '=', 'bank')], limit=1).id,
-                }
-    
-                # Diferenciar entre entrada y salida para el payment_type
+                # Preparar las líneas de la factura
+                invoice_lines = []
                 if viaje.tipo_viaje == 'entrada':
-                    payment_vals['payment_type'] = 'outbound'
-                else:  # asumiendo 'salida' u otro caso
-                    payment_vals['payment_type'] = 'inbound'
-    
-                # Crear un pago si hay un monto total a pagar
+                    for line in viaje.purchase_order_id.order_line:
+                        invoice_lines.append((0, 0, {
+                            'product_id': line.product_id.id,
+                            'quantity': line.product_qty,
+                            'price_unit': line.price_unit,
+                            
+                        }))
+                else: 
+                    for line in viaje.sale_order_id.order_line:
+                        invoice_lines.append((0, 0, {
+                            'product_id': line.product_id.id,
+                            'quantity': line.product_uom_qty,
+                            'price_unit': line.price_unit,
+                            
+                        }))
+
+                # Fecha actual para la factura
+                fecha_actual = fields.Date.today()
+        
+                # Preparar valores para la factura
+                invoice_vals = {
+                    'partner_id': viaje.transportista_id.id if viaje.tipo_viaje == 'entrada' else viaje.solicitante_id.id,
+                    'move_type': 'in_invoice' if viaje.tipo_viaje == 'entrada' else 'out_invoice',
+                    'invoice_line_ids': invoice_lines,
+                    'total_descontar': str(total_gastos),
+                    'invoice_date': fecha_actual,
+                    
+                }
+        
+                # Agregar el ID del viaje actual a los valores de la factura
+                invoice_vals['viajes_ids'] = [(4, viaje.id)]
+        
+                # Crear la factura
                 if total_gastos > 0:
-                    payment_method_id = self.env.ref('account.account_payment_method_manual_out').id if viaje.tipo_viaje == 'entrada' else self.env.ref('account.account_payment_method_manual_in').id
-                    payment_vals['payment_method_id'] = payment_method_id
-                    AccountPayment.create(payment_vals)
-    
+                    factura_creada = Invoice.create(invoice_vals)
+                    viaje.write({'factura_id': factura_creada.id})
+        
                 viaje.write({'state': 'liquidado'})
-       
+        
         
     def action_coordinado(self):
         self.write({'state': 'coordinado'})
@@ -727,5 +748,21 @@ class Viajes(models.Model):
             error_message = f"Error al enviar SMS: {e}"
             _logger.error(error_message)
             self.message_post(body=error_message, message_type='comment', subtype_xmlid='mail.mt_comment')
-        
+
+
+
+
+    def action_view_factura(self):
+        self.ensure_one() 
+        if self.factura_id:
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'account.move',
+                'view_mode': 'form',
+                'res_id': self.factura_id.id,
+                'target': 'current',
+            }
+        else:
+            raise UserError('No hay una factura asociada a este viaje.')
+
 

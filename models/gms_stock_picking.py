@@ -16,26 +16,30 @@ class StockPicking(models.Model):
         for picking in self:
             picking.agenda_count = len(picking.agenda_ids)
 
-   
+
+    
     def button_schedule_trip(self):
-        # Verificar si ya hay una agenda con estados solicitud, proceso o confirmado
+        _logger.info("Iniciando button_schedule_trip para el albarán: %s", self.name)
+    
         agendas = self.agenda_ids.filtered(lambda r: r.state in ['solicitud', 'proceso', 'confirmado'])
         if agendas:
-            # Si hay, lanzar un mensaje de advertencia
             raise UserError('Ya existe una agenda en estado Solicitud, Proceso o Confirmado.')
         else:
-            # Determinar si es un viaje de entrada o salida
             tipo_viaje = 'entrada' if self.picking_type_id.code == 'incoming' else 'salida'
             _logger.info("Picking type code: %s", self.picking_type_id.code)
-
-            # Definir origen y destino basado en el tipo de viaje
+    
             if tipo_viaje == 'entrada':
-                origen = self.partner_id.id  # Proveedor
-                destino = self.picking_type_id.warehouse_id.partner_id.id  
+                # Verifica el tipo del partner asociado al albarán
+                if self.partner_id.tipo != 'chacra':
+                    # Lanzar un error si el origen no es de tipo 'chacra'
+                    raise UserError("El origen no es de tipo 'chacra'. No se puede agendar el viaje.")
+                origen = self.partner_id.id
+    
+                destino = self.picking_type_id.warehouse_id.partner_id.id
             else:
-                origen = self.picking_type_id.warehouse_id.partner_id.id  # Almacén
-                destino = self.partner_id.id  # Cliente o destino final
-
+                origen = self.picking_type_id.warehouse_id.partner_id.id
+                destino = self.partner_id.id
+    
             agenda_vals = {
                 'fecha': fields.Date.today(),
                 'fecha_viaje': fields.Date.today(),
@@ -45,8 +49,13 @@ class StockPicking(models.Model):
                 'picking_id': self.id,
                 'tipo_viaje': tipo_viaje,
             }
-            agenda = self.env['gms.agenda'].create(agenda_vals)
+    
+            _logger.info("Valores de la agenda a crear: %s", agenda_vals)
+            self.env['gms.agenda'].create(agenda_vals)
+    
+        _logger.info("Finalizando button_schedule_trip para el albarán: %s", self.name)
         return True
+
 
 
     
