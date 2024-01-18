@@ -25,6 +25,10 @@ class ResConfigSettings(models.TransientModel):
         'product.product', 
         string='Producto Flete Puerto'
     )
+
+    cantidad_kilos_flete_puerto = fields.Float(
+        string='Cantidad Kilos por Kilómetro para Flete Puerto'
+    )
    
     def set_values(self):
         super(ResConfigSettings, self).set_values()
@@ -33,6 +37,7 @@ class ResConfigSettings(models.TransientModel):
         self.env['ir.config_parameter'].sudo().set_param('gms.producto_secado_id', self.producto_secado_id.id)
         self.env['ir.config_parameter'].sudo().set_param('gms.producto_pre_limpieza_id', self.producto_pre_limpieza_id.id)
         self.env['ir.config_parameter'].sudo().set_param('gms.producto_flete_puerto_id', self.producto_flete_puerto_id.id)
+        self.env['ir.config_parameter'].sudo().set_param('gms.cantidad_kilos_flete_puerto', self.cantidad_kilos_flete_puerto)
 
     @api.model
     def get_values(self):
@@ -44,6 +49,7 @@ class ResConfigSettings(models.TransientModel):
             producto_secado_id=int(config_params.get_param('gms.producto_secado_id', 0)),
             producto_pre_limpieza_id=int(config_params.get_param('gms.producto_pre_limpieza_id', 0)),
             producto_flete_puerto_id=int(config_params.get_param('gms.producto_flete_puerto_id', 0)),
+            cantidad_kilos_flete_puerto=float(config_params.get_param('gms.cantidad_kilos_flete_puerto', 0.0)),
         )
         return res
 

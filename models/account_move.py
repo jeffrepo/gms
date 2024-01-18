@@ -1,4 +1,5 @@
-from odoo import models, fields, api
+from odoo import models, fields, api, _
+from odoo.exceptions import UserError
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -8,6 +9,10 @@ class AccountMove(models.Model):
 
     # Campo adicional para asignar propietario
     ap_id = fields.Many2one('res.partner', string='Asignar Propietario')
+    #conector hacia viajes
+    viajes_ids = fields.Many2many('gms.viaje', string='Viajes Asociados')
+
+    total_descontar = fields.Char(string="Total a descontar", tracking="1")
 
     def action_post(self):
         # Llamar al método original
@@ -29,3 +34,55 @@ class AccountMove(models.Model):
                         _logger.info(f"Actualizado owner_id en el albarán {picking.name} con el valor {invoice.ap_id.id}")
 
         return res
+
+
+    def action_view_viajes(self):
+        self.ensure_one() 
+        if self.viajes_ids:
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'gms.viaje',
+                'view_mode': 'tree,form',
+                'domain': [('id', 'in', self.viajes_ids.ids)],
+                'context': {'create': False},
+                'target': 'current',
+            }
+        else:
+            raise UserError('No hay viajes asociados a esta factura.')
+
+
+
+    def unlink(self):
+        for record in self:
+            # Si la factura está en estado distinto de 'borrador' y tiene viajes asociados
+            if record.state != 'draft' and record.viajes_ids:
+                raise UserError(_("No se puede eliminar la factura en estado '%s' porque está asociada a uno o más viajes.") % record.state)
+            
+            # Cambiar el estado de los viajes asociados a 'proceso'
+            if record.viajes_ids:
+                record.viajes_ids.write({'state': 'proceso'})
+        
+        return super(AccountMove, self).unlink()
+
+
+
+
+     
+    def create(self, vals):
+        # Crear la factura como normalmente
+        record = super(AccountMove, self).create(vals)
+
+        # Verificar si la factura está asociada a viajes
+        if 'viajes_ids' in vals:
+            # Recuperar los nombres de los viajes asociados
+            viajes_ids = [v_id[1] for v_id in vals['viajes_ids'] if v_id[0] == 4]
+            viajes = self.env['gms.viaje'].browse(viajes_ids)
+            nombres_viajes = viajes.mapped('name')
+
+            # Crear un mensaje en el chatter con los nombres de los viajes
+            if nombres_viajes:
+                mensaje = _("Factura creada para los viajes: %s") % ', '.join(nombres_viajes)
+                record.message_post(body=mensaje)
+
+        return record
+    
