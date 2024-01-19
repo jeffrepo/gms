@@ -112,10 +112,16 @@ class StockPicking(models.Model):
         viaje_vals = {
            
         }
-        self.env['gms.viaje'].create(viaje_vals)
+        viaje = self.env['gms.viaje'].create(viaje_vals)  # Asegúrate de que esta línea esté presente
 
-        return
-
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Viaje Creado',
+            'res_model': 'gms.viaje',
+            'view_mode': 'form',
+            'res_id': viaje.id,
+            'target': 'current',
+        }
     
     def _prepare_purchase_order_vals(self):
         # Preparar valores para la creación de la orden de compra
@@ -237,3 +243,11 @@ class StockPicking(models.Model):
                 vals['owner_id'] = vals.get('partner_id')
         return super(StockPicking, self).create(vals)
 
+
+    # @api.depends('viaje_ids')
+    # def _compute_show_buttons(self):
+    #     for record in self:
+    #         viaje_exists = bool(record.viaje_ids)
+    #         # Si existe un viaje, mostrar el botón de viaje
+    #         record.show_button_create_trip = not viaje_exists
+    #         _logger.info(f"Record {record.id}: show_button_create_trip = {record.show_button_create_trip}")
