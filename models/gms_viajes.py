@@ -54,9 +54,9 @@ class Viajes(models.Model):
 
     camion_disponible_id = fields.Many2one('gms.camiones.disponibilidad', string='Camión Disponible', tracking="1")
 
-    camion_id = fields.Many2one('gms.camiones', string='Camion', required=True , tracking="1")
+    camion_id = fields.Many2one('gms.camiones', string='Camion', tracking="1")
 
-    conductor_id = fields.Many2one('res.partner', string='Chofer', readonly=True, compute="_compute_conductor_transportista", tracking="1")
+    conductor_id = fields.Many2one('res.partner', string='Chofer', compute="_compute_conductor_transportista", tracking="1")
 
     solicitante_id = fields.Many2one('res.partner', string='Solicitante', tracking="1",
                                  domain="[('tipo', 'not in', ['chacra', 'planta'])]")
@@ -66,7 +66,7 @@ class Viajes(models.Model):
 
     numero_remito = fields.Char(string="Número de remito / Guía", tracking="1")
     
-    transportista_id = fields.Many2one('res.partner', string="Transportista", readonly=True, compute="_compute_conductor_transportista", tracking="1")
+    transportista_id = fields.Many2one('res.partner', string="Transportista", compute="_compute_conductor_transportista", tracking="1")
 
     ruta_id = fields.Many2one('gms.rutas', 
                           string="Ruta", 
@@ -161,6 +161,11 @@ class Viajes(models.Model):
             if viaje.camion_id:
                 viaje.conductor_id = viaje.camion_id.conductor_id.id
                 viaje.transportista_id = viaje.camion_id.transportista_id.id
+            else:
+                # Limpia los campos si no hay camion_id
+                viaje.conductor_id = None
+                viaje.transportista_id = None
+
                 
 
     @api.depends('peso_bruto', 'tara')
@@ -257,13 +262,17 @@ class Viajes(models.Model):
     
             # Obtener el valor de kilometros_flete para calcular el precio total del flete puerto
             kilometros_flete = self.kilometros_flete 
+
+            # Obtener el valor de 'cantidad_kilos_flete_puerto' de la configuración
+            config_params = self.env['ir.config_parameter'].sudo()
+            cantidad_kilos_flete_puerto = float(config_params.get_param('gms.cantidad_kilos_flete_puerto', 0.0))
         
             # Buscar coincidencia en gms.datos_flete
             datos_flete = self.env['gms.datos_flete'].search([('flete_km', '=', kilometros_flete)], limit=1)
             tarifa_flete = datos_flete.tarifa if datos_flete else 0  
         
-            # Calcular el precio_total_flete
-            precio_total_flete = tarifa_flete * kilometros_flete if tarifa_flete else 0
+            # Calcular el precio_total_flete para 'Flete Puerto'
+            precio_total_flete_puerto = cantidad_kilos_flete_puerto * self.kilometros_flete
     
             # Crear las líneas de gasto si los productos están configurados
             if producto_secado_id:
@@ -290,7 +299,7 @@ class Viajes(models.Model):
                 self.env['gms.gasto_viaje'].create({
                     'name': 'Flete Puerto',
                     'producto_id': producto_flete_puerto_id,
-                    'precio_total': precio_total_flete,  
+                    'precio_total': precio_total_flete_puerto,  
                     'viaje_id': self.id,
                     'estado_compra': 'no_comprado',
                     'moneda_id': moneda_proveedor_id
@@ -570,7 +579,7 @@ class Viajes(models.Model):
             precio_unitario = producto.standard_price
     
             # Calcular el precio total multiplicando por los kilómetros de la ruta
-            precio_total = precio_unitario * self.ruta_id.kilometros if self.ruta_id else 0
+            precio_total_flete = self.peso_neto * self.kilometros_flete * precio_unitario
             
             # Obtener la moneda de compra del proveedor
             moneda_proveedor_id = self.transportista_id.property_purchase_currency_id.id if self.transportista_id else False
@@ -580,7 +589,7 @@ class Viajes(models.Model):
                 'name': 'Flete',
                 'producto_id': producto_gasto_id,
                 'viaje_id': self.id,
-                'precio_total': precio_total,
+                'precio_total': precio_total_flete,
                 'proveedor_id': self.transportista_id.id,
                 'moneda_id': moneda_proveedor_id,
                 'estado_compra': 'no_comprado'
@@ -752,6 +761,28 @@ class Viajes(models.Model):
 
 
 
+
+    @api.onchange('peso_neto')
+    def _onchange_peso_neto(self):
+        if self.peso_neto:
+            # Actualizar el precio total del flete en los gastos del viaje
+            for gasto in self.gastos_ids:
+                if gasto.name == 'Flete':  # Asegúrate de que este sea el nombre correcto del gasto de flete
+                    # Calcular el nuevo precio total del flete
+                    precio_unitario = gasto.producto_id.standard_price
+                    gasto.precio_total = self.peso_neto * self.kilometros_flete * precio_unitario
+
+    
+    def action_liquidar_viajes(self):
+        for viaje in self:
+            # Asegúrate de que el viaje está en un estado terminado
+            if viaje.state in ['terminado']:
+                viaje.state = 'liquidado'
+                
+            else:
+                raise UserError('No se puede liquidar uno o más de los viajes seleccionados.')
+    
+
     def action_view_factura(self):
         self.ensure_one() 
         if self.factura_id:
@@ -764,5 +795,9 @@ class Viajes(models.Model):
             }
         else:
             raise UserError('No hay una factura asociada a este viaje.')
+
+
+
+    
 
 

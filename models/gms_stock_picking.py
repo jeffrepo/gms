@@ -88,13 +88,13 @@ class StockPicking(models.Model):
     def button_create_trip(self):
         _logger.info(f"Iniciando button_create_trip para el albarán {self.name} con estado {self.state} y tipo {self.picking_type_id.code}")
         order = None  # Inicializar la variable 'order'
-
+    
         # Verificar si ya existe un viaje para este albarán
         if self.viaje_ids:
             raise UserError('Ya existe un viaje para este albarán.')
-
+    
         _logger.info(f"Albarán {self.name}: Sin viajes existentes. Procesando creación de orden...")
-
+    
         # Crear orden de compra o venta si no existe
         if not self.origin:
             if self.picking_type_id.code == 'incoming':
@@ -107,30 +107,21 @@ class StockPicking(models.Model):
                 order_vals = self._prepare_sale_order_vals()
                 order = self.env['sale.order'].create(order_vals)
                 self.origin = order.name
-
-        # Pasar la información de la orden al asistente, si la orden fue creada
-        if order:
-            order_type = 'purchase' if self.picking_type_id.code == 'incoming' else 'sale'
-            order_id = order.id
-        else:
-            order_type = None
-            order_id = None
-
-        # Abrir el asistente para seleccionar camión
-        return {
-            'name': 'Seleccionar Camión Disponible',
-            'type': 'ir.actions.act_window',
-            'res_model': 'gms.camion.seleccion.asistente',
-            'view_mode': 'form',
-            'view_id': self.env.ref('gms.view_camion_seleccion_asistente_form').id,
-            'target': 'new',
-            'context': {
-                'default_albaran_id': self.id,
-                'order_type': order_type,
-                'order_id': order_id
-            }
+    
+        # Crear el viaje
+        viaje_vals = {
+           
         }
+        viaje = self.env['gms.viaje'].create(viaje_vals)  # Asegúrate de que esta línea esté presente
 
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Viaje Creado',
+            'res_model': 'gms.viaje',
+            'view_mode': 'form',
+            'res_id': viaje.id,
+            'target': 'current',
+        }
     
     def _prepare_purchase_order_vals(self):
         # Preparar valores para la creación de la orden de compra
@@ -235,8 +226,8 @@ class StockPicking(models.Model):
             # Sumar el total de los viajes asociados
             total_viaje = sum(viaje.kilogramos_a_liquidar for viaje in self.viaje_ids)
 
-            if total_albaran != total_viaje:
-                raise UserError("El total del albarán no coincide con el total del viaje.")
+            #if total_albaran != total_viaje:
+                #raise UserError("El total del albarán no coincide con el total del viaje.")
 
         return super(StockPicking, self).button_validate()
 
@@ -252,3 +243,11 @@ class StockPicking(models.Model):
                 vals['owner_id'] = vals.get('partner_id')
         return super(StockPicking, self).create(vals)
 
+
+    # @api.depends('viaje_ids')
+    # def _compute_show_buttons(self):
+    #     for record in self:
+    #         viaje_exists = bool(record.viaje_ids)
+    #         # Si existe un viaje, mostrar el botón de viaje
+    #         record.show_button_create_trip = not viaje_exists
+    #         _logger.info(f"Record {record.id}: show_button_create_trip = {record.show_button_create_trip}")

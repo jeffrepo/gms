@@ -74,3 +74,8 @@ class GastosViaje(models.Model):
             'type': 'ir.actions.client',
             'tag': 'reload',
         }
+
+
+
+
+    
