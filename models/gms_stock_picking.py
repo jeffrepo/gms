@@ -57,8 +57,6 @@ class StockPicking(models.Model):
         return True
 
 
-
-    
     def action_view_agenda(self):
         self.ensure_one()
         return {
@@ -68,13 +66,6 @@ class StockPicking(models.Model):
             'view_mode': 'tree,form',
             'domain': [('picking_id', '=', self.id)],
         }
-
-
-
-
-
-
-
 
 
     viaje_ids = fields.One2many('gms.viaje', 'albaran_id', string='Viajes Relacionados')
@@ -155,12 +146,7 @@ class StockPicking(models.Model):
             'order_line': line_vals,
         }
 
-        
-
-           
-    
-
-
+                 
     def action_cancel(self):
         _logger.info("Iniciando el proceso de cancelación del albarán")
         
@@ -194,9 +180,6 @@ class StockPicking(models.Model):
             'domain': [('albaran_id', '=', self.id)],
         }
     
-
-
-
 
     # Campo calculado para controlar la visibilidad del botón "Agendar viaje"
     show_button_schedule_trip = fields.Boolean(compute='_compute_show_buttons')
