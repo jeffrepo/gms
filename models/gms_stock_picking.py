@@ -68,7 +68,7 @@ class StockPicking(models.Model):
         }
 
 
-    viaje_ids = fields.One2many('gms.viaje', 'albaran_id', string='Viajes Relacionados')
+    viaje_ids = fields.One2many('gms.viaje', 'picking_id', string='Viajes Relacionados')
     viaje_count = fields.Integer(string='Número de Viajes', compute='_compute_viaje_count')
 
     @api.depends('viaje_ids')
@@ -79,6 +79,7 @@ class StockPicking(models.Model):
     def button_create_trip(self):
         _logger.info(f"Iniciando button_create_trip para el albarán {self.name} con estado {self.state} y tipo {self.picking_type_id.code}")
         order = None  # Inicializar la variable 'order'
+        tipo_viaje = 'entrada' if self.picking_type_id.code == 'incoming' else 'salida'
     
         # Verificar si ya existe un viaje para este albarán
         if self.viaje_ids:
@@ -98,21 +99,61 @@ class StockPicking(models.Model):
                 order_vals = self._prepare_sale_order_vals()
                 order = self.env['sale.order'].create(order_vals)
                 self.origin = order.name
+
+        if tipo_viaje == 'entrada':
+                # Verifica el tipo del partner asociado al albarán
+                if self.partner_id.tipo != 'puerto':
+                    # Lanzar un error si el origen no es de tipo 'chacra'
+                    raise UserError("El Solicitante no es de tipo 'Puerto'. No se puede agendar el viaje.")
+                origen = self.partner_id.id
     
+                destino = self.picking_type_id.warehouse_id.partner_id.id
+        else:
+                origen = self.picking_type_id.warehouse_id.partner_id.id
+                destino = self.partner_id.id        
+    
+        # Determinar el producto transportado y la cantidad
+        if len(self.move_ids_without_package) > 0:
+            producto_transportado_id = self.move_ids_without_package[0].product_id.id
+            cantidad = self.move_ids_without_package[0].quantity_done
+        else:
+            producto_transportado_id = False
+            cantidad = 0.0
+
+
+        ruta = self.env['gms.rutas'].search([
+            ('direccion_origen_id', '=', origen),
+            ('direccion_destino_id', '=', destino),
+        ], limit=1)
+    
+
         # Crear el viaje
         viaje_vals = {
-           
+            'fecha_viaje': fields.Date.today(),
+            'solicitante_id': self.partner_id.id,
+            'origen': origen,
+            'destino': destino,
+            'picking_id': self.id,
+            'tipo_viaje': tipo_viaje,
+            'producto_transportado_id': producto_transportado_id,
+            'ruta_id': ruta.id if ruta else False,
+            'creado_desde_albaran': True,
+            
         }
-        viaje = self.env['gms.viaje'].create(viaje_vals)  # Asegúrate de que esta línea esté presente
+        self.env['gms.viaje'].create(viaje_vals)  
 
+        return True
+    
+    def action_view_trip(self):
+        self.ensure_one()
         return {
             'type': 'ir.actions.act_window',
-            'name': 'Viaje Creado',
+            'name': 'Viajes',
             'res_model': 'gms.viaje',
-            'view_mode': 'form',
-            'res_id': viaje.id,
-            'target': 'current',
+            'view_mode': 'tree,form',
+            'domain': [('picking_id', '=', self.id)],
         }
+    
     
     def _prepare_purchase_order_vals(self):
         # Preparar valores para la creación de la orden de compra
@@ -168,17 +209,6 @@ class StockPicking(models.Model):
         _logger.info("Finalizado el proceso de cancelación del albarán")
 
         return res
-
-
-    def action_view_trip(self):
-        self.ensure_one()
-        return {
-            'type': 'ir.actions.act_window',
-            'name': 'Viajes',
-            'res_model': 'gms.viaje',
-            'view_mode': 'tree,form',
-            'domain': [('albaran_id', '=', self.id)],
-        }
     
 
     # Campo calculado para controlar la visibilidad del botón "Agendar viaje"
@@ -226,11 +256,3 @@ class StockPicking(models.Model):
                 vals['owner_id'] = vals.get('partner_id')
         return super(StockPicking, self).create(vals)
 
-
-    # @api.depends('viaje_ids')
-    # def _compute_show_buttons(self):
-    #     for record in self:
-    #         viaje_exists = bool(record.viaje_ids)
-    #         # Si existe un viaje, mostrar el botón de viaje
-    #         record.show_button_create_trip = not viaje_exists
-    #         _logger.info(f"Record {record.id}: show_button_create_trip = {record.show_button_create_trip}")

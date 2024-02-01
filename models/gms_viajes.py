@@ -141,6 +141,11 @@ class Viajes(models.Model):
     proteina = fields.Float(string='Proteína'  , tracking=True)
     
     factura_id = fields.Many2one('account.move', string='Factura Asociada')
+
+    picking_id = fields.Many2one('stock.picking', string='Albarán')
+
+    creado_desde_albaran = fields.Boolean(string='Creado desde Albarán', default=False)
+
     
     # prelimpieza_entrada_1 = fields.Selection([('si', 'Si'), ('no', 'No')], string="Prelimpieza entrada", tracking="1")
 
@@ -559,6 +564,11 @@ class Viajes(models.Model):
             self.determinar_y_asignar_gasto_viaje()
     
     def determinar_y_asignar_gasto_viaje(self):
+         # Verificar primero si el viaje fue creado desde un albarán
+        if self.creado_desde_albaran:
+           
+            return
+        
         # no se creen registros duplicados
         if not self.gastos_ids.filtered(lambda g: g.producto_id.id == self._get_gasto_viaje_producto_id()):
             # Obtener los productos de gasto de los ajustes
