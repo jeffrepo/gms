@@ -125,7 +125,7 @@ class Viajes(models.Model):
     partida = fields.Datetime(string="Partida", tracking=True)
 
     chacra = fields.Char(string='Chacra', tracking="1")
-    remito = fields.Float(string='Remito', tracking="1")
+    remito = fields.Char(string='Remito', tracking="1")
 
     firma = fields.Binary(string='Firma', tracking="1")
 
@@ -146,7 +146,8 @@ class Viajes(models.Model):
 
     creado_desde_albaran = fields.Boolean(string='Creado desde Albarán', default=False)
 
-    
+    mensaje_enviado = fields.Boolean(string='Mensaje Enviado', default=False)
+
     # prelimpieza_entrada_1 = fields.Selection([('si', 'Si'), ('no', 'No')], string="Prelimpieza entrada", tracking="1")
 
     # secado_entrada_1 = fields.Selection([('si', 'Si'), ('no', 'No')], string="Secado entrada", tracking="1")
@@ -200,6 +201,10 @@ class Viajes(models.Model):
 
 
     def action_proceso(self):
+        # Eliminar gastos de viaje existentes
+        gastos_viaje = self.env['gms.gasto_viaje'].search([('viaje_id', '=', self.id)])
+        gastos_viaje.unlink()  # Esto eliminará todos los gastos asociados al viaje actual
+
         self.write({'state': 'proceso'})
 
 
@@ -236,7 +241,7 @@ class Viajes(models.Model):
             # Establece la fecha y hora de partida para el viaje
         self.partida = fecha_hora_actual
 
-
+        
         if self.tipo_viaje == 'entrada':
             self.enviar_sms_solicitante()
 

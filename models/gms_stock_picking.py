@@ -101,10 +101,10 @@ class StockPicking(models.Model):
                 self.origin = order.name
 
         if tipo_viaje == 'entrada':
-                # Verifica el tipo del partner asociado al albarán
-                if self.partner_id.tipo != 'puerto':
-                    # Lanzar un error si el origen no es de tipo 'chacra'
-                    raise UserError("El Solicitante no es de tipo 'Puerto'. No se puede agendar el viaje.")
+                # Verificar si el tipo del partner_id es 'chacra' o 'planta'
+                if self.partner_id.tipo not in ['chacra', 'planta']:
+                    # Lanzar un error si el tipo no es ni 'chacra' ni 'planta'
+                    raise UserError("El Solicitante no es de tipo 'Chacra' ni 'Planta'. No se puede agendar el viaje.")
                 origen = self.partner_id.id
     
                 destino = self.picking_type_id.warehouse_id.partner_id.id
