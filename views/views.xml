@@ -390,7 +390,7 @@
                                     <tree editable="bottom">
                                         <field name="propiedad" widget='field' options="{'width': '25%', 'no_create': True}"/>
                                         <field name="valor_medida" widget='field' options="{'width': '25%'}"/>
-                                        <field name="parametro" widget='field' options="{'width': '25%'}"/>
+                                        <!-- <field name="parametro" widget='field' options="{'width': '25%'}"/> -->
                                         <field name="merma_kg" force_save="True" widget='field' options="{'width': '25%'}"/>
                                         <field name="propiedades_disponibles_ids" invisible="1"/>
                                     </tree>
@@ -558,6 +558,9 @@
             <field name="model">product.template</field>
             <field name="inherit_id" ref="product.product_template_only_form_view"/>
             <field name="arch" type="xml">
+                <!-- <xpath expr="//field[@name='product_tag_ids']" position="after">
+                    <field name="humedad" string="Humedad del producto" tracking="1"/>
+                </xpath> -->
                 <notebook position="inside">
                     <page string="Propiedades">
                        

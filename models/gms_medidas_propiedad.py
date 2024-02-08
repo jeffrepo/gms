@@ -42,7 +42,7 @@ class MedidaPropiedad(models.Model):
             record.parametro = record.valor_medida / 100
 
 
-    @api.onchange('propiedad', 'viaje_id')
+    @api.onchange('propiedad', 'viaje_id', 'valor_medida')
     def _onchange_calculate_merma(self):
         for record in self:
             _logger.info("Iniciando cálculo de merma...")
@@ -77,3 +77,31 @@ class MedidaPropiedad(models.Model):
                         else:
                             record.merma_kg = (peso_neto * parametro) / 100.0
                         _logger.info("Merma KG Calculada: %s", record.merma_kg)
+
+
+
+    @api.model
+    def create(self, vals):
+        if 'viaje_id' in vals and 'propiedad' in vals:
+            existent_records = self.search([
+                ('viaje_id', '=', vals['viaje_id']),
+                ('propiedad', '=', vals['propiedad'])
+            ])
+            if existent_records:
+                raise UserError("La propiedad seleccionada ya está asignada a este viaje. Por favor, seleccione una propiedad diferente.")
+        return super(MedidaPropiedad, self).create(vals)
+
+    def write(self, vals):
+        if 'propiedad' in vals:
+            for record in self:
+                if record.viaje_id:
+                    existent_records = self.search([
+                        ('viaje_id', '=', record.viaje_id.id),
+                        ('propiedad', '=', vals['propiedad']),
+                        ('id', '!=', record.id)  # Excluir el registro actual de la búsqueda
+                    ])
+                    if existent_records:
+                        raise UserError("La propiedad seleccionada ya está asignada a este viaje. Por favor, seleccione una propiedad diferente.")
+        return super(MedidaPropiedad, self).write(vals)
+
+

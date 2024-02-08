@@ -141,6 +141,7 @@ class StockPicking(models.Model):
         # Crear el viaje
         viaje_vals = {
             'fecha_viaje': fields.Date.today(),
+            'arribo': fields.Datetime.now(),
             'solicitante_id': self.partner_id.id,
             'origen': origen,
             'destino': destino,
