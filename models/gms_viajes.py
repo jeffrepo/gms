@@ -816,3 +816,17 @@ class Viajes(models.Model):
     
 
 
+    @api.model
+    def create(self, vals):
+        # Verificar si 'peso_bruto', 'peso_neto' o 'tara' son negativos
+        for field in ['peso_bruto', 'peso_neto', 'tara']:
+            if field in vals and vals[field] < 0:
+                raise UserError(_("%s no puede ser negativo." % field))
+        return super(Viajes, self).create(vals)
+
+    def write(self, vals):
+        # Verificar si 'peso_bruto', 'peso_neto' o 'tara' son negativos
+        for field in ['peso_bruto', 'peso_neto', 'tara']:
+            if field in vals and vals[field] < 0:
+                raise UserError(_("%s no puede ser negativo." % field))
+        return super(Viajes, self).write(vals)
