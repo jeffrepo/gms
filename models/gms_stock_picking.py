@@ -107,10 +107,21 @@ class StockPicking(models.Model):
                     raise UserError("El Solicitante no es de tipo 'Chacra' ni 'Planta'. No se puede agendar el viaje.")
                 origen = self.partner_id.id
     
+                sub_contactos_origen = self.env['res.partner'].search([('parent_id', '=', self.partner_id.id)], limit=1)
+                if sub_contactos_origen:
+                    origen = sub_contactos_origen.id
+                else:
+                    raise UserError("No se encontraron sub contactos para el solicitante.")
                 destino = self.picking_type_id.warehouse_id.partner_id.id
         else:
                 origen = self.picking_type_id.warehouse_id.partner_id.id
-                destino = self.partner_id.id        
+                # Buscar el primer sub contacto del destinatario para viajes de salida
+                sub_contactos_destino = self.env['res.partner'].search([('parent_id', '=', self.partner_id.id)], limit=1)
+                if sub_contactos_destino:
+                    destino = sub_contactos_destino.id
+                else:
+                    # Si no se encuentra sub contacto para el destinatario, usar el ID del partner_id como destino
+                    destino = self.partner_id.id
     
         # Determinar el producto transportado y la cantidad
         if len(self.move_ids_without_package) > 0:
@@ -138,6 +149,7 @@ class StockPicking(models.Model):
             'producto_transportado_id': producto_transportado_id,
             'ruta_id': ruta.id if ruta else False,
             'creado_desde_albaran': True,
+            'albaran_id': self.id,
             
         }
         self.env['gms.viaje'].create(viaje_vals)  
@@ -146,13 +158,20 @@ class StockPicking(models.Model):
     
     def action_view_trip(self):
         self.ensure_one()
-        return {
-            'type': 'ir.actions.act_window',
-            'name': 'Viajes',
-            'res_model': 'gms.viaje',
-            'view_mode': 'tree,form',
-            'domain': [('picking_id', '=', self.id)],
-        }
+        last_viaje_id = self.viaje_ids and max(self.viaje_ids.ids) or False
+        if last_viaje_id:
+            return {
+                'type': 'ir.actions.act_window',
+                'name': 'Viaje',
+                'res_model': 'gms.viaje',
+                'view_mode': 'form',
+                'res_id': last_viaje_id,  # ID del último viaje creado
+                'target': 'current',
+                'context': self.env.context,
+            }
+        else:
+            # Manejar el caso en que no hay viajes asociados
+            return {'type': 'ir.actions.act_window_close'}
     
     
     def _prepare_purchase_order_vals(self):
