@@ -37,19 +37,22 @@ class AccountMove(models.Model):
 
 
     def action_view_viajes(self):
-        self.ensure_one() 
-        if self.viajes_ids:
+        self.ensure_one()
+        # Obtener los IDs de los viajes asociados a esta factura
+        viaje_ids = self.viajes_ids.ids
+        if viaje_ids:
             return {
                 'type': 'ir.actions.act_window',
+                'name': 'Viajes',
                 'res_model': 'gms.viaje',
                 'view_mode': 'tree,form',
-                'domain': [('id', 'in', self.viajes_ids.ids)],
-                'context': {'create': False},
+                'domain': [('id', 'in', viaje_ids)],  
                 'target': 'current',
+                'context': self.env.context,
             }
         else:
-            raise UserError('No hay viajes asociados a esta factura.')
-
+            # Manejar el caso en que no hay viajes asociados
+            return {'type': 'ir.actions.act_window_close'}
 
 
     def unlink(self):
