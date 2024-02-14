@@ -575,6 +575,7 @@
 
                                     <field name="propiedades_id"/>
                                     <field name="umbral_tolerancia"/>
+                                    <field name="x"/>
                                 </tree>
                             </field>
                         </group>
@@ -789,6 +790,7 @@
                             <tree editable="bottom">
                                 <field name="propiedades_id"/>
                                 <field name="umbral_tolerancia"/>
+                                <field name="x"/>
                             </tree>
                         </field>
                     </group>

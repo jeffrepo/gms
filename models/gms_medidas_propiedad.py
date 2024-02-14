@@ -64,14 +64,18 @@ class MedidaPropiedad(models.Model):
                         _logger.info("Parámetro: %s", parametro)
                         peso_neto = record.viaje_id.peso_neto
                         _logger.info("Peso Neto: %s", peso_neto)
-                        valor_medida = record.valor_medida  
+                        valor_medida = record.valor_medida
+                        umbral_tolerancia = record.propiedad.umbral_tolerancia # Asumiendo que umbral_tolerancia está en el modelo de propiedad
+                        x = record.propiedad.x 
                         
                         # Si la propiedad tiene una fórmula, evaluarla
                         if record.propiedad.formula:
                             localdict = {
                                 'parametro': parametro,
                                 'peso_neto': peso_neto,
-                                'valor_medida': valor_medida,  
+                                'valor_medida': valor_medida,
+                                'umbral_tolerancia': umbral_tolerancia,
+                                'x': x,  
                                 'resultado': record.merma_kg  
                             }
                             safe_eval.safe_eval(record.propiedad.formula, localdict, mode="exec", nocopy=True) #Ejecuta la formula

@@ -263,10 +263,12 @@ class Viajes(models.Model):
             for medida in self.medidas_propiedades_ids:
                 valor_medida = medida.valor_medida  
         
-            # Buscar la coincidencia en gms.datos_humedad para calcular el precio total del secado
+           # Buscar la coincidencia en gms.datos_humedad para calcular el precio total del secado
             datos_humedad = self.env['gms.datos_humedad'].search([('humedad', '=', valor_medida)], limit=1)
-            tarifa_humedad = datos_humedad.tarifa if datos_humedad else 0  
-            precio_total_secado = (tarifa_humedad/1000) * self.peso_neto if tarifa_humedad else 0
+            tarifa_humedad = datos_humedad.tarifa if datos_humedad else 0
+
+            # El cálculo del precio total del secado se ajusta para usar valor_medida de humedad
+            precio_total_secado = (valor_medida * tarifa_humedad) / 1000
     
             # Para el producto de Pre Limpieza
             producto_pre_limpieza = self.env['product.product'].browse(producto_pre_limpieza_id)
@@ -293,7 +295,7 @@ class Viajes(models.Model):
                     'producto_id': producto_secado_id,
                     'precio_total': precio_total_secado, 
                     'viaje_id': self.id,
-                    'estado_compra': 'no_comprado',
+                    'estado_compra': 'no_aplica',
                     'moneda_id': moneda_proveedor_id
                 })
     
@@ -303,7 +305,7 @@ class Viajes(models.Model):
                     'producto_id': producto_pre_limpieza_id,
                     'precio_total': precio_total_pre_limpieza,  
                     'viaje_id': self.id,
-                    'estado_compra': 'no_comprado',
+                    'estado_compra': 'no_aplica',
                     'moneda_id': moneda_proveedor_id
                 })
     
@@ -313,7 +315,7 @@ class Viajes(models.Model):
                     'producto_id': producto_flete_puerto_id,
                     'precio_total': precio_total_flete_puerto,  
                     'viaje_id': self.id,
-                    'estado_compra': 'no_comprado',
+                    'estado_compra': 'no_aplica',
                     'moneda_id': moneda_proveedor_id
                 })
 

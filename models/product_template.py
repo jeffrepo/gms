@@ -7,3 +7,5 @@ class ProductTemplate(models.Model):
     propiedades_ids = fields.One2many('gms.propiedades_lineas', 'producto_id', tracking ="1")
 
     humedad = fields.Char(String="Humedad del prodcuto", tracking = "1")
+
+    x = fields.Char(String = "x", tracking = "1")
