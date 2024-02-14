@@ -339,6 +339,26 @@
 
                         <!-- Agrega la pestaña de Gastos -->
                         <notebook>
+
+                             <page string="Balanza">
+                                <group string="pesaje">
+
+                                    <field name="balanza_id"/> 
+                                    <field name="peso_bruto"  attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
+                                    <field name="tara"  attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
+                                    <field name="peso_neto"/>
+                                    <field name="peso_neto_destino" attrs="{'invisible': [('tipo_viaje', '!=', 'salida')], 'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}" />
+                                    
+                                    
+                                    <button string="Peso bruto" type="object" name="accion_leer_balanza" class="oe_highlight"/> 
+                                    <button string="Calcular Tara" type="object" name="accion_calcular_tara" class="btn-primary"/>
+                                    
+                                </group>
+                                
+                            </page>
+
+
+
                             <page string="Gastos">
                                 <field name="gastos_ids" >
                                     <tree>
@@ -355,22 +375,7 @@
                                 </field>
                             </page>
 
-                            <page string="Balanza">
-                                <group string="pesaje">
-
-                                    <field name="balanza_id"/> 
-                                    <field name="peso_bruto"  attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
-                                    <field name="tara"  attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
-                                    <field name="peso_neto"/>
-                                    <field name="peso_neto_destino" attrs="{'invisible': [('tipo_viaje', '!=', 'salida')], 'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}" />
-                                    
-                                    
-                                    <button string="Peso bruto" type="object" name="accion_leer_balanza" class="oe_highlight"/> 
-                                    <button string="Calcular Tara" type="object" name="accion_calcular_tara" class="btn-primary"/>
-                                    
-                                </group>
-                                
-                            </page>
+                           
 
 
                             <page string="Operaciones">

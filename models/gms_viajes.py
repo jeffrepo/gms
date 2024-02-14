@@ -770,7 +770,7 @@ class Viajes(models.Model):
             # Preparar el mensaje con detalles del viaje y las propiedades con sus mermas
             mensaje_sms = "Detalles del viaje: {}\n".format(self.name)
             for medida in self.medidas_propiedades_ids:
-                mensaje_sms += "{}: {}\n".format(medida.propiedad.cod, medida.merma_kg)
+                mensaje_sms += "{}: {}\n".format(medida.propiedad.cod, medida.valor_medida)
 
             # Obtener el número de teléfono del solicitante
             telefono_solicitante = self.solicitante_id.mobile or self.solicitante_id.phone
