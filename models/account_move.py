@@ -94,7 +94,7 @@ class AccountMove(models.Model):
     
 
 
-   
+    
     def action_view_purchase_orders(self):
         self.ensure_one()
         return {
