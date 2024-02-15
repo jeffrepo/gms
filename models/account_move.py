@@ -46,7 +46,7 @@ class AccountMove(models.Model):
                 'name': 'Viajes',
                 'res_model': 'gms.viaje',
                 'view_mode': 'tree,form',
-                'domain': [('id', 'in', viaje_ids)],  
+                'domain': [('id', 'in', viaje_ids)],  # Filtrar para mostrar solo los viajes de esta factura
                 'target': 'current',
                 'context': self.env.context,
             }
@@ -70,15 +70,15 @@ class AccountMove(models.Model):
 
 
 
-     
-    def create(self, vals):
+    @api.model_create_multi 
+    def create(self, vals_list):
         # Crear la factura como normalmente
-        record = super(AccountMove, self).create(vals)
+        record = super(AccountMove, self).create(vals_list)
 
         # Verificar si la factura está asociada a viajes
-        if 'viajes_ids' in vals:
+        if 'viajes_ids' in vals_list:
             # Recuperar los nombres de los viajes asociados
-            viajes_ids = [v_id[1] for v_id in vals['viajes_ids'] if v_id[0] == 4]
+            viajes_ids = [v_id[1] for v_id in vals_list['viajes_ids'] if v_id[0] == 4]
             viajes = self.env['gms.viaje'].browse(viajes_ids)
             nombres_viajes = viajes.mapped('name')
 

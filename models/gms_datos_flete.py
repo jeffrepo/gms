@@ -7,4 +7,4 @@ class DatosFlete(models.Model):
 
     follower_ids = fields.Many2many('res.users', string='Followers')
     flete_km = fields.Float(string='Flete kilometros')
-    tarifa = fields.Float(string='Tarifa')
+    tarifa = fields.Float(string='Tarifa', digits=(16, 4))  #4 decimales
