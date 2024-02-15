@@ -105,9 +105,9 @@ class Viajes(models.Model):
     prelimpieza_entrada = fields.Boolean(string="Prelimpieza Entrada", tracking=True)
     secado_entrada = fields.Boolean(string="Secado Entrada", tracking=True)
 
-    kilometros_flete = fields.Float(string="Kilómetros flete", tracking="1")
+    kilometros_flete = fields.Float(string="Kilómetros flete", tracking="1", store=True, compute='_compute_kilometros_flete')
 
-    kilogramos_a_liquidar = fields.Float(string="Kilogramos a liquidar" , readonly=True, compute="_compute_kilogramos_a_liquidar", store=True, tracking=True)
+    kilogramos_a_liquidar = fields.Float(string="Kilogramos a liquidar" , readonly=True, store=True, tracking=True)
 
     pedido_venta_id = fields.Many2one('sale.order', string="Pedido de venta", tracking="1", readonly=True)
 
@@ -182,11 +182,28 @@ class Viajes(models.Model):
             record.peso_neto = record.peso_bruto - record.tara
 
 
+    @api.depends('ruta_id')
+    def _compute_kilometros_flete(self):
+        for viaje in self:
+            if viaje.ruta_id:
+                viaje.kilometros_flete = viaje.ruta_id.kilometros
+    
 
     @api.onchange('ruta_id')
     def _onchange_ruta_id(self):
-         if self.ruta_id:   
-             self.kilometros_flete = self.ruta_id.kilometros
+        for viaje in self:
+            
+            if viaje.ruta_id:
+                # Lógica para determinar y asignar el gasto del viaje
+                viaje.determinar_y_asignar_gasto_viaje()
+        
+                # Asignar kilómetros de flete basados en la ruta seleccionada
+                # viaje.kilometros_flete = viaje.ruta_id.kilometros
+        
+                # Eliminar gastos relacionados con la ruta anterior
+                gastos_a_eliminar = viaje.gastos_ids.filtered(lambda g: g.es_de_ruta)
+                viaje.gastos_ids -= gastos_a_eliminar
+
 
 
 
@@ -502,15 +519,6 @@ class Viajes(models.Model):
 
 
 
-    @api.onchange('ruta_id')
-    def _onchange_ruta_id(self):
-        # Encuentra y elimina la línea antigua si existe
-        gastos_a_eliminar = self.gastos_ids.filtered(lambda g: g.es_de_ruta)
-        self.gastos_ids -= gastos_a_eliminar
-
-        if self.ruta_id:
-           
-            pass
 
 
  
@@ -580,11 +588,8 @@ class Viajes(models.Model):
 
 
     
-    @api.onchange('ruta_id')
-    def _onchange_ruta_id(self):
-        if self.ruta_id:
-            # Lógica para determinar y asignar el gasto del viaje
-            self.determinar_y_asignar_gasto_viaje()
+
+    
     
     def determinar_y_asignar_gasto_viaje(self):
          # Verificar primero si el viaje fue creado desde un albarán

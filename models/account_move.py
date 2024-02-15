@@ -14,6 +14,9 @@ class AccountMove(models.Model):
 
     total_descontar = fields.Char(string="Total a descontar", tracking="1")
 
+    purchase_order_ids = fields.Many2many('purchase.order', string='Órdenes de Compra')
+
+
     def action_post(self):
         # Llamar al método original
         res = super(AccountMove, self).action_post()
@@ -88,4 +91,18 @@ class AccountMove(models.Model):
                 record.message_post(body=mensaje)
 
         return record
+    
+
+
+   
+    def action_view_purchase_orders(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Órdenes de Compra',
+            'view_mode': 'tree,form',
+            'res_model': 'purchase.order',
+            'domain': [('id', 'in', self.purchase_order_ids.ids)],
+            'context': {'default_partner_id': self.partner_id.id},
+        }
     

@@ -1085,6 +1085,15 @@
                             attrs="{'invisible': [('viajes_ids', '=', [])]}">
                         <field name="viajes_ids" widget="statinfo" string="Viajes"/>
                     </button>
+
+                    <!-- <button name="action_view_purchase_orders"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-shopping-cart"
+                        attrs="{'invisible': [('purchase_order_ids', '=', [])]}">
+                    <field name="purchase_order_ids" widget="statinfo" string="Órdenes de Compra"/>
+                </button> -->
+
                 </xpath>
                 
                 <xpath expr="//field[@name='purchase_vendor_bill_id']" position="after">
