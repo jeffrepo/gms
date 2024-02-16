@@ -14,6 +14,9 @@ class AccountMove(models.Model):
 
     total_descontar = fields.Char(string="Total a descontar", tracking="1")
 
+    purchase_order_ids = fields.Many2many('purchase.order', string='Órdenes de Compra')
+
+
     def action_post(self):
         # Llamar al método original
         res = super(AccountMove, self).action_post()
@@ -37,19 +40,22 @@ class AccountMove(models.Model):
 
 
     def action_view_viajes(self):
-        self.ensure_one() 
-        if self.viajes_ids:
+        self.ensure_one()
+        # Obtener los IDs de los viajes asociados a esta factura
+        viaje_ids = self.viajes_ids.ids
+        if viaje_ids:
             return {
                 'type': 'ir.actions.act_window',
+                'name': 'Viajes',
                 'res_model': 'gms.viaje',
                 'view_mode': 'tree,form',
-                'domain': [('id', 'in', self.viajes_ids.ids)],
-                'context': {'create': False},
+                'domain': [('id', 'in', viaje_ids)],  # Filtrar para mostrar solo los viajes de esta factura
                 'target': 'current',
+                'context': self.env.context,
             }
         else:
-            raise UserError('No hay viajes asociados a esta factura.')
-
+            # Manejar el caso en que no hay viajes asociados
+            return {'type': 'ir.actions.act_window_close'}
 
 
     def unlink(self):
@@ -67,15 +73,15 @@ class AccountMove(models.Model):
 
 
 
-     
-    def create(self, vals):
+    @api.model_create_multi 
+    def create(self, vals_list):
         # Crear la factura como normalmente
-        record = super(AccountMove, self).create(vals)
+        record = super(AccountMove, self).create(vals_list)
 
         # Verificar si la factura está asociada a viajes
-        if 'viajes_ids' in vals:
+        if 'viajes_ids' in vals_list:
             # Recuperar los nombres de los viajes asociados
-            viajes_ids = [v_id[1] for v_id in vals['viajes_ids'] if v_id[0] == 4]
+            viajes_ids = [v_id[1] for v_id in vals_list['viajes_ids'] if v_id[0] == 4]
             viajes = self.env['gms.viaje'].browse(viajes_ids)
             nombres_viajes = viajes.mapped('name')
 
@@ -85,4 +91,18 @@ class AccountMove(models.Model):
                 record.message_post(body=mensaje)
 
         return record
+    
+
+
+    
+    def action_view_purchase_orders(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Órdenes de Compra',
+            'view_mode': 'tree,form',
+            'res_model': 'purchase.order',
+            'domain': [('id', 'in', self.purchase_order_ids.ids)],
+            'context': {'default_partner_id': self.partner_id.id},
+        }
     

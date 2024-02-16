@@ -42,7 +42,7 @@ class MedidaPropiedad(models.Model):
             record.parametro = record.valor_medida / 100
 
 
-    @api.onchange('propiedad', 'viaje_id')
+    @api.onchange('propiedad', 'viaje_id', 'valor_medida')
     def _onchange_calculate_merma(self):
         for record in self:
             _logger.info("Iniciando cálculo de merma...")
@@ -64,16 +64,50 @@ class MedidaPropiedad(models.Model):
                         _logger.info("Parámetro: %s", parametro)
                         peso_neto = record.viaje_id.peso_neto
                         _logger.info("Peso Neto: %s", peso_neto)
+                        valor_medida = record.valor_medida
+                        umbral_tolerancia = record.propiedad.umbral_tolerancia # Asumiendo que umbral_tolerancia está en el modelo de propiedad
+                        x = record.propiedad.x 
                         
                         # Si la propiedad tiene una fórmula, evaluarla
                         if record.propiedad.formula:
                             localdict = {
                                 'parametro': parametro,
                                 'peso_neto': peso_neto,
+                                'valor_medida': valor_medida,
+                                'umbral_tolerancia': umbral_tolerancia,
+                                'x': x,  
                                 'resultado': record.merma_kg  
                             }
                             safe_eval.safe_eval(record.propiedad.formula, localdict, mode="exec", nocopy=True) #Ejecuta la formula
-                            record.merma_kg = localdict.get('resultado', record.merma_kg) 
+                            record.merma_kg = max(0, localdict.get('resultado', record.merma_kg))
                         else:
-                            record.merma_kg = (peso_neto * parametro) / 100.0
+                            # Asegurar que el cálculo directo de merma_kg no resulte negativo
+                            record.merma_kg = max(0, (peso_neto * parametro) / 100.0)
                         _logger.info("Merma KG Calculada: %s", record.merma_kg)
+
+
+    @api.model
+    def create(self, vals):
+        if 'viaje_id' in vals and 'propiedad' in vals:
+            existent_records = self.search([
+                ('viaje_id', '=', vals['viaje_id']),
+                ('propiedad', '=', vals['propiedad'])
+            ])
+            if existent_records:
+                raise UserError("La propiedad seleccionada ya está asignada a este viaje. Por favor, seleccione una propiedad diferente.")
+        return super(MedidaPropiedad, self).create(vals)
+
+    def write(self, vals):
+        if 'propiedad' in vals:
+            for record in self:
+                if record.viaje_id:
+                    existent_records = self.search([
+                        ('viaje_id', '=', record.viaje_id.id),
+                        ('propiedad', '=', vals['propiedad']),
+                        ('id', '!=', record.id)  # Excluir el registro actual de la búsqueda
+                    ])
+                    if existent_records:
+                        raise UserError("La propiedad seleccionada ya está asignada a este viaje. Por favor, seleccione una propiedad diferente.")
+        return super(MedidaPropiedad, self).write(vals)
+
+

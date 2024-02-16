@@ -82,8 +82,4 @@ class PurchaseOrder(models.Model):
 
 
 
-    def write(self, vals):
-        for record in self:
-            if record.viaje_ids and vals.get('state') not in ['draft', 'cancel']:
-                raise UserError("No se pueden modificar órdenes de compra que tienen viajes asociados.")
-        return super(PurchaseOrder, self).write(vals)
+    

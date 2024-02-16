@@ -1,5 +1,6 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
+from collections import defaultdict
 import datetime
 import paramiko
 import logging
@@ -7,6 +8,7 @@ import requests
 import asyncio
 from asyncvnc import Client
 import serial
+
 _logger = logging.getLogger(__name__)
 
 
@@ -103,9 +105,9 @@ class Viajes(models.Model):
     prelimpieza_entrada = fields.Boolean(string="Prelimpieza Entrada", tracking=True)
     secado_entrada = fields.Boolean(string="Secado Entrada", tracking=True)
 
-    kilometros_flete = fields.Float(string="Kilómetros flete", tracking="1")
+    kilometros_flete = fields.Float(string="Kilómetros flete", tracking="1", store=True, compute='_compute_kilometros_flete')
 
-    kilogramos_a_liquidar = fields.Float(string="Kilogramos a liquidar" , readonly=True, compute="_compute_kilogramos_a_liquidar", store=True, tracking=True)
+    kilogramos_a_liquidar = fields.Float(string="Kilogramos a liquidar" , readonly=True, store=True, tracking=True)
 
     pedido_venta_id = fields.Many2one('sale.order', string="Pedido de venta", tracking="1", readonly=True)
 
@@ -125,7 +127,7 @@ class Viajes(models.Model):
     partida = fields.Datetime(string="Partida", tracking=True)
 
     chacra = fields.Char(string='Chacra', tracking="1")
-    remito = fields.Float(string='Remito', tracking="1")
+    remito = fields.Char(string='Remito', tracking="1")
 
     firma = fields.Binary(string='Firma', tracking="1")
 
@@ -141,7 +143,13 @@ class Viajes(models.Model):
     proteina = fields.Float(string='Proteína'  , tracking=True)
     
     factura_id = fields.Many2one('account.move', string='Factura Asociada')
-    
+
+    picking_id = fields.Many2one('stock.picking', string='Albarán')
+
+    creado_desde_albaran = fields.Boolean(string='Creado desde Albarán', default=False)
+
+    mensaje_enviado = fields.Boolean(string='Mensaje Enviado', default=False)
+
     # prelimpieza_entrada_1 = fields.Selection([('si', 'Si'), ('no', 'No')], string="Prelimpieza entrada", tracking="1")
 
     # secado_entrada_1 = fields.Selection([('si', 'Si'), ('no', 'No')], string="Secado entrada", tracking="1")
@@ -174,11 +182,28 @@ class Viajes(models.Model):
             record.peso_neto = record.peso_bruto - record.tara
 
 
+    @api.depends('ruta_id')
+    def _compute_kilometros_flete(self):
+        for viaje in self:
+            if viaje.ruta_id:
+                viaje.kilometros_flete = viaje.ruta_id.kilometros
+    
 
     @api.onchange('ruta_id')
     def _onchange_ruta_id(self):
-         if self.ruta_id:   
-             self.kilometros_flete = self.ruta_id.kilometros
+        for viaje in self:
+            
+            if viaje.ruta_id:
+                # Lógica para determinar y asignar el gasto del viaje
+                viaje.determinar_y_asignar_gasto_viaje()
+        
+                # Asignar kilómetros de flete basados en la ruta seleccionada
+                # viaje.kilometros_flete = viaje.ruta_id.kilometros
+        
+                # Eliminar gastos relacionados con la ruta anterior
+                gastos_a_eliminar = viaje.gastos_ids.filtered(lambda g: g.es_de_ruta)
+                viaje.gastos_ids -= gastos_a_eliminar
+
 
 
 
@@ -195,6 +220,10 @@ class Viajes(models.Model):
 
 
     def action_proceso(self):
+        # Eliminar gastos de viaje existentes
+        gastos_viaje = self.env['gms.gasto_viaje'].search([('viaje_id', '=', self.id)])
+        gastos_viaje.unlink()  # Esto eliminará todos los gastos asociados al viaje actual
+
         self.write({'state': 'proceso'})
 
 
@@ -231,7 +260,7 @@ class Viajes(models.Model):
             # Establece la fecha y hora de partida para el viaje
         self.partida = fecha_hora_actual
 
-
+        
         if self.tipo_viaje == 'entrada':
             self.enviar_sms_solicitante()
 
@@ -251,10 +280,12 @@ class Viajes(models.Model):
             for medida in self.medidas_propiedades_ids:
                 valor_medida = medida.valor_medida  
         
-            # Buscar la coincidencia en gms.datos_humedad para calcular el precio total del secado
+           # Buscar la coincidencia en gms.datos_humedad para calcular el precio total del secado
             datos_humedad = self.env['gms.datos_humedad'].search([('humedad', '=', valor_medida)], limit=1)
-            tarifa_humedad = datos_humedad.tarifa if datos_humedad else 0  
-            precio_total_secado = (tarifa_humedad/1000) * self.peso_neto if tarifa_humedad else 0
+            tarifa_humedad = datos_humedad.tarifa if datos_humedad else 0
+
+            # El cálculo del precio total del secado se ajusta para usar valor_medida de humedad
+            precio_total_secado = (valor_medida * tarifa_humedad) / 1000
     
             # Para el producto de Pre Limpieza
             producto_pre_limpieza = self.env['product.product'].browse(producto_pre_limpieza_id)
@@ -281,7 +312,7 @@ class Viajes(models.Model):
                     'producto_id': producto_secado_id,
                     'precio_total': precio_total_secado, 
                     'viaje_id': self.id,
-                    'estado_compra': 'no_comprado',
+                    'estado_compra': 'no_aplica',
                     'moneda_id': moneda_proveedor_id
                 })
     
@@ -291,7 +322,7 @@ class Viajes(models.Model):
                     'producto_id': producto_pre_limpieza_id,
                     'precio_total': precio_total_pre_limpieza,  
                     'viaje_id': self.id,
-                    'estado_compra': 'no_comprado',
+                    'estado_compra': 'no_aplica',
                     'moneda_id': moneda_proveedor_id
                 })
     
@@ -301,7 +332,7 @@ class Viajes(models.Model):
                     'producto_id': producto_flete_puerto_id,
                     'precio_total': precio_total_flete_puerto,  
                     'viaje_id': self.id,
-                    'estado_compra': 'no_comprado',
+                    'estado_compra': 'no_aplica',
                     'moneda_id': moneda_proveedor_id
                 })
 
@@ -317,7 +348,7 @@ class Viajes(models.Model):
             else:
                 # Sumar el total de los gastos
                 total_gastos = sum(gasto.precio_total for gasto in viaje.gastos_ids)
-    
+
                 # Preparar las líneas de la factura
                 invoice_lines = []
                 if viaje.tipo_viaje == 'entrada':
@@ -326,7 +357,6 @@ class Viajes(models.Model):
                             'product_id': line.product_id.id,
                             'quantity': line.product_qty,
                             'price_unit': line.price_unit,
-                            
                         }))
                 else: 
                     for line in viaje.sale_order_id.order_line:
@@ -334,31 +364,40 @@ class Viajes(models.Model):
                             'product_id': line.product_id.id,
                             'quantity': line.product_uom_qty,
                             'price_unit': line.price_unit,
-                            
                         }))
+
+                # Agregar línea para el producto transportado y los kilogramos a liquidar, si aplica
+                if viaje.producto_transportado_id and viaje.kilogramos_a_liquidar:
+                    invoice_lines.append((0, 0, {
+                        'product_id': viaje.producto_transportado_id.id,
+                        'name': f"Viaje {viaje.name}",
+                        'quantity': viaje.kilogramos_a_liquidar,
+                        'price_unit': viaje.producto_transportado_id.lst_price,
+                        'account_id': viaje.producto_transportado_id.categ_id.property_account_income_categ_id.id,
+                    }))
 
                 # Fecha actual para la factura
                 fecha_actual = fields.Date.today()
-        
+            
                 # Preparar valores para la factura
+                usd_currency_id = self.env['res.currency'].search([('name', '=', 'USD')], limit=1).id
                 invoice_vals = {
-                    'partner_id': viaje.transportista_id.id if viaje.tipo_viaje == 'entrada' else viaje.solicitante_id.id,
+                    'partner_id': viaje.solicitante_id.id if viaje.tipo_viaje == 'entrada' else viaje.transportista_id.id,
                     'move_type': 'in_invoice' if viaje.tipo_viaje == 'entrada' else 'out_invoice',
                     'invoice_line_ids': invoice_lines,
-                    'total_descontar': str(total_gastos),
                     'invoice_date': fecha_actual,
-                    
+                    'currency_id': usd_currency_id,
+                    'total_descontar': str(total_gastos), 
                 }
-        
+            
                 # Agregar el ID del viaje actual a los valores de la factura
                 invoice_vals['viajes_ids'] = [(4, viaje.id)]
-        
+
                 # Crear la factura
-                if total_gastos > 0:
+                if total_gastos > 0 or viaje.kilogramos_a_liquidar > 0:
                     factura_creada = Invoice.create(invoice_vals)
-                    viaje.write({'factura_id': factura_creada.id})
-        
-                viaje.write({'state': 'liquidado'})
+                    viaje.write({'factura_id': factura_creada.id, 'state': 'liquidado'})
+
         
         
     def action_coordinado(self):
@@ -480,15 +519,6 @@ class Viajes(models.Model):
 
 
 
-    @api.onchange('ruta_id')
-    def _onchange_ruta_id(self):
-        # Encuentra y elimina la línea antigua si existe
-        gastos_a_eliminar = self.gastos_ids.filtered(lambda g: g.es_de_ruta)
-        self.gastos_ids -= gastos_a_eliminar
-
-        if self.ruta_id:
-           
-            pass
 
 
  
@@ -528,6 +558,12 @@ class Viajes(models.Model):
             # Actualizar la ubicación destino del albarán con la del silo seleccionado
             self.albaran_id.write({'location_dest_id': self.silo_id.id})
             _logger.info(f"Ubicación destino del albarán {self.albaran_id.name} actualizada a {self.silo_id.name}")
+    
+            # Ahora actualizamos también cada línea de movimiento del albarán
+            move_lines = self.albaran_id.move_line_ids_without_package | self.albaran_id.move_line_nosuggest_ids
+            for move_line in move_lines:
+                move_line.write({'location_dest_id': self.silo_id.id})
+                _logger.info(f"Ubicación destino de la línea de movimiento {move_line.id} actualizada a {self.silo_id.name}")
 
 
     @api.model
@@ -552,13 +588,15 @@ class Viajes(models.Model):
 
 
     
-    @api.onchange('ruta_id')
-    def _onchange_ruta_id(self):
-        if self.ruta_id:
-            # Lógica para determinar y asignar el gasto del viaje
-            self.determinar_y_asignar_gasto_viaje()
+
+    
     
     def determinar_y_asignar_gasto_viaje(self):
+         # Verificar primero si el viaje fue creado desde un albarán
+        if self.creado_desde_albaran:
+           
+            return
+        
         # no se creen registros duplicados
         if not self.gastos_ids.filtered(lambda g: g.producto_id.id == self._get_gasto_viaje_producto_id()):
             # Obtener los productos de gasto de los ajustes
@@ -739,7 +777,7 @@ class Viajes(models.Model):
             # Preparar el mensaje con detalles del viaje y las propiedades con sus mermas
             mensaje_sms = "Detalles del viaje: {}\n".format(self.name)
             for medida in self.medidas_propiedades_ids:
-                mensaje_sms += "{}: {}\n".format(medida.propiedad.cod, medida.merma_kg)
+                mensaje_sms += "{}: {}\n".format(medida.propiedad.cod, medida.valor_medida)
 
             # Obtener el número de teléfono del solicitante
             telefono_solicitante = self.solicitante_id.mobile or self.solicitante_id.phone
@@ -774,13 +812,52 @@ class Viajes(models.Model):
 
     
     def action_liquidar_viajes(self):
+        if not self:
+            raise UserError("No se seleccionó ningún viaje.")
+        
+
         for viaje in self:
-            # Asegúrate de que el viaje está en un estado terminado
-            if viaje.state in ['terminado']:
-                viaje.state = 'liquidado'
-                
+            if viaje.albaran_id and viaje.albaran_id.state != 'done':
+                raise UserError("No se puede pasar el viaje a estado 'Liquidado' hasta que el albarán esté confirmado.")
             else:
-                raise UserError('No se puede liquidar uno o más de los viajes seleccionados.')
+                # Sumar el total de los gastos
+                total_gastos = sum(gasto.precio_total for gasto in viaje.gastos_ids)
+                Invoice = self.env['account.move']
+                viajes_por_proveedor = defaultdict(lambda: self.env['gms.viaje'])
+                for viaje in self.filtered(lambda v: v.state == 'terminado' and v.albaran_id.state == 'done'):
+                    viajes_por_proveedor[viaje.solicitante_id] |= viaje
+
+                for proveedor, viajes in viajes_por_proveedor.items():
+                    invoice_lines = []
+                    for viaje in viajes:
+                        # Asumiendo que cada viaje tiene un producto transportado y kilogramos a liquidar
+                        if viaje.producto_transportado_id and viaje.kilogramos_a_liquidar:
+                            invoice_lines.append((0, 0, {
+                                'product_id': viaje.producto_transportado_id.id,
+                                'name': f" {viaje.name}",
+                                'quantity': viaje.kilogramos_a_liquidar,
+                                'price_unit': viaje.producto_transportado_id.lst_price,
+                                # Debes asegurarte de que este campo se establece correctamente según tu configuración de contabilidad
+                                'account_id': viaje.producto_transportado_id.categ_id.property_account_income_categ_id.id,
+                            }))
+
+                    if invoice_lines:
+                        # Ajusta la moneda si es necesario, en este caso se usa USD como ejemplo
+                        usd_currency_id = self.env['res.currency'].search([('name', '=', 'USD')], limit=1).id
+                        invoice_vals = {
+                            'partner_id': proveedor.id,
+                            'move_type': 'in_invoice',
+                            'invoice_line_ids': invoice_lines,
+                            'currency_id': usd_currency_id,
+                            'total_descontar': str(total_gastos),
+                        }
+                        factura_creada = Invoice.create(invoice_vals)
+                        
+                        # Actualizar el estado de los viajes a 'liquidado' y vincular la factura creada
+                        viajes.write({'state': 'liquidado', 'factura_id': factura_creada.id})
+
+                return True
+
     
 
     def action_view_factura(self):
@@ -801,3 +878,17 @@ class Viajes(models.Model):
     
 
 
+    @api.model
+    def create_pesos(self, vals):
+        # Verificar si 'peso_bruto', 'peso_neto' o 'tara' son negativos
+        for field in ['peso_bruto', 'peso_neto', 'tara']:
+            if field in vals and vals[field] < 0:
+                raise UserError(_("%s no puede ser negativo." % field))
+        return super(Viajes, self).create(vals)
+
+    def write_pesos(self, vals):
+        # Verificar si 'peso_bruto', 'peso_neto' o 'tara' son negativos
+        for field in ['peso_bruto', 'peso_neto', 'tara']:
+            if field in vals and vals[field] < 0:
+                raise UserError(_("%s no puede ser negativo." % field))
+        return super(Viajes, self).write(vals)

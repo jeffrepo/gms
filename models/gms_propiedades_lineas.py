@@ -8,3 +8,4 @@ class PropiedadesLineas(models.Model):
     producto_id = fields.Many2one('product.template', string='Producto')
     valor = fields.Float(string='Valor')
     umbral_tolerancia = fields.Float(string='Umbral de tolerancia', tracking ="1")
+    x = fields.Char(String = "x", tracking = "1")
