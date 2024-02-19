@@ -503,7 +503,7 @@ class Viajes(models.Model):
 
 
    
-    @api.depends('peso_neto', 'medidas_propiedades_ids.merma_kg')
+    @api.onchange('peso_neto', 'medidas_propiedades_ids.merma_kg')
     def _compute_kilogramos_a_liquidar(self):
         for record in self:
             _logger.info("Calculando kilogramos a liquidar para el viaje %s", record.name)
@@ -525,7 +525,7 @@ class Viajes(models.Model):
 
 
 
-    
+
     @api.model
     def _post_create_actions(self, vals):
         if vals.get('ruta_id'):

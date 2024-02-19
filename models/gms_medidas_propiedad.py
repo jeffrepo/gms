@@ -57,7 +57,7 @@ class MedidaPropiedad(models.Model):
                     propiedad_linea = producto.propiedades_ids.filtered(
                         lambda p: p.propiedades_id == record.propiedad
                     )
-                    _logger.info("Propiedad Filtrada: %s", propiedad_linea)
+                    _logger.info("Propiedad Filtrada: %s", propiedad_linea.propiedades_id.name)
                     
                     if propiedad_linea:
                         parametro = record.parametro  
@@ -65,8 +65,11 @@ class MedidaPropiedad(models.Model):
                         peso_neto = record.viaje_id.peso_neto
                         _logger.info("Peso Neto: %s", peso_neto)
                         valor_medida = record.valor_medida
-                        umbral_tolerancia = record.propiedad.umbral_tolerancia # Asumiendo que umbral_tolerancia está en el modelo de propiedad
-                        x = record.propiedad.x 
+                        umbral_tolerancia = record.propiedad.umbral_tolerancia 
+                        _logger.info("Umbral: %s", umbral_tolerancia)
+                        x = record.propiedad.x
+                        _logger.info("x: %s", x) 
+
                         
                         # Si la propiedad tiene una fórmula, evaluarla
                         if record.propiedad.formula:
@@ -77,7 +80,9 @@ class MedidaPropiedad(models.Model):
                                 'umbral_tolerancia': umbral_tolerancia,
                                 'x': x,  
                                 'resultado': record.merma_kg  
+
                             }
+                           
                             safe_eval.safe_eval(record.propiedad.formula, localdict, mode="exec", nocopy=True) #Ejecuta la formula
                             record.merma_kg = max(0, localdict.get('resultado', record.merma_kg))
                         else:

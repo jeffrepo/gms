@@ -166,7 +166,7 @@ class StockPicking(models.Model):
                 'name': 'Viaje',
                 'res_model': 'gms.viaje',
                 'view_mode': 'form',
-                'res_id': last_viaje_id,  # ID del último viaje creado
+                'res_id': last_viaje_id, 
                 'target': 'current',
                 'context': self.env.context,
             }
@@ -210,18 +210,18 @@ class StockPicking(models.Model):
                  
     def action_cancel(self):
         _logger.info("Iniciando el proceso de cancelación del albarán")
-        
+
         # Recorrer todos los viajes relacionados y cancelarlos
         for viaje in self.viaje_ids:
             _logger.info(f"Cancelando el viaje {viaje.name}")
             viaje.action_cancel()
 
             # Si hay un camión asociado, cambiar su estado a 'disponible'
-        if viaje.camion_disponible_id and viaje.camion_disponible_id.camion_id:
-            _logger.info(f"Cambiando el estado del camión {viaje.camion_disponible_id.camion_id.matricula} a disponible")
-            viaje.camion_disponible_id.write({'estado': 'disponible'})
-        else:
-            _logger.info("No hay camión asignado a este viaje")
+            if viaje.camion_disponible_id and viaje.camion_disponible_id.camion_id:
+                _logger.info(f"Cambiando el estado del camión {viaje.camion_disponible_id.camion_id.matricula} a disponible")
+                viaje.camion_disponible_id.write({'estado': 'disponible'})
+            else:
+                _logger.info("No hay camión asignado a este viaje")
 
         # Llamada al método original
         res = super(StockPicking, self).action_cancel()
@@ -229,6 +229,7 @@ class StockPicking(models.Model):
         _logger.info("Finalizado el proceso de cancelación del albarán")
 
         return res
+
     
 
     # Campo calculado para controlar la visibilidad del botón "Agendar viaje"
