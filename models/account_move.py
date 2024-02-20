@@ -106,3 +106,9 @@ class AccountMove(models.Model):
             'context': {'default_partner_id': self.partner_id.id},
         }
     
+
+    # def action_view_viajes(self):
+    #     action = self.env.ref('gms.viaje').read()[0]  
+    #     action['domain'] = [('id', 'in', self.viajes_ids.ids)]
+    #     action['context'] = {'default_invoice_id': self.id}  
+    #     return action

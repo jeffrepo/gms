@@ -14,15 +14,13 @@ class GmsRutas(models.Model):
         'res.partner', 
         string='Origen', 
         required=True, 
-        tracking="1", 
-        domain="[('tipo', 'in', ['chacra', 'planta'])]"
+        tracking="1"
     )
     direccion_destino_id = fields.Many2one(
         'res.partner', 
         string='Destino', 
         required=True, 
-        tracking="1", 
-        domain="[('tipo', 'in', ['puerto', 'planta'])]"
+        tracking="1"
     )
     kilometros = fields.Float(string='Kilómetros', tracking ="1")
 

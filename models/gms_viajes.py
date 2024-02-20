@@ -814,51 +814,61 @@ class Viajes(models.Model):
     def action_liquidar_viajes(self):
         if not self:
             raise UserError("No se seleccionó ningún viaje.")
-        
+
+        factura_creada = None  # Cambio a None para claridad
 
         for viaje in self:
             if viaje.albaran_id and viaje.albaran_id.state != 'done':
                 raise UserError("No se puede pasar el viaje a estado 'Liquidado' hasta que el albarán esté confirmado.")
-            else:
-                # Sumar el total de los gastos
-                total_gastos = sum(gasto.precio_total for gasto in viaje.gastos_ids)
-                Invoice = self.env['account.move']
-                viajes_por_proveedor = defaultdict(lambda: self.env['gms.viaje'])
-                for viaje in self.filtered(lambda v: v.state == 'terminado' and v.albaran_id.state == 'done'):
-                    viajes_por_proveedor[viaje.solicitante_id] |= viaje
 
-                for proveedor, viajes in viajes_por_proveedor.items():
-                    invoice_lines = []
-                    for viaje in viajes:
-                        # Asumiendo que cada viaje tiene un producto transportado y kilogramos a liquidar
-                        if viaje.producto_transportado_id and viaje.kilogramos_a_liquidar:
-                            invoice_lines.append((0, 0, {
-                                'product_id': viaje.producto_transportado_id.id,
-                                'name': f" {viaje.name}",
-                                'quantity': viaje.kilogramos_a_liquidar,
-                                'price_unit': viaje.producto_transportado_id.lst_price,
-                                # Debes asegurarte de que este campo se establece correctamente según tu configuración de contabilidad
-                                'account_id': viaje.producto_transportado_id.categ_id.property_account_income_categ_id.id,
-                            }))
+        total_gastos = sum(gasto.precio_total for viaje in self for gasto in viaje.gastos_ids)
+        Invoice = self.env['account.move']
+        viajes_por_proveedor = defaultdict(lambda: self.env['gms.viaje'])
+        for viaje in self.filtered(lambda v: v.state == 'terminado' and v.albaran_id.state == 'done'):
+            viajes_por_proveedor[viaje.solicitante_id] |= viaje
 
-                    if invoice_lines:
-                        # Ajusta la moneda si es necesario, en este caso se usa USD como ejemplo
-                        usd_currency_id = self.env['res.currency'].search([('name', '=', 'USD')], limit=1).id
-                        invoice_vals = {
-                            'partner_id': proveedor.id,
-                            'move_type': 'in_invoice',
-                            'invoice_line_ids': invoice_lines,
-                            'currency_id': usd_currency_id,
-                            'total_descontar': str(total_gastos),
-                        }
-                        factura_creada = Invoice.create(invoice_vals)
-                        
-                        # Actualizar el estado de los viajes a 'liquidado' y vincular la factura creada
-                        viajes.write({'state': 'liquidado', 'factura_id': factura_creada.id})
+        for proveedor, viajes in viajes_por_proveedor.items():
+            invoice_lines = []
+            for viaje in viajes:
+                if viaje.producto_transportado_id and viaje.kilogramos_a_liquidar:
+                    invoice_lines.append((0, 0, {
+                        'product_id': viaje.producto_transportado_id.id,
+                        'name': f" {viaje.name}",
+                        'quantity': viaje.kilogramos_a_liquidar,
+                        'price_unit': viaje.producto_transportado_id.lst_price,
+                        'account_id': viaje.producto_transportado_id.categ_id.property_account_income_categ_id.id,
+                        'date_maturity': fields.Date.today(),
+                    }))
 
-                return True
+            if invoice_lines:
+                usd_currency_id = self.env['res.currency'].search([('name', '=', 'USD')], limit=1).id
+                invoice_vals = {
+                    'partner_id': proveedor.id,
+                    'move_type': 'in_invoice',
+                    'invoice_line_ids': invoice_lines,
+                    'currency_id': usd_currency_id,
+                    'invoice_date_due': fields.Date.today(),
+                    'total_descontar': str(total_gastos),
+                }
+                factura_creada = Invoice.create(invoice_vals)
 
-    
+                # Asociar los viajes con la factura creada
+                factura_creada.viajes_ids = [(6, 0, viajes.ids)]  # Esta línea asocia los viajes
+                
+                # Actualizar el estado de los viajes a 'liquidado' y vincular la factura creada
+                viajes.write({'state': 'liquidado', 'factura_id': factura_creada.id})
+
+        if factura_creada:
+            action = self.env["ir.actions.actions"]._for_xml_id("account.action_move_in_invoice_type")
+            action['views'] = [(self.env.ref('account.view_move_form').id, 'form')]
+            action['res_id'] = factura_creada.id
+            return action  
+
+       
+        
+
+        return True
+        
 
     def action_view_factura(self):
         self.ensure_one() 

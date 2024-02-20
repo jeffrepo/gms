@@ -292,7 +292,7 @@
                                 <field name="fecha_viaje" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}"/>
                                 <field name="solicitante_id" attrs="{'readonly': [('state', 'in', ['proceso','coordinado', 'liquidado', 'terminado', 'cancelado'])]}"/>
                                 <field name="origen" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}"/>
-                                <field name="destino" attrs="{'readonly': [('state', 'in', ['proceso','coordinado', 'liquidado', 'terminado', 'cancelado'])]}"/>
+                                <field name="destino" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}"/>
                                 <field name="camion_id" attrs="{'readonly': ['|', '&amp;', ('albaran_id', '!=', False), ('state', 'not in', ['coordinado']), ('state', 'in', ['proceso', 'terminado', 'liquidado', 'cancelado'])]}"/>
                                 <field name="conductor_id" attrs="{'readonly': [('state', 'in', ['proceso', 'cancelado'])]}" />
                             </group>   
@@ -1086,13 +1086,7 @@
                         <field name="viajes_ids" widget="statinfo" string="Viajes"/>
                     </button>
 
-                    <!-- <button name="action_view_purchase_orders"
-                        type="object"
-                        class="oe_stat_button"
-                        icon="fa-shopping-cart"
-                        attrs="{'invisible': [('purchase_order_ids', '=', [])]}">
-                    <field name="purchase_order_ids" widget="statinfo" string="Órdenes de Compra"/>
-                </button> -->
+                   
 
                 </xpath>
                 
