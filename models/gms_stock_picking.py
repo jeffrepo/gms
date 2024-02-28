@@ -29,16 +29,27 @@ class StockPicking(models.Model):
             _logger.info("Picking type code: %s", self.picking_type_id.code)
 
             if tipo_viaje == 'entrada':
-                # Verifica el tipo del partner asociado al albarán
-                # if self.partner_id.tipo != 'chacra':
-                #     # Lanzar un error si el origen no es de tipo 'chacra'
-                #     raise UserError("El origen no es de tipo 'chacra'. No se puede agendar el viaje.")
+                # Verificar si el tipo del partner_id es 'chacra' o 'planta'
+                # if self.partner_id.tipo not in ['chacra', 'planta']:
+                #     # Lanzar un error si el tipo no es ni 'chacra' ni 'planta'
+                #     raise UserError("El Solicitante no es de tipo 'Chacra' ni 'Planta'. No se puede agendar el viaje.")
                 origen = self.partner_id.id
 
+                sub_contactos_origen = self.env['res.partner'].search([('parent_id', '=', self.partner_id.id)], limit=1)
+                if sub_contactos_origen:
+                    origen = sub_contactos_origen.id
+                else:
+                    raise UserError("No se encontraron sub contactos para el solicitante.")
                 destino = self.picking_type_id.warehouse_id.partner_id.id
             else:
                 origen = self.picking_type_id.warehouse_id.partner_id.id
-                destino = self.partner_id.id
+                # Buscar el primer sub contacto del destinatario para viajes de salida
+                sub_contactos_destino = self.env['res.partner'].search([('parent_id', '=', self.partner_id.id)], limit=1)
+                if sub_contactos_destino:
+                    destino = sub_contactos_destino.id
+                else:
+                    # Si no se encuentra sub contacto para el destinatario, usar el ID del partner_id como destino
+                    destino = self.partner_id.id
 
             agenda_vals = {
                 'fecha': fields.Date.today(),
@@ -78,7 +89,12 @@ class StockPicking(models.Model):
 
     def button_create_trip(self):
         _logger.info(f"Iniciando button_create_trip para el albarán {self.name} con estado {self.state} y tipo {self.picking_type_id.code}")
-        order = None  # Inicializar la variable 'order'
+        # Buscar la orden de compra basada en el campo origin del albarán
+        if self.origin:
+            order = self.env['purchase.order'].search([('name', '=', self.origin)], limit=1)
+        else:
+            order = None
+        
         tipo_viaje = 'entrada' if self.picking_type_id.code == 'incoming' else 'salida'
 
         # Verificar si ya existe un viaje para este albarán
@@ -151,6 +167,8 @@ class StockPicking(models.Model):
             'ruta_id': ruta.id if ruta else False,
             'creado_desde_albaran': True,
             'albaran_id': self.id,
+            'purchase_order_id': order.id if order else False,
+            
 
         }
         self.env['gms.viaje'].create(viaje_vals)
@@ -277,3 +295,4 @@ class StockPicking(models.Model):
                 # Establecer 'owner_id' igual a 'partner_id'
                 vals['owner_id'] = vals.get('partner_id')
         return super(StockPicking, self).create(vals)
+        

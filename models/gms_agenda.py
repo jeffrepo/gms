@@ -31,6 +31,7 @@ class Agenda(models.Model):
                              ondelete='cascade',context="{'default_parent_id': solicitante_id}") 
     
 
+    
     destino = fields.Many2one('res.partner', 
                               string='Destino', 
                               required=True, 
@@ -39,25 +40,30 @@ class Agenda(models.Model):
     
     transportista_id = fields.Many2one('res.partner', 
                                        string='Trasportista', 
-                                       readonly=True, 
-                                       states={'cancelado': [('readonly', True)]}, 
+                                       readonly=True,
+                                       states={'proceso': [('readonly', False), ('required', True)],
+                                           'cancelado': [('readonly', True)]},
+                                       
                                        tracking="1")
     
     camion_disponible_id = fields.Many2one('gms.camiones.disponibilidad',
                                            string='Disponibilidad Camión',
-                                           states={'cancelado': [('readonly', True)]},
+                                           states={'proceso': [('readonly', False), ('required', True)],
+                                           'cancelado': [('readonly', True)]},
                                            tracking="1",
                                            domain="[('estado', '=', 'disponible'), ('camion_id.disponible_zafra', '=', True)]",
                                            attrs="{'invisible': [('state', '=', 'solicitud')]}")  
     
 
-    camion_id = fields.Many2one('gms.camiones', string='Camion', readonly=True , tracking="1")
+    camion_id = fields.Many2one('gms.camiones', string='Camion', states={'proceso': [('readonly', False), ('required', True)],
+                                           'cancelado': [('readonly', True)]}, readonly=True ,  tracking="1")
 
-    conductor_id = fields.Many2one('res.partner', string='Chofer', readonly=True, tracking="1")
+    conductor_id = fields.Many2one('res.partner', string='Chofer',  states={'proceso': [('readonly', False), ('required', True)],
+                                           'cancelado': [('readonly', True)]}, readonly=True,  tracking="1")
 
     solicitante_id = fields.Many2one('res.partner', 
                                      string='Solicitante', 
-                                     required=True, 
+                                     
                                      readonly=True, 
                                      tracking="1", 
                                      domain="[('tipo', '!=', 'chacras'), ('tipo', '!=', 'planta'), ('tipo', '=', False)]")
@@ -185,6 +191,7 @@ class Agenda(models.Model):
         else:
             silo_id = None 
 
+       
         # Llenar el registro gms.viaje
         dic_viaje = {
             'agenda': self.id,
