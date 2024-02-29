@@ -58,6 +58,26 @@ class AccountMove(models.Model):
             return {'type': 'ir.actions.act_window_close'}
 
 
+    def action_view_ordenes_compra(self):
+        self.ensure_one()
+        # Obtener los IDs de las órdenes de compra asociadas a esta factura
+        purchase_order_ids = self.purchase_order_ids.ids
+        if orden_compra_ids:
+            return {
+                'type': 'ir.actions.act_window',
+                'name': 'Órdenes de Compra',
+                'res_model': 'purchase.order',  
+                'view_mode': 'tree,form',
+                'domain': [('id', 'in', purchase_order_ids)],  # Filtrar para mostrar solo las órdenes de esta factura
+                'target': 'current',
+                'context': self.env.context,
+            }
+        else:
+            # Manejar el caso en que no hay órdenes de compra asociadas
+            return {'type': 'ir.actions.act_window_close'}
+
+
+
     def unlink(self):
         for record in self:
             # Si la factura está en estado distinto de 'borrador' y tiene viajes asociados
@@ -106,3 +126,9 @@ class AccountMove(models.Model):
             'context': {'default_partner_id': self.partner_id.id},
         }
     
+
+    # def action_view_viajes(self):
+    #     action = self.env.ref('gms.viaje').read()[0]  
+    #     action['domain'] = [('id', 'in', self.viajes_ids.ids)]
+    #     action['context'] = {'default_invoice_id': self.id}  
+    #     return action

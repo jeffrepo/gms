@@ -13,4 +13,4 @@ class Propiedades(models.Model):
     producto_id = fields.Many2one('product.template', string='Producto', tracking ="1")
     umbral_tolerancia = fields.Float(string='Umbral de tolerancia', tracking ="1")
     propiedad = fields.Char(string='Propiedad', tracking ="1")
-    x = fields.Char(String = "x", tracking = "1")
+    x = fields.Float(string="X" , tracking ="1")

@@ -23,6 +23,18 @@ class PurchaseOrder(models.Model):
         for order in self:
             order.agenda_count = len(order.agenda_ids)
 
+    has_liquidated_viajes = fields.Boolean(
+        string='Tiene Viajes Liquidados',
+        compute='_compute_has_liquidated_viajes',
+        default=False,
+    )
+
+    @api.depends('viaje_ids.state')  
+    def _compute_has_liquidated_viajes(self):
+        for order in self:
+            # Verifica si algún viaje asociado está en estado 'liquidado'
+            order.has_liquidated_viajes = any(viaje.state == 'liquidado' for viaje in order.viaje_ids)
+
     def button_schedule_trip(self):
         pickings = self.env['stock.picking'].search([('origin', '=', self.name), ('picking_type_id.code', '=', 'incoming')], limit=1)
 

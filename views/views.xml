@@ -287,21 +287,22 @@
                         </div>                        
                         <group>
                             <group>
-                                <field name="albaran_id" invisible="1"/>
+                                <field name="albaran_id" invisible="1" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}" />
                                 <field name="estado" invisible="1"/>
                                 <field name="fecha_viaje" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}"/>
                                 <field name="solicitante_id" attrs="{'readonly': [('state', 'in', ['proceso','coordinado', 'liquidado', 'terminado', 'cancelado'])]}"/>
+                               
                                 <field name="origen" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}"/>
-                                <field name="destino" attrs="{'readonly': [('state', 'in', ['proceso','coordinado', 'liquidado', 'terminado', 'cancelado'])]}"/>
+                                <field name="destino" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}"/>
                                 <field name="camion_id" attrs="{'readonly': ['|', '&amp;', ('albaran_id', '!=', False), ('state', 'not in', ['coordinado']), ('state', 'in', ['proceso', 'terminado', 'liquidado', 'cancelado'])]}"/>
-                                <field name="conductor_id" attrs="{'readonly': [('state', 'in', ['proceso', 'cancelado'])]}" />
+                                <field name="conductor_id" attrs="{'readonly': [('state', 'in', ['proceso', 'cancelado', 'liquidado'])]}" />
                             </group>   
 
 
 
                             <group>
-                                <field name="arribo" attrs="{'readonly': [('estado', 'in', ['cancelado', 'terminado', 'liquidado'])]}"/>
-                                <field name="partida" attrs="{'readonly': [('estado', 'in', ['cancelado', 'liquidado'])]}"/>
+                                <field name="arribo" attrs="{'readonly': [('state', 'in', ['cancelado', 'terminado', 'liquidado'])]}"/>
+                                <field name="partida" attrs="{'readonly': [('state', 'in', ['cancelado', 'liquidado'])]}"/>
                                 <field name="tipo_viaje" attrs="{'readonly': [('state', 'in', ['cancelado', 'coordinado', 'proceso', 'terminado', 'liquidado'])]}"/>
                                 <field name="numero_remito" attrs="{'readonly': [('state', 'in',['cancelado','terminado', 'liquidado'])]}"/>
                                 <field name="kilometros_flete" attrs="{'readonly': [('state', 'in', ['cancelado', 'proceso','terminado', 'liquidado'])]}"/>
@@ -314,7 +315,7 @@
 
                             <group>
                             
-                                <field name="transportista_id" attrs="{'readonly': [('state', 'in', ['cancelado','proceso'])]}"/>
+                                <field name="transportista_id" attrs="{'readonly': [('state', 'in', ['cancelado','proceso','liquidado'])]}"/>
                                 <field name="ruta_id" attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])], 'required':[('state', '=', 'proceso')]}"/>
                               
                                 <field name="producto_transportado_id" attrs="{'required': [('state', '=', 'coordinado')]}"/>
@@ -330,7 +331,7 @@
                             <group>
                             
                                 <!-- <field name="chacra"/> -->
-                                <field name="remito"/>
+                                <field name="remito" attrs="{'readonly': [('state', 'in', ['cancelado', 'terminado', 'liquidado'])]}" />
 
                             </group>  
 
@@ -343,7 +344,7 @@
                              <page string="Balanza">
                                 <group string="pesaje">
 
-                                    <field name="balanza_id"/> 
+                                    <field name="balanza_id" /> 
                                     <field name="peso_bruto"  attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
                                     <field name="tara"  attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])]}"/>
                                     <field name="peso_neto"/>
@@ -405,7 +406,7 @@
 
                             <page string="Información">
                                 <group string="INFORMACION">
-                                    <field name="firma" widget="signature" options="{'width': 500, 'height': 300}"/>
+                                    <field name="firma" widget="signature" options="{'width': 500, 'height': 300}"  attrs="{'readonly': [('state', 'in', ['cancelado', 'terminado', 'liquidado'])]}"/>
                                 </group>
                                 
                             </page>
@@ -415,7 +416,7 @@
 
                         <group name="note_group" col="6" class="mt-2 mt-md-0">
                             <group colspan="4">
-                                <field colspan="2" name="observaciones" nolabel="1" placeholder="Observaciones..."/>
+                                <field colspan="2" name="observaciones" nolabel="1" placeholder="Observaciones..." attrs="{'readonly': [('state', 'in', ['cancelado', 'liquidado'])]}"/>
                             </group>
                             <div class="clearfix"/>
                         </group>
@@ -575,7 +576,7 @@
 
                                     <field name="propiedades_id"/>
                                     <field name="umbral_tolerancia"/>
-                                    <field name="x"/>
+                                    <field name="valor_extra"/>
                                 </tree>
                             </field>
                         </group>
@@ -747,9 +748,11 @@
         <field name="model">purchase.order</field>
         <field name="inherit_id" ref="purchase.purchase_order_form"/>
         <field name="arch" type="xml">
+           
             <header position="inside">
                 <!-- <button name="button_schedule_trip" string="Agendar viaje" type="object"/> -->
             </header>
+          
 
             <div class="oe_button_box" name="button_box" position="inside">
                  <!-- botón de Agenda
@@ -790,7 +793,7 @@
                             <tree editable="bottom">
                                 <field name="propiedades_id"/>
                                 <field name="umbral_tolerancia"/>
-                                <field name="x"/>
+                                <field name="valor_extra"/>
                             </tree>
                         </field>
                     </group>
@@ -1078,6 +1081,7 @@
             <field name="inherit_id" ref="account.view_move_form"/>
             <field name="arch" type="xml">
                 <xpath expr="//div[@name='button_box']" position="inside">
+                    <!-- Boton que visualiza los viajes enlazados -->
                     <button name="action_view_viajes"
                             type="object"
                             class="oe_stat_button"
@@ -1086,13 +1090,16 @@
                         <field name="viajes_ids" widget="statinfo" string="Viajes"/>
                     </button>
 
-                    <!-- <button name="action_view_purchase_orders"
-                        type="object"
-                        class="oe_stat_button"
-                        icon="fa-shopping-cart"
-                        attrs="{'invisible': [('purchase_order_ids', '=', [])]}">
-                    <field name="purchase_order_ids" widget="statinfo" string="Órdenes de Compra"/>
-                </button> -->
+                    <!--  botón para visualizar las órdenes de compra -->
+                    <button name="action_view_purchase_orders"
+                            type="object"
+                            class="oe_stat_button"
+                            icon="fa-shopping-cart"
+                            attrs="{'invisible': [('purchase_order_ids', '=', [])]}">
+                        <field name="purchase_order_ids" widget="statinfo" string="Órdenes de Compra"/>
+                    </button>
+
+                   
 
                 </xpath>
                 

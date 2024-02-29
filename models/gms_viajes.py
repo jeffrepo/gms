@@ -107,7 +107,7 @@ class Viajes(models.Model):
 
     kilometros_flete = fields.Float(string="Kilómetros flete", tracking="1", store=True, compute='_compute_kilometros_flete')
 
-    kilogramos_a_liquidar = fields.Float(string="Kilogramos a liquidar" , readonly=True, store=True, tracking=True)
+    kilogramos_a_liquidar = fields.Float(compute='_compute_kilogramos_a_liquidar', readonly=True, store=True, tracking=True)
 
     pedido_venta_id = fields.Many2one('sale.order', string="Pedido de venta", tracking="1", readonly=True)
 
@@ -119,20 +119,36 @@ class Viajes(models.Model):
 
     albaran_id = fields.Many2one('stock.picking', string="Albarán" , tracking=True)
 
-    purchase_order_id= fields.Many2one('purchase.order', tracking=True)
 
-    medidas_propiedades_ids = fields.One2many('gms.medida.propiedad', 'viaje_id', string='Medidas de Propiedades', tracking="1")
 
-    arribo = fields.Datetime(string="Arribo", tracking=True)
+    medidas_propiedades_ids = fields.One2many('gms.medida.propiedad', 'viaje_id', string='Medidas de Propiedades',states = {
+    'cancelado': [('readonly', True), ('required', False)],  
+    'liquidado': [('readonly', False), ('required', True)]  
+}, tracking="1")
+
+    arribo = fields.Datetime(string="Arribo", states = {
+    'cancelado': [('readonly', True), ('required', False)],  
+    'liquidado': [('readonly', False), ('required', True)]  
+},
+ tracking=True)
+
+    
     partida = fields.Datetime(string="Partida", tracking=True)
 
     chacra = fields.Char(string='Chacra', tracking="1")
-    remito = fields.Char(string='Remito', tracking="1")
+    remito = fields.Char(string='Remito',states = {
+    'cancelado': [('readonly', True), ('required', False)],  
+    'liquidado': [('readonly', False), ('required', False)]  
+        
+}, tracking="1")
 
     firma = fields.Binary(string='Firma', tracking="1")
 
     sale_order_id = fields.Many2one('sale.order', string='Orden de Venta' , tracking=True)
+    
     purchase_order_id = fields.Many2one('purchase.order', string='Orden de Compra' , tracking=True)
+
+    purchase_order_ids = fields.Many2many('purchase.order', string='Orden de Compra' , tracking=True)
 
     balanza_id = fields.Many2one('gms.balanza', string='Balanza' , tracking=True)
     
@@ -444,7 +460,8 @@ class Viajes(models.Model):
 
             # Guarda una relación entre gastos y líneas de compra
             gastos_and_po_lines = {}
-
+            # Preparar valores para la factura
+            usd_currency_id = self.env['res.currency'].search([('name', '=', 'USD')], limit=1).id
             for trip in trips:
                 for gasto in trip.gastos_ids:
                     if gasto.estado_compra == 'no_comprado':
@@ -454,6 +471,7 @@ class Viajes(models.Model):
                             'product_qty': 1,
                             'price_unit': gasto.precio_total,
                             'product_uom': gasto.producto_id.uom_id.id,
+                            'currency_id': usd_currency_id,
                             'date_planned': fields.Date.today(),
                         }
                         po_vals['order_line'].append((0, 0, po_line_vals))
@@ -502,19 +520,12 @@ class Viajes(models.Model):
 
 
 
-   
+      
     @api.depends('peso_neto', 'medidas_propiedades_ids.merma_kg')
     def _compute_kilogramos_a_liquidar(self):
         for record in self:
-            _logger.info("Calculando kilogramos a liquidar para el viaje %s", record.name)
-            _logger.info("Peso Neto: %s", record.peso_neto)
-            
             total_mermas = sum(record.medidas_propiedades_ids.mapped('merma_kg'))
-            _logger.info("Total Mermas: %s", total_mermas)
-            
             record.kilogramos_a_liquidar = record.peso_neto - total_mermas
-            _logger.info("Kilogramos a Liquidar Calculados: %s", record.kilogramos_a_liquidar)
-
 
 
 
@@ -525,7 +536,7 @@ class Viajes(models.Model):
 
 
 
-    
+
     @api.model
     def _post_create_actions(self, vals):
         if vals.get('ruta_id'):
@@ -814,51 +825,77 @@ class Viajes(models.Model):
     def action_liquidar_viajes(self):
         if not self:
             raise UserError("No se seleccionó ningún viaje.")
-        
+
+        factura_creada = None  # Cambio a None para claridad
+        purchase_order_ids = set() 
 
         for viaje in self:
             if viaje.albaran_id and viaje.albaran_id.state != 'done':
                 raise UserError("No se puede pasar el viaje a estado 'Liquidado' hasta que el albarán esté confirmado.")
-            else:
-                # Sumar el total de los gastos
-                total_gastos = sum(gasto.precio_total for gasto in viaje.gastos_ids)
-                Invoice = self.env['account.move']
-                viajes_por_proveedor = defaultdict(lambda: self.env['gms.viaje'])
-                for viaje in self.filtered(lambda v: v.state == 'terminado' and v.albaran_id.state == 'done'):
-                    viajes_por_proveedor[viaje.solicitante_id] |= viaje
 
-                for proveedor, viajes in viajes_por_proveedor.items():
-                    invoice_lines = []
-                    for viaje in viajes:
-                        # Asumiendo que cada viaje tiene un producto transportado y kilogramos a liquidar
-                        if viaje.producto_transportado_id and viaje.kilogramos_a_liquidar:
-                            invoice_lines.append((0, 0, {
-                                'product_id': viaje.producto_transportado_id.id,
-                                'name': f" {viaje.name}",
-                                'quantity': viaje.kilogramos_a_liquidar,
-                                'price_unit': viaje.producto_transportado_id.lst_price,
-                                # Debes asegurarte de que este campo se establece correctamente según tu configuración de contabilidad
-                                'account_id': viaje.producto_transportado_id.categ_id.property_account_income_categ_id.id,
-                            }))
+        total_gastos = sum(gasto.precio_total for viaje in self for gasto in viaje.gastos_ids)
+        Invoice = self.env['account.move']
+        viajes_por_proveedor = defaultdict(lambda: self.env['gms.viaje'])
+        for viaje in self.filtered(lambda v: v.state == 'terminado' and v.albaran_id.state == 'done'):
+            viajes_por_proveedor[viaje.solicitante_id] |= viaje
 
-                    if invoice_lines:
-                        # Ajusta la moneda si es necesario, en este caso se usa USD como ejemplo
-                        usd_currency_id = self.env['res.currency'].search([('name', '=', 'USD')], limit=1).id
-                        invoice_vals = {
-                            'partner_id': proveedor.id,
-                            'move_type': 'in_invoice',
-                            'invoice_line_ids': invoice_lines,
-                            'currency_id': usd_currency_id,
-                            'total_descontar': str(total_gastos),
-                        }
-                        factura_creada = Invoice.create(invoice_vals)
+        for proveedor, viajes in viajes_por_proveedor.items():
+            invoice_lines = []
+            for viaje in viajes:
+                if viaje.producto_transportado_id and viaje.kilogramos_a_liquidar:
+                    purchase_order_line_id = viaje.purchase_order_line_id.id if hasattr(viaje, 'purchase_order_line_id') and viaje.purchase_order_line_id else False
+                    purchase_order_id = viaje.purchase_order_id.id if hasattr(viaje, 'purchase_order_id') and viaje.purchase_order_id else False
+                    invoice_lines.append((0, 0, {
+                        'product_id': viaje.producto_transportado_id.id,
+                        'name': f" {viaje.name}",
+                        'quantity': viaje.kilogramos_a_liquidar,
+                        'price_unit': viaje.producto_transportado_id.lst_price,
+                        'account_id': viaje.producto_transportado_id.categ_id.property_account_income_categ_id.id,
+                        'date_maturity': fields.Date.today(),
+                        'purchase_order_id': purchase_order_id, # Referencia al pedido de compra
+                    }))
+   
+           
                         
-                        # Actualizar el estado de los viajes a 'liquidado' y vincular la factura creada
-                        viajes.write({'state': 'liquidado', 'factura_id': factura_creada.id})
 
-                return True
+            if invoice_lines:
+                usd_currency_id = self.env['res.currency'].search([('name', '=', 'USD')], limit=1).id
+                # Actualización del estado de las órdenes de compra a "invoiced"
+                self.env['purchase.order'].browse(list(purchase_order_ids)).write({'invoice_status': 'invoiced'})
+                _logger.info(f"Órdenes de compra actualizadas a facturado: {purchase_order_ids}")
+                
+                invoice_vals = {
+                    'partner_id': proveedor.id,
+                    'move_type': 'in_invoice',
+                    'invoice_line_ids': invoice_lines,
+                    'currency_id': usd_currency_id,
+                    'invoice_date_due': fields.Date.today(),
+                    'total_descontar': str(total_gastos),
+                    'invoice_origin': viajes[0].purchase_order_id.name,
+                }
+              
+                
+                factura_creada = Invoice.create(invoice_vals)
 
-    
+                # Asociar los viajes con la factura creada
+                factura_creada.viajes_ids = [(6, 0, viajes.ids)]  # Esta línea asocia los viajes
+                # purchase_order_ids es un set de todos los IDs de las órdenes de compra
+                invoice_vals['purchase_order_ids'] = [(6, 0, [purchase_order_ids])]
+                
+                # Actualizar el estado de los viajes a 'liquidado' y vincular la factura creada
+                viajes.write({'state': 'liquidado', 'factura_id': factura_creada.id})
+
+        if factura_creada:
+            action = self.env["ir.actions.actions"]._for_xml_id("account.action_move_in_invoice_type")
+            action['views'] = [(self.env.ref('account.view_move_form').id, 'form')]
+            action['res_id'] = factura_creada.id
+            return action  
+
+       
+        
+
+        return True
+        
 
     def action_view_factura(self):
         self.ensure_one() 

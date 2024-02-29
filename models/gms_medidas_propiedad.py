@@ -48,7 +48,7 @@ class MedidaPropiedad(models.Model):
             _logger.info("Iniciando cálculo de merma...")
             _logger.info("Propiedad: %s", record.propiedad)
             _logger.info("Viaje ID: %s", record.viaje_id)
-            
+            valor_extra = 0
             if record.propiedad and record.viaje_id:
                 producto = record.viaje_id.producto_transportado_id
                 _logger.info("Producto Transportado ID: %s", producto)
@@ -65,9 +65,18 @@ class MedidaPropiedad(models.Model):
                         peso_neto = record.viaje_id.peso_neto
                         _logger.info("Peso Neto: %s", peso_neto)
                         valor_medida = record.valor_medida
-                        umbral_tolerancia = record.propiedad.umbral_tolerancia # Asumiendo que umbral_tolerancia está en el modelo de propiedad
-                        x = record.propiedad.x 
+                      
+
                         
+                        if len(record.viaje_id.producto_transportado_id.propiedades_ids) > 0:
+                            for linea_propiedad in record.viaje_id.producto_transportado_id.propiedades_ids:
+                                if linea_propiedad.propiedades_id.id == record.propiedad.id:
+                                    valor_extra = linea_propiedad.valor_extra
+                                    umbral_tolerancia = linea_propiedad.umbral_tolerancia
+
+                        _logger.info("Valor extra x: %s", valor_extra)
+                        _logger.info("umbral_tolerancia : %s",umbral_tolerancia)
+
                         # Si la propiedad tiene una fórmula, evaluarla
                         if record.propiedad.formula:
                             localdict = {
@@ -75,7 +84,7 @@ class MedidaPropiedad(models.Model):
                                 'peso_neto': peso_neto,
                                 'valor_medida': valor_medida,
                                 'umbral_tolerancia': umbral_tolerancia,
-                                'x': x,  
+                                'valor_extra': valor_extra,  
                                 'resultado': record.merma_kg  
                             }
                             safe_eval.safe_eval(record.propiedad.formula, localdict, mode="exec", nocopy=True) #Ejecuta la formula
