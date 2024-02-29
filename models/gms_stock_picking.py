@@ -118,9 +118,9 @@ class StockPicking(models.Model):
 
         if tipo_viaje == 'entrada':
                 # Verificar si el tipo del partner_id es 'chacra' o 'planta'
-                # if self.partner_id.tipo not in ['chacra', 'planta']:
-                #     # Lanzar un error si el tipo no es ni 'chacra' ni 'planta'
-                #     raise UserError("El Solicitante no es de tipo 'Chacra' ni 'Planta'. No se puede agendar el viaje.")
+                #if self.partner_id.tipo not in ['chacra', 'planta']:
+                    # Lanzar un error si el tipo no es ni 'chacra' ni 'planta'
+                    #raise UserError("El Solicitante no es de tipo 'Chacra' ni 'Planta'. No se puede agendar el viaje.")
                 origen = self.partner_id.id
 
                 sub_contactos_origen = self.env['res.partner'].search([('parent_id', '=', self.partner_id.id)], limit=1)
