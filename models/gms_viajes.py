@@ -565,7 +565,8 @@ class Viajes(models.Model):
     # silo_id debe llenarse con el campo destino del albarán
     @api.onchange('silo_id')
     def _onchange_silo_id(self):
-        if self.albaran_id and self.silo_id:
+        # Solo proceder si el tipo de viaje es 'entrada' y hay un albarán y un silo seleccionados
+        if self.tipo_viaje == 'entrada' and self.albaran_id and self.silo_id:
             # Actualizar la ubicación destino del albarán con la del silo seleccionado
             self.albaran_id.write({'location_dest_id': self.silo_id.id})
             _logger.info(f"Ubicación destino del albarán {self.albaran_id.name} actualizada a {self.silo_id.name}")
@@ -575,6 +576,10 @@ class Viajes(models.Model):
             for move_line in move_lines:
                 move_line.write({'location_dest_id': self.silo_id.id})
                 _logger.info(f"Ubicación destino de la línea de movimiento {move_line.id} actualizada a {self.silo_id.name}")
+        elif self.tipo_viaje == 'salida':
+            # Si el tipo de viaje es 'salida', no hacer cambios en el albarán
+            _logger.info("El tipo de viaje es 'salida'. No se realizan cambios en el albarán.")
+
 
 
     @api.model
