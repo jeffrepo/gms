@@ -14,6 +14,7 @@ class GastosViaje(models.Model):
     purchase_order_id = fields.Many2one('purchase.order', string='Orden de Compra' , readonly=True)
     purchase_order_line_id = fields.Many2one('purchase.order.line', string='Línea de Orden de Compra', readonly=True)
     es_de_ruta = fields.Boolean(string='Es de Ruta', default=False)
+    purchase_line_id = fields.Many2one('purchase.order.line', string='Línea de Orden de Compra')
 
     moneda_id = fields.Many2one('res.currency', string='Moneda')
 

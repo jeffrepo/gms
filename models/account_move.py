@@ -15,6 +15,7 @@ class AccountMove(models.Model):
     total_descontar = fields.Char(string="Total a descontar", tracking="1")
 
     purchase_order_ids = fields.Many2many('purchase.order', string='Órdenes de Compra')
+    sale_order_ids = fields.Many2many('sale.order', string='Órdenes de Venta', tracking=True)
 
 
     def action_post(self):
@@ -117,12 +118,31 @@ class AccountMove(models.Model):
     
     def action_view_purchase_orders(self):
         self.ensure_one()
+        _logger.info(f"Acción llamada para el registro con ID: {self.id}")  # Log del ID del registro.
+        _logger.debug(f"Purchase Order IDs: {self.purchase_order_ids.ids}")  # Log de los IDs de las órdenes de compra relacionadas.
+
+        if not self.purchase_order_ids:
+            _logger.warning("No hay órdenes de compra relacionadas para este registro.")  # Advertencia si no hay órdenes de compra.
+
+
         return {
             'type': 'ir.actions.act_window',
             'name': 'Órdenes de Compra',
             'view_mode': 'tree,form',
             'res_model': 'purchase.order',
             'domain': [('id', 'in', self.purchase_order_ids.ids)],
+            'context': {'default_partner_id': self.partner_id.id},
+        }
+
+
+    def action_view_sale_orders(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Órdenes de Venta',
+            'view_mode': 'tree,form',
+            'res_model': 'sale.order',
+            'domain': [('id', 'in', self.sale_order_ids.ids)],
             'context': {'default_partner_id': self.partner_id.id},
         }
     
