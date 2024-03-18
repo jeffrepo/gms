@@ -200,6 +200,7 @@
                     <field name="fecha_viaje"/>
                     <field name="origen"/>
                     <field name="destino"/>
+                    <field name="transportista_id"/>
                     <field name="camion_id"/>
                     <field name="conductor_id"/>
                     <field name="tipo_viaje"/>
@@ -294,8 +295,10 @@
                                
                                 <field name="origen" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}"/>
                                 <field name="destino" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}"/>
-                                <field name="camion_id" attrs="{'readonly': ['|', '&amp;', ('albaran_id', '!=', False), ('state', 'not in', ['coordinado']), ('state', 'in', ['proceso', 'terminado', 'liquidado', 'cancelado'])]}"/>
-                                <field name="conductor_id" attrs="{'readonly': [('state', 'in', ['proceso', 'cancelado', 'liquidado'])]}" />
+                                <field name="camion_id" attrs="{'readonly': ['|', '&amp;', ('albaran_id', '!=', False), ('state', 'not in', ['coordinado']), ('state', 'in', ['proceso', 'terminado', 'liquidado', 'cancelado'])], 'required': [('state', '=', 'coordinado')]}" />
+
+                                <field name="conductor_id" attrs="{'readonly': [('state', 'in', ['proceso', 'cancelado', 'liquidado'])], 'required': [('state', '=', 'coordinado')]}" />
+
                             </group>   
 
 
@@ -304,7 +307,7 @@
                                 <field name="arribo" attrs="{'readonly': [('state', 'in', ['cancelado', 'terminado', 'liquidado'])]}"/>
                                 <field name="partida" attrs="{'readonly': [('state', 'in', ['cancelado', 'liquidado'])]}"/>
                                 <field name="tipo_viaje" attrs="{'readonly': [('state', 'in', ['cancelado', 'coordinado', 'proceso', 'terminado', 'liquidado'])]}"/>
-                                <field name="numero_remito" attrs="{'readonly': [('state', 'in',['cancelado','terminado', 'liquidado'])]}"/>
+                               
                                 <field name="kilometros_flete" attrs="{'readonly': [('state', 'in', ['cancelado', 'proceso','terminado', 'liquidado'])]}"/>
                                 <field name="kilogramos_a_liquidar" attrs="{'readonly': [('state', 'in', ['proceso','cancelado','terminado', 'liquidado'])]}"/>
                                 
@@ -315,7 +318,7 @@
 
                             <group>
                             
-                                <field name="transportista_id" attrs="{'readonly': [('state', 'in', ['cancelado','proceso','liquidado'])]}"/>
+                              <field name="transportista_id" attrs="{'readonly': [('state', 'in', ['cancelado', 'proceso', 'liquidado'])], 'required': [('state', '=', 'coordinado')]}" />
                                 <field name="ruta_id" attrs="{'readonly': [('state', 'in', ['cancelado','terminado', 'liquidado'])], 'required':[('state', '=', 'proceso')]}"/>
                               
                                 <field name="producto_transportado_id" attrs="{'required': [('state', '=', 'coordinado')]}"/>
@@ -332,7 +335,7 @@
                             
                                 <!-- <field name="chacra"/> -->
                                 <field name="remito" attrs="{'readonly': [('state', 'in', ['cancelado', 'terminado', 'liquidado'])]}" />
-
+                               
                             </group>  
 
 
@@ -1097,6 +1100,16 @@
                             icon="fa-shopping-cart"
                             attrs="{'invisible': [('purchase_order_ids', '=', [])]}">
                         <field name="purchase_order_ids" widget="statinfo" string="Órdenes de Compra"/>
+                    </button>
+
+
+                      <!--  botón para visualizar las órdenes de V -->
+                    <button name="action_view_sale_orders"
+                            type="object"
+                            class="oe_stat_button"
+                            icon="fa-shopping-cart"
+                            attrs="{'invisible': [('sale_order_ids', '=', [])]}">
+                        <field name="sale_order_ids" widget="statinfo" string="Órdenes de Venta"/>
                     </button>
 
                    

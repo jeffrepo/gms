@@ -89,6 +89,7 @@ class StockPicking(models.Model):
 
     def button_create_trip(self):
         _logger.info(f"Iniciando button_create_trip para el albarán {self.name} con estado {self.state} y tipo {self.picking_type_id.code}")
+        sale_order = None
         # Buscar la orden de compra basada en el campo origin del albarán
         if self.origin:
             order = self.env['purchase.order'].search([('name', '=', self.origin)], limit=1)
@@ -131,6 +132,8 @@ class StockPicking(models.Model):
                 destino = self.picking_type_id.warehouse_id.partner_id.id
         else:
                 origen = self.picking_type_id.warehouse_id.partner_id.id
+                # Buscar la orden de venta basada en el campo origin del albarán
+                sale_order = self.env['sale.order'].search([('name', '=', self.origin)], limit=1)
                 # Buscar el primer sub contacto del destinatario para viajes de salida
                 sub_contactos_destino = self.env['res.partner'].search([('parent_id', '=', self.partner_id.id)], limit=1)
                 if sub_contactos_destino:
@@ -167,6 +170,7 @@ class StockPicking(models.Model):
             'ruta_id': ruta.id if ruta else False,
             'creado_desde_albaran': True,
             'albaran_id': self.id,
+            'sale_order_id': sale_order.id if sale_order else False,
             'purchase_order_id': order.id if order else False,
             
 
