@@ -276,14 +276,19 @@ class Agenda(models.Model):
         
 
     def _get_warehouse_partner_domain(self):
-          # Busca todos los almacenes y obtén los IDs de sus socios asociados
-        warehouse_partners = self.env['stock.warehouse'].search([]).mapped('partner_id').ids
+        # Asegura que hay un solicitante_id definido
+        if not self.solicitante_id:
+            return [('id', '=', False)]  # Devuelve un dominio vacío si no hay solicitante
 
-        # Busca todos los subcontactos (hijos) de esos socios
-        subcontactos = self.env['res.partner'].search([('parent_id', 'in', warehouse_partners)])
+        # Busca todos los subcontactos (hijos) del solicitante que sean de tipo 'planta' o 'chacra'
+        subcontactos = self.env['res.partner'].search([
+            ('parent_id', '=', self.solicitante_id.id),
+            ('tipo', 'in', ['planta', 'chacra']),
+        ])
 
         # Devuelve un dominio que incluya solo esos subcontactos
         return [('id', 'in', subcontactos.ids)]
+
 
    
    
