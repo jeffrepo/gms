@@ -5,8 +5,6 @@ _logger = logging.getLogger(__name__)
 class StockPicking(models.Model):
     _inherit = 'stock.picking'
 
-
-
     agenda_ids = fields.One2many('gms.agenda', 'picking_id', string='Agendas')
     agenda_count = fields.Integer(string='Agenda Count', compute='_compute_agenda_count')
 
