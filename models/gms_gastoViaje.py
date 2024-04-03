@@ -18,10 +18,14 @@ class GastosViaje(models.Model):
 
     moneda_id = fields.Many2one('res.currency', string='Moneda')
 
-    proveedor_id = fields.Many2one('res.partner', string='Proveedor', 
-                                   domain=[('supplier_rank', '>', 0)], 
-                                   help="Este es el proveedor del gasto.")
-    # ver solo aquellos partners que tienen una clasificación de proveedor 
+     # ver solo aquellos partners que tienen una clasificación de proveedor 
+    proveedor_id = fields.Many2one(
+    'res.partner', 
+    string='Proveedor', 
+    domain=[('supplier_rank', '>', 0)],
+    help="Este es el proveedor del gasto."
+    )
+
 
 
 
