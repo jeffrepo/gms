@@ -154,11 +154,19 @@
                         <group>
                             <group>
 
-                                <field name="fecha" attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado', 'proceso'])]}"/>                                <field name="fecha_viaje" attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado', 'proceso'])]}" />
+                                <field name="fecha" attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado', 'proceso'])]}"/>                                
+                                <field name="fecha_viaje" attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado', 'proceso'])]}" />
                                 <field name="tipo_viaje" attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado', 'solicitud', 'proceso'])]}"/>
                                 <field name="solicitante_id" attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado', 'solicitud', 'proceso'])]}"/>
-                                <field name="origen"  attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado', 'proceso'])]}"/>
-                                <field name="destino" attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado', 'proceso'])]}"/>
+                                <!-- <field name="origen"  attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado', 'proceso'])]}"/>
+                                <field name="destino" domain="destino_domain" attrs="{'readonly': [('state', 'in', ['cancelado', 'confirmado', 'proceso'])]}"/> -->
+                                <field name="origen_domain" invisible="1"/>
+                                <field name="destino_domain" invisible="1"/>
+
+                                <field name="origen" domain="origen_domain"/>
+                                <field name="destino" domain="destino_domain"/>
+
+
                                 <field name="picking_id" string = " "  invisible="True"/>
                                 
 

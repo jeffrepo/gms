@@ -3,6 +3,7 @@ from odoo.exceptions import UserError
 import logging
 from datetime import datetime, timedelta
 # import pdb; pdb.set_trace()
+import json
 
 
 _logger = logging.getLogger(__name__)
@@ -16,6 +17,25 @@ class Agenda(models.Model):
     'Name', )
 
 
+    # def _get_warehouse_partner_domain(self):
+    #     # Asegura que hay un solicitante_id definido
+    #     # if not self.solicitante_id:
+    #     #     return [('id', '=', False)]  # Devuelve un dominio vacío si no hay solicitante
+
+    #     # Busca todos los subcontactos (hijos) del solicitante que sean de tipo 'planta' o 'chacra'
+    #     logging.warning(self.solicitante_id)
+    #     logging.warning(self)
+    #     id = self.env.context.get('active_ids', [])
+    #     logging.warning(id)
+    #     subcontactos = self.env['res.partner'].search([
+    #         ('parent_id', '=', self.solicitante_id.id),
+    #         ('tipo', 'in', ['planta', 'chacra']),
+    #     ])
+    #     logging.warning(subcontactos)
+    #     logging.warning('_get_warehouse_partner_domain')
+    #     # Devuelve un dominio que incluya solo esos subcontactos
+    #     return [('id', 'in', subcontactos.ids)]
+    
     name = fields.Char(required=True, default=lambda self: _('New'), copy=False, readonly=True, tracking=True)
 
     fecha = fields.Date(string='Fecha', required=True, readonly=True, tracking="1", default=fields.Date.today())
@@ -27,7 +47,6 @@ class Agenda(models.Model):
                              required=True, 
                              readonly=True,
                              tracking="1", 
-                             domain="['&',('tipo', '!=', False),('parent_id','=',solicitante_id)]", 
                              ondelete='cascade',context="{'default_parent_id': solicitante_id}") 
     
 
@@ -36,7 +55,7 @@ class Agenda(models.Model):
                               string='Destino', 
                               required=True, 
                               tracking="1", 
-                              domain=lambda self: self._get_warehouse_partner_domain())
+                              )
     
     transportista_id = fields.Many2one('res.partner', 
                                        string='Trasportista', 
@@ -63,7 +82,7 @@ class Agenda(models.Model):
 
     solicitante_id = fields.Many2one('res.partner', 
                                      string='Solicitante', 
-                                     
+                                     store=True,
                                      readonly=True, 
                                      tracking="1", 
                                      domain="[('tipo', '!=', 'chacras'), ('tipo', '!=', 'planta'), ('tipo', '=', False)]")
@@ -77,6 +96,38 @@ class Agenda(models.Model):
     albaran_id = fields.Many2one('stock.picking', string="Albarán", compute="_compute_albaran", store=True, readonly=True , tracking=True)
 
     order_id = fields.Many2one('purchase.order', string='Orden de Compra', tracking=True)
+    
+     # Campos calculados para dominios en formato JSON
+    origen_domain = fields.Char(compute='_compute_origen_domain', readonly=True, store=False)
+    destino_domain = fields.Char(compute='_compute_destino_domain', readonly=True, store=False)
+
+    @api.depends('solicitante_id', 'tipo_viaje', 'fecha_viaje')  # Asegúrate de incluir todas las dependencias relevantes
+    def _compute_origen_domain(self):
+        for record in self:
+            domain = [('id', '=', False)]  # Un dominio que inicialmente no permite seleccionar ningún registro
+            if record.tipo_viaje == 'entrada' and record.solicitante_id:
+                domain = [('parent_id', '=', record.solicitante_id.id), ('id', '!=', record.solicitante_id.id)]
+            elif record.tipo_viaje == 'salida':
+                # Aquí va la lógica para definir el dominio de origen cuando el tipo de viaje es 'salida'
+                pass
+            record.origen_domain = json.dumps(domain)
+
+    @api.depends('solicitante_id', 'tipo_viaje', 'fecha_viaje')  # Ajusta las dependencias según sea necesario
+    def _compute_destino_domain(self):
+        for record in self:
+            domain = [('id', '=', False)]  # Un dominio inicial
+            if record.tipo_viaje == 'salida' and record.solicitante_id:
+                domain = [('parent_id', '=', record.solicitante_id.id), ('tipo', 'in', ['planta', 'chacra'])]
+            elif record.tipo_viaje == 'entrada':
+                # Aquí va la lógica para definir el dominio de destino cuando el tipo de viaje es 'entrada'
+                # Esto podría incluir la lógica para `picking_type_id.warehouse_id.partner_id.id` mencionada anteriormente
+                pass
+            record.destino_domain = json.dumps(domain)
+
+    
+
+
+
 
     @api.depends('name')
     def _compute_albaran(self):
@@ -105,6 +156,10 @@ class Agenda(models.Model):
 
     follower_ids = fields.Many2many('res.users', string='Followers')
 
+
+
+
+
     @api.onchange('camion_disponible_id')
     def _onchange_camion_disponible_id(self):
         if self.camion_disponible_id:
@@ -116,17 +171,35 @@ class Agenda(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
-            if vals.get('tipo_viaje') == 'entrada' and 'solicitante_id' in vals:
-                # Buscar el primer subcontacto del solicitante
+            solicitante_id = vals.get('solicitante_id')
+
+            if vals.get('tipo_viaje') == 'entrada' and solicitante_id:
+                # Para viajes de tipo 'entrada', buscar el primer subcontacto del solicitante
                 primer_subcontacto = self.env['res.partner'].search([
-                    ('parent_id', '=', vals['solicitante_id']),
-                    ('id', '!=', vals['solicitante_id'])
+                    ('parent_id', '=', solicitante_id),
+                    ('id', '!=', solicitante_id)
                 ], limit=1, order='id')
                 if primer_subcontacto:
                     vals['origen'] = primer_subcontacto.id
-            if vals.get('name', 'New') == 'New':
+                    _logger.info(f"Estableciendo origen a primer subcontacto {primer_subcontacto.name} para viaje de entrada.")
+
+            elif vals.get('tipo_viaje') == 'salida' and solicitante_id:
+                # Para viajes de tipo 'salida', buscar un subcontacto adecuado para el destino
+                primer_subcontacto = self.env['res.partner'].search([
+                    ('parent_id', '=', solicitante_id),
+                    ('tipo', 'in', ['planta', 'chacra']),
+                ], limit=1)
+                if primer_subcontacto:
+                    vals['destino'] = primer_subcontacto.id
+                    _logger.info(f"Estableciendo destino a primer subcontacto {primer_subcontacto.name} de tipo 'planta' o 'chacra' para viaje de salida.")
+                else:
+                    _logger.warning("No se encontró un subcontacto adecuado de tipo 'planta' o 'chacra' para el destino en viaje de salida.")
+
+            if vals.get('name', _('New')) == _('New'):
                 vals['name'] = self.env['ir.sequence'].next_by_code('gms.agenda')
+
         return super().create(vals_list)
+
     
 
     
@@ -137,7 +210,7 @@ class Agenda(models.Model):
         self.write({'state': 'proceso'})
 
     def action_view_scheduled_trips(self):
-        self.ensure_one()  # Asegura que solo se está trabajando con un registro a la vez
+        self.ensure_one()  # 
         viaje = self.env['gms.viaje'].search([('agenda', '=', self.id)], limit=1)
         if viaje:
             return {
@@ -275,32 +348,20 @@ class Agenda(models.Model):
             raise UserError(_('No hay un albarán asociado a esta agenda.'))
         
 
-    def _get_warehouse_partner_domain(self):
-        # Asegura que hay un solicitante_id definido
-        if not self.solicitante_id:
-            return [('id', '=', False)]  # Devuelve un dominio vacío si no hay solicitante
 
-        # Busca todos los subcontactos (hijos) del solicitante que sean de tipo 'planta' o 'chacra'
-        subcontactos = self.env['res.partner'].search([
-            ('parent_id', '=', self.solicitante_id.id),
-            ('tipo', 'in', ['planta', 'chacra']),
-        ])
-
-        # Devuelve un dominio que incluya solo esos subcontactos
-        return [('id', 'in', subcontactos.ids)]
 
 
    
    
 
-    @api.onchange('tipo_viaje')
-    def _onchange_tipo_viaje(self):
-        # Si el tipo de viaje es 'salida', ajustar el dominio del campo destino
-        if self.tipo_viaje == 'salida':
-            return {'domain': {'destino': [('tipo', 'in', ['puerto', 'planta'])]}}
-        else:
-            # Restablecer el dominio original para otros tipos de viaje
-            return {'domain': {'destino': self._get_warehouse_partner_domain()}}
+    # @api.onchange('tipo_viaje')
+    # def _onchange_tipo_viaje(self):
+    #     # Si el tipo de viaje es 'salida', ajustar el dominio del campo destino
+    #     if self.tipo_viaje == 'salida':
+    #         return {'domain': {'destino': [('tipo', 'in', ['puerto', 'planta'])]}}
+    #     else:
+    #         # Restablecer el dominio original para otros tipos de viaje
+    #         return {'domain': {'destino': self._get_warehouse_partner_domain()}}
 
 
     def enviar_notificaciones_sms(self):
@@ -362,3 +423,7 @@ class Agenda(models.Model):
                 self.message_post(body=mensaje_error)
     
         _logger.info("Finalizado el envío de notificaciones SMS para la agenda %s", self.name)
+
+
+
+    
