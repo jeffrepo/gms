@@ -23,7 +23,8 @@ class ResPartner(models.Model):
 
     link = fields.Char(string='Link Google Maps')
 
- 
+
+   
    
 
     def unlink(self):

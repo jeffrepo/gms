@@ -252,6 +252,8 @@ class Viajes(models.Model):
         gastos_viaje = self.env['gms.gasto_viaje'].search([('viaje_id', '=', self.id)])
         gastos_viaje.unlink()  # Esto eliminará todos los gastos asociados al viaje actual
 
+        self.actualizar_ubicacion_destino()
+
         self.write({'state': 'proceso'})
 
 
@@ -576,22 +578,40 @@ class Viajes(models.Model):
         return {'domain': {'origen': []}}
 
     # silo_id debe llenarse con el campo destino del albarán
-    @api.onchange('silo_id')
-    def _onchange_silo_id(self):
-        # Proceder solo si hay un albarán y un silo seleccionados
+    # @api.onchange('silo_id')
+    # def _onchange_silo_id(self):
+    #     # Proceder solo si hay un albarán y un silo seleccionados
+    #     if self.albaran_id and self.silo_id:
+    #         # Actualizar la ubicación destino del albarán con la del silo seleccionado
+    #         self.albaran_id.write({'location_dest_id': self.silo_id.id})
+    #         _logger.info(f"Ubicación destino del albarán {self.albaran_id.name} actualizada a {self.silo_id.name}")
+
+    #         # Ahora actualizamos también cada línea de movimiento del albarán
+    #         move_lines = self.albaran_id.move_line_ids_without_package | self.albaran_id.move_line_nosuggest_ids
+    #         for move_line in move_lines:
+    #             move_line.write({'location_dest_id': self.silo_id.id})
+    #             _logger.info(f"Ubicación destino de la línea de movimiento {move_line.id} actualizada a {self.silo_id.name}")
+    #     else:
+    #         # Mensaje de log si no se cumplen las condiciones necesarias
+    #         _logger.info("Es necesario seleccionar tanto un albarán como un silo para actualizar la ubicación.")
+
+
+
+    
+    def actualizar_ubicacion_destino(self):   #metodo que se llama en la action proceso para ver si cambia el silo en salida, no resultando
         if self.albaran_id and self.silo_id:
-            # Actualizar la ubicación destino del albarán con la del silo seleccionado
+            # Actualizar la ubicación destino del albarán
             self.albaran_id.write({'location_dest_id': self.silo_id.id})
             _logger.info(f"Ubicación destino del albarán {self.albaran_id.name} actualizada a {self.silo_id.name}")
 
-            # Ahora actualizamos también cada línea de movimiento del albarán
+            # Actualizar las líneas de movimiento del albarán
             move_lines = self.albaran_id.move_line_ids_without_package | self.albaran_id.move_line_nosuggest_ids
             for move_line in move_lines:
                 move_line.write({'location_dest_id': self.silo_id.id})
                 _logger.info(f"Ubicación destino de la línea de movimiento {move_line.id} actualizada a {self.silo_id.name}")
         else:
-            # Mensaje de log si no se cumplen las condiciones necesarias
             _logger.info("Es necesario seleccionar tanto un albarán como un silo para actualizar la ubicación.")
+        
 
 
     @api.model
@@ -859,6 +879,15 @@ class Viajes(models.Model):
                     continue
                 order = viaje.purchase_order_id
                 _logger.info(f"Orden de compra asociada al viaje {viaje.name}: {order.name}")
+                # Buscar la línea de pedido de compra específica para el producto transportado
+                purchase_line = self.env['purchase.order.line'].search([
+                    ('order_id', '=', order.id),
+                    ('product_id', '=', viaje.producto_transportado_id.id),
+                ], limit=1)
+                
+                if not purchase_line:
+                    _logger.warning(f"No se encontró una línea de pedido de compra para el producto transportado en el viaje {viaje.name}")
+                    continue  
             else:  # 'salida'
                 if not viaje.sale_order_id:
                     _logger.warning(f"El viaje {viaje.name} no tiene una orden de venta asociada.")
@@ -873,6 +902,7 @@ class Viajes(models.Model):
                 'quantity': viaje.kilogramos_a_liquidar,
                 'price_unit': viaje.producto_transportado_id.lst_price,
                 'account_id': viaje.producto_transportado_id.categ_id.property_account_income_categ_id.id,
+                'purchase_line_id': purchase_line.id,  #ID de la línea de pedido de compra
             })
     
             order_type_key = 'purchase_order_ids' if viaje.tipo_viaje == 'entrada' else 'sale_order_ids'

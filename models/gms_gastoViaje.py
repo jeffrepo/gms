@@ -3,10 +3,10 @@ from odoo import models, fields
 class GastosViaje(models.Model):
     _name = 'gms.gasto_viaje'
     _description = 'Gastos de Viaje'
-    #_inherit = ['mail.thread', 'mail.activity.mixin']
+    _inherit = ['mail.thread', 'mail.activity.mixin']
 
 
-    #follower_ids = fields.Many2many('res.users', string='Followers')
+    follower_ids = fields.Many2many('res.users', string='Followers')
     name = fields.Char(string='Descripción', required=True, tracking ="1")
     producto_id = fields.Many2one('product.product', string='Producto', tracking ="1")
     precio_total = fields.Float(string='Precio Total', tracking ="1")
@@ -18,11 +18,17 @@ class GastosViaje(models.Model):
 
     moneda_id = fields.Many2one('res.currency', string='Moneda')
 
-    proveedor_id = fields.Many2one('res.partner', string='Proveedor', 
-                                   domain=[('supplier_rank', '>', 0)], 
-                                   help="Este es el proveedor del gasto.")
     # ver solo aquellos partners que tienen una clasificación de proveedor 
 
+    proveedor_id = fields.Many2one(
+    'res.partner', 
+    string='Proveedor',
+    domain=[('supplier_rank', '>', 0)],
+    context={'res_partner_search_mode': 'supplier'},
+    help="Este es el proveedor del gasto."
+    )
+
+    
 
 
     estado_compra = fields.Selection([
