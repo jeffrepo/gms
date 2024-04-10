@@ -286,6 +286,14 @@ class Viajes(models.Model):
         self.camion_disponible_id.estado = "disponible"
         self.camion_disponible_id.fecha_hora_liberacion = fecha_hora_actual
 
+         # Luego de cambiar el estado, buscamos todas las medidas de propiedad asociadas
+        medida_obj = self.env['gms.medida.propiedad']
+        medidas = medida_obj.search([('viaje_id', '=', self.id)])
+        
+        # Llamamos al método _onchange_calculate_merma para cada medida encontrada
+        for medida in medidas:
+            medida._onchange_calculate_merma()
+
 
         fecha_hora_actual = fields.Datetime.now()
             # Establece la fecha y hora de partida para el viaje
