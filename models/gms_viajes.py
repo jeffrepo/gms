@@ -68,6 +68,8 @@ class Viajes(models.Model):
 
     numero_remito = fields.Char(string="Número de remito / Guía", tracking="1")
 
+    company_id = fields.Many2one('res.company', string='Company', default=lambda self: self.env.company)
+
     transportista_id = fields.Many2one('res.partner', string="Transportista", compute="_compute_conductor_transportista", tracking="1", store = True)
 
     ruta_id = fields.Many2one('gms.rutas',
