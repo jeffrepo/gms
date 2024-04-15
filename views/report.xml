@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <record id="action_report_viaje" model="ir.actions.report">
+            <field name="name">Reporte de Viaje</field>
+            <field name="model">gms.viaje</field>
+            <field name="report_name">gms.report_viaje</field>
+            <field name="report_file">gms.report_viaje</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="print_report_name">'Reporte de Viaje - %s' % (object.name)</field>
+            <field name="binding_model_id" ref="model_gms_viaje"/>
+        </record>
+    </data>
+</odoo>
