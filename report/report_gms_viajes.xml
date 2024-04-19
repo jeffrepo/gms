@@ -70,7 +70,7 @@
                           <header class="header-content">
                                 <div class="company-info">
                                     <div class="logo-section">
-                                        <img class="logo" t-att-src="image_data_uri(o.company_id.logo)" alt="Company Logo" style="width: 60px; margin-right: 10px;"/>
+                                        <img class="logo" t-att-src="image_data_uri(o.company_id.logo)" alt="Company Logo" style="width: 40px; margin-right: 10px;"/>
                                         <div style="font-size:8px">
                                             <span>Tel.: 4540 4135 - Cel.: 098 530 081</span><br/>
                                             <span>balanza@artigasilveira.com</span>
@@ -91,12 +91,12 @@
                                 </div>
                                 <div class="alineado_derecha">
                                     <table style="width:100%">
-                                        <tr style="font-size:19px">
+                                        <tr style="font-size:12x">
                                             <td colspan="2" style="width:50%"><strong><span>Tipo Pesaje: </span></strong><span t-field="o.tipo_viaje"/></td>
                                             <!-- <td colspan="2" style="padding-right:5px"><b>Propiedades adicionales:</b></td> -->
                                         </tr>
                                     </table>
-                                    <table style="font-size:13px; width:70%;">
+                                    <table style="font-size:11px; width:70%;">
                                         <tr>
                                             <td><strong><span>Arribo: </span></strong></td>
                                             <td style="padding-left:5px;"><span t-field="o.arribo"/></td>
@@ -201,8 +201,8 @@
                                         <td></td>
                                         <td colspan="4" style="text-align: center;">
                                             <div><strong></strong></div>
-                                            <!-- Asegurarse de que la imagen de la firma se muestra correctamente -->
-                                            <img t-if="o.firma" t-att-src="image_data_uri(o.firma)" style="max-height: 100px; display: block; margin: auto;"/>
+                                            <!--  imagen de la firma  -->
+                                            <img t-if="o.firma" t-att-src="image_data_uri(o.firma)" style="max-height: 70px; display: block; margin: auto;"/>
                                             <span t-if="not o.firma">Sin firma disponible</span>
                                             <!-- Línea de firma y texto "Conformidad transportista" -->
                                             <div style="border-top: 1px solid black; margin-top: 5px; padding-top: 5px;">
@@ -235,7 +235,7 @@
                           <header class="header-content">
                                 <div class="company-info">
                                     <div class="logo-section">
-                                        <img class="logo" t-att-src="image_data_uri(o.company_id.logo)" alt="Company Logo" style="width: 60px; margin-right: 10px;"/>
+                                        <img class="logo" t-att-src="image_data_uri(o.company_id.logo)" alt="Company Logo" style="width: 40px; margin-right: 10px;"/>
                                         <div style="font-size:8px">
                                             <span>Tel.: 4540 4135 - Cel.: 098 530 081</span><br/>
                                             <span>balanza@artigasilveira.com</span>
@@ -256,12 +256,12 @@
                                 </div>
                                 <div class="alineado_derecha">
                                     <table style="width:100%">
-                                        <tr style="font-size:19px">
+                                        <tr style="font-size:12px">
                                             <td colspan="2" style="width:50%"><strong><span>Tipo Pesaje: </span></strong><span t-field="o.tipo_viaje"/></td>
                                             <!-- <td colspan="2" style="padding-right:5px"><b>Propiedades adicionales:</b></td> -->
                                         </tr>
                                     </table>
-                                    <table style="font-size:13px; width:70%;">
+                                    <table style="font-size:11px; width:70%;">
                                         <tr>
                                             <td><strong><span>Arribo: </span></strong></td>
                                             <td style="padding-left:5px;"><span t-field="o.arribo"/></td>
@@ -367,7 +367,7 @@
                                         <td colspan="4" style="text-align: center;">
                                             <div><strong></strong></div>
                                             <!-- Asegurarse de que la imagen de la firma se muestra correctamente -->
-                                            <img t-if="o.firma" t-att-src="image_data_uri(o.firma)" style="max-height: 100px; display: block; margin: auto;"/>
+                                            <img t-if="o.firma" t-att-src="image_data_uri(o.firma)" style="max-height: 70px; display: block; margin: auto;"/>
                                             <span t-if="not o.firma">Sin firma disponible</span>
                                             <!-- Línea de firma y texto "Conformidad transportista" -->
                                             <div style="border-top: 1px solid black; margin-top: 5px; padding-top: 5px;">
