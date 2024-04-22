@@ -67,6 +67,8 @@ class Viajes(models.Model):
     tipo_viaje = fields.Selection([('entrada', 'Entrada'), ('salida', 'Salida')], string="Tipo de Viaje", tracking="1")
 
     numero_remito = fields.Char(string="Número de remito / Guía", tracking="1")
+    
+    company_id = fields.Many2one('res.company', string='Company', default=lambda self: self.env.company)
 
     transportista_id = fields.Many2one('res.partner', string="Transportista", compute="_compute_conductor_transportista", tracking="1", store = True)
 
@@ -149,7 +151,7 @@ class Viajes(models.Model):
     purchase_order_id = fields.Many2one('purchase.order', string='Orden de Compra' , tracking=True)
 
     sale_order_id = fields.Many2one('sale.order', string='Órdenes de Venta', tracking=True)
-    
+
     purchase_order_ids = fields.Many2many('purchase.order', string='Orden de Compra' , tracking=True)
 
     sale_order_ids = fields.Many2many('sale.order', string='Órdenes de Venta', tracking=True)
@@ -175,6 +177,7 @@ class Viajes(models.Model):
 
     # secado_entrada_1 = fields.Selection([('si', 'Si'), ('no', 'No')], string="Secado entrada", tracking="1")
 
+    user_id = fields.Many2one('res.users', string='Usuario')
 
 
 
@@ -214,7 +217,7 @@ class Viajes(models.Model):
         for viaje in self:
             if viaje.ruta_id:
                 viaje.kilometros_flete = viaje.ruta_id.kilometros
-    
+
 
 
     @api.onchange('ruta_id')
@@ -268,7 +271,7 @@ class Viajes(models.Model):
     def action_terminado(self):
         self.determinar_y_asignar_gasto_viaje()
         self.write({'state': 'terminado'})
-
+        self.actualizar_ubicacion_destino()
         # Guarda la fecha y hora actual
         fecha_hora_actual = fields.Datetime.now()
 
@@ -285,15 +288,12 @@ class Viajes(models.Model):
          # Actualiza el estado del camión a 'disponible' si existe
         self.camion_disponible_id.estado = "disponible"
         self.camion_disponible_id.fecha_hora_liberacion = fecha_hora_actual
-
-         # Luego de cambiar el estado, buscamos todas las medidas de propiedad asociadas
         medida_obj = self.env['gms.medida.propiedad']
         medidas = medida_obj.search([('viaje_id', '=', self.id)])
-        
+
         # Llamamos al método _onchange_calculate_merma para cada medida encontrada
         for medida in medidas:
             medida._onchange_calculate_merma()
-
 
         fecha_hora_actual = fields.Datetime.now()
             # Establece la fecha y hora de partida para el viaje
@@ -605,31 +605,43 @@ class Viajes(models.Model):
 
 
 
-    
+
     def actualizar_ubicacion_destino(self):   #metodo que se llama en la action proceso para ver si cambia el silo en salida, no resultando
         if self.albaran_id and self.silo_id:
-            # Actualizar la ubicación destino del albarán
-            self.albaran_id.write({'location_dest_id': self.silo_id.id})
-            _logger.info(f"Ubicación destino del albarán {self.albaran_id.name} actualizada a {self.silo_id.name}")
+            if self.tipo_viaje == "salida":
+                # Actualizar la ubicación destino del albarán
+                self.albaran_id.write({'location_id': self.silo_id.id})
+                _logger.info(f"Ubicación destino del albarán {self.albaran_id.name} actualizada a {self.silo_id.name}")
 
-            # Actualizar las líneas de movimiento del albarán
-            move_lines = self.albaran_id.move_line_ids_without_package | self.albaran_id.move_line_nosuggest_ids
-            for move_line in move_lines:
-                move_line.write({'location_dest_id': self.silo_id.id})
-                _logger.info(f"Ubicación destino de la línea de movimiento {move_line.id} actualizada a {self.silo_id.name}")
+                # Actualizar las líneas de movimiento del albarán
+                move_lines = self.albaran_id.move_line_ids_without_package | self.albaran_id.move_line_nosuggest_ids
+                for move_line in move_lines:
+                    move_line.write({'location_dest_id': self.albaran_id.location_dest_id.id})
+                    move_line.write({'location_id': self.silo_id.id})
+                    _logger.info(f"Ubicación destino de la línea de movimiento {move_line.id} actualizada a {self.silo_id.name}")
+            else:
+                # Actualizar la ubicación destino del albarán
+                self.albaran_id.write({'location_dest_id': self.silo_id.id})
+                _logger.info(f"Ubicación destino del albarán {self.albaran_id.name} actualizada a {self.silo_id.name}")
+
+                # Actualizar las líneas de movimiento del albarán
+                move_lines = self.albaran_id.move_line_ids_without_package | self.albaran_id.move_line_nosuggest_ids
+                for move_line in move_lines:
+                    move_line.write({'location_id': self.albaran_id.location_id.id})
+                    move_line.write({'location_dest_id': self.silo_id.id})
+                    _logger.info(f"Ubicación destino de la línea de movimiento {move_line.id} actualizada a {self.silo_id.name}")
         else:
             _logger.info("Es necesario seleccionar tanto un albarán como un silo para actualizar la ubicación.")
-        
 
 
     @api.model
     def create_post_create_actions01(self, vals):
         # Crear el viaje como normalmente
         viaje = super(Viajes, self).create(vals)
-
-        # Si hay un albarán asociado en la agenda, asignar su destino al silo del viaje
-        if viaje.agenda and viaje.agenda.picking_id and viaje.agenda.picking_id.location_dest_id:
-            viaje.silo_id = viaje.agenda.picking_id.location_dest_id.id
+        if viaje.tipo_viaje == "entrada":
+            # Si hay un albarán asociado en la agenda, asignar su destino al silo del viaje
+            if viaje.agenda and viaje.agenda.picking_id and viaje.agenda.picking_id.location_dest_id:
+                viaje.silo_id = viaje.agenda.picking_id.location_dest_id.id
 
         return viaje
 
@@ -866,21 +878,21 @@ class Viajes(models.Model):
                     precio_unitario = gasto.producto_id.standard_price
                     gasto.precio_total = self.peso_neto * self.kilometros_flete * precio_unitario
 
-    
+
     def action_liquidar_viajes(self):
         if not self:
             raise UserError("No se seleccionó ningún viaje.")
         _logger.info("Iniciando el proceso de liquidación de viajes...")
-    
+
         # Diccionario para agrupar líneas de factura por proveedor
         invoice_lines_by_partner = {}
-    
+
         for viaje in self:
             _logger.info(f"Procesando viaje: {viaje.name}")
             if viaje.albaran_id and viaje.albaran_id.state != 'done':
                 _logger.warning(f"El viaje {viaje.name} no se puede liquidar porque su albarán no está confirmado.")
                 raise UserError("No se puede pasar el viaje a estado 'Liquidado' hasta que el albarán esté confirmado.")
-    
+
             if viaje.tipo_viaje == 'entrada':
                 if not viaje.purchase_order_id:
                     _logger.warning(f"El viaje {viaje.name} no tiene una orden de compra asociada.")
@@ -892,17 +904,17 @@ class Viajes(models.Model):
                     ('order_id', '=', order.id),
                     ('product_id', '=', viaje.producto_transportado_id.id),
                 ], limit=1)
-                
+
                 if not purchase_line:
                     _logger.warning(f"No se encontró una línea de pedido de compra para el producto transportado en el viaje {viaje.name}")
-                    continue  
+                    continue
             else:  # 'salida'
                 if not viaje.sale_order_id:
                     _logger.warning(f"El viaje {viaje.name} no tiene una orden de venta asociada.")
                     continue
                 order = viaje.sale_order_id
                 _logger.info(f"Orden de venta asociada al viaje {viaje.name}: {order.name}")
-    
+
             partner_id = order.partner_id.id
             invoice_line = (0, 0, {
                 'product_id': viaje.producto_transportado_id.id,
@@ -912,9 +924,9 @@ class Viajes(models.Model):
                 'account_id': viaje.producto_transportado_id.categ_id.property_account_income_categ_id.id,
                 'purchase_line_id': purchase_line.id,  #ID de la línea de pedido de compra
             })
-    
+
             order_type_key = 'purchase_order_ids' if viaje.tipo_viaje == 'entrada' else 'sale_order_ids'
-    
+
             if partner_id not in invoice_lines_by_partner:
                 invoice_lines_by_partner[partner_id] = {
                     'partner_id': partner_id,
@@ -926,7 +938,7 @@ class Viajes(models.Model):
                 invoice_lines_by_partner[partner_id]['lines'].append(invoice_line)
                 invoice_lines_by_partner[partner_id][order_type_key].add(order.id)
                 invoice_lines_by_partner[partner_id]['total_descontar'] += sum(gasto.precio_total for gasto in viaje.gastos_ids)
-    
+
         for partner_id, data in invoice_lines_by_partner.items():
             usd_currency_id = self.env['res.currency'].search([('name', '=', 'USD')], limit=1).id
             move_type = 'in_invoice' if 'purchase_order_ids' in data else 'out_invoice'
@@ -942,20 +954,20 @@ class Viajes(models.Model):
             _logger.info(f"Creando factura con valores: {invoice_vals}")
             factura = self.env['account.move'].create(invoice_vals)
             _logger.info(f"Factura creada con éxito. ID de la factura: {factura.id}")
-    
+
             factura.write({'viajes_ids': [(6, 0, self.ids)]})
             _logger.info(f"Viajes asociados con la factura {factura.id}.")
-    
+
             for order_id in data.get('purchase_order_ids', set()) | data.get('sale_order_ids', set()):
                 order_model = 'purchase.order' if 'purchase_order_ids' in data else 'sale.order'
                 order = self.env[order_model].browse(order_id)
                 order.invoice_ids = [(4, factura.id)]
                 _logger.info(f"Factura {factura.id} asociada a la orden {order.name}.")
                 order.invoice_count = len(order.invoice_ids)
-    
+
             for viaje in self.filtered(lambda v: getattr(v, 'purchase_order_id' if 'purchase_order_ids' in data else 'sale_order_id').partner_id.id == partner_id):
                 viaje.write({'state': 'liquidado', 'factura_id': factura.id})
-    
+
         _logger.info("Proceso de liquidación de viajes finalizado.")
 
 
