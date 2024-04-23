@@ -55,7 +55,7 @@
                               float:right;
                             }
                             .buttom{
-                            height: 40px;
+                            height: 60px;
 
                             }
                             .buttom-top{
@@ -70,15 +70,15 @@
                           <header class="header-content">
                                 <div class="company-info">
                                     <div class="logo-section">
-                                        <img class="logo" t-att-src="image_data_uri(o.company_id.logo)" alt="Company Logo" style="width: 40px; margin-right: 10px;"/>
-                                        <div style="font-size:8px">
+                                        <img class="logo" t-att-src="image_data_uri(o.company_id.logo)" alt="Company Logo" style="width: 60px; margin-right: 10px;"/>
+                                        <div style="font-size:10px">
                                             <span>Tel.: 4540 4135 - Cel.: 098 530 081</span><br/>
                                             <span>balanza@artigasilveira.com</span>
                                         </div>
                                     </div>
                                 </div>
                               
-                                <div class="div_encabezado">
+                            <div class="div_encabezado">
                                 <div class="alineado_izquierda">
                                         <table style="font-size:15px; width:85%;">
                                             <tr>
@@ -89,39 +89,63 @@
                                             </tr>
                                         </table>
                                 </div>
-                                <div class="alineado_derecha">
-                                    <table style="width:100%">
-                                        <tr style="font-size:12x">
-                                            <td colspan="2" style="width:50%"><strong><span>Tipo Pesaje: </span></strong><span t-field="o.tipo_viaje"/></td>
-                                            <!-- <td colspan="2" style="padding-right:5px"><b>Propiedades adicionales:</b></td> -->
-                                        </tr>
-                                    </table>
-                                    <table style="font-size:11px; width:70%;">
+                               <div class="alineado_derecha">
+                                    <table style="width:100%; font-size:13px;">
                                         <tr>
-                                            <td><strong><span>Arribo: </span></strong></td>
-                                            <td style="padding-left:5px;"><span t-field="o.arribo"/></td>
-                                            <td><b>Propiedad</b></td>
-                                            <td style="padding-right:5px"><b>Valor</b></td>
+                                            <td style="width:50%; vertical-align:top;">
+                                                <table style="width:100%;">
+                                                    <tr>
+                                                        <td colspan="2"><strong><span>Tipo Pesaje: </span></strong><span t-field="o.tipo_viaje"/></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong><span>Arribo: </span></strong></td>
+                                                        <td style="font-size:12px;"><span t-field="o.arribo"/></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong><span>Partida: </span></strong></td>
+                                                        <td style="font-size:12px;"><span t-field="o.partida"/></td>
+                                                    </tr>
+                                                    <br/>
+                                                    <tr>
+                                                        <td><strong><span>Numero: </span></strong></td>
+                                                        <td><span t-esc="o.name[-4:]"/></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong><span>Bruto: </span></strong></td>
+                                                        <td><span t-field="o.peso_bruto"/></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong><span>Tara: </span></strong></td>
+                                                        <td><span t-field="o.tara"/></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong><span>Neto: </span></strong></td>
+                                                        <td><span t-field="o.peso_neto"/></td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                            <td style="width:50%; vertical-align:top;">
+                                                <table style="width:100%; font-size:13px;">
+                                                    <tr>
+                                                        <td><b>Propiedad</b></td>
+                                                        <td style="padding-right:5px"><b>Valor</b></td>
+                                                    </tr>
+                                                    <!-- Bucle foreach para las propiedades adicionales -->
+                                                    <t t-foreach="o.medidas_propiedades_ids" t-as="medida">
+                                                        <tr>
+                                                            <td><span t-field="medida.propiedad.name"/></td>
+                                                            <td style="padding-right:5px"><span t-field="medida.valor_medida"/></td>
+                                                        </tr>
+                                                    </t>
+                                                </table>
+                                            </td>
                                         </tr>
-                                        <tr>
-                                            <td><strong><span>Partida: </span></strong></td>
-                                            <td style="padding-left:5px;"><span t-field="o.partida"/></td>
-                                            <!-- Espacios adicionales para alinear con las columnas de propiedades -->
-                                            <td></td>
-                                            <td></td>
-                                        </tr>
-                                        <!-- Bucle foreach para las propiedades adicionales -->
-                                        <t t-foreach="o.medidas_propiedades_ids" t-as="medida">
-                                            <tr>
-                                                <td colspan="2"><!-- Colspan para alinear bajo 'Partida' si es necesario --></td>
-                                                <td><span t-field="medida.propiedad.name"/></td>
-                                                <td style="padding-right:5px"><span t-field="medida.valor_medida"/></td>
-                                            </tr>
-                                        </t>
                                     </table>
                                 </div>
+        
+                                  
 
-                                </div>
+                            </div>
                               
                             <div class="clearfix"/>
                             <div class="break" style="height:10px"/>
@@ -164,26 +188,7 @@
                                             </tr>
                                         </table>
                                 </div>
-                                <div class="alineado_derecha">
-                                   <table style="font-size:14px;">
-                                            <tr>
-                                                <th colspan="2"><strong><span>Numero: </span></strong><span t-esc="o.name[-4:]"/></th>
-                                            </tr>
-                                            <tr>
-                                                <td><strong><span>Bruto: </span></strong></td>
-                                                <td style="padding-left:5px;"><span t-field="o.peso_bruto"/></td>
-                                            </tr>
-                                            <tr>
-                                               <td><strong><span>Tara: </span></strong></td>
-                                                <td style="padding-left:5px;"><span t-field="o.tara"/></td>
-                                            </tr>
-                                           <tr>
-                                                <td><strong><span>Neto: </span></strong></td>
-                                                <td style="padding-left:5px;"><span t-field="o.peso_neto"/></td>
-                                            </tr>
-                                           
-                                    </table>
-                                </div>
+                                
                             </div>
                             
                             <div class="clearfix"/>
@@ -204,7 +209,7 @@
                                         <td></td>
                                         <td colspan="4" style="text-align: center;">
                                             <div><strong></strong></div>
-                                            <!--  imagen de la firma  -->
+                                            <!-- Asegurarse de que la imagen de la firma se muestra correctamente -->
                                             <img t-if="o.firma" t-att-src="image_data_uri(o.firma)" style="max-height: 70px; display: block; margin: auto;"/>
                                             <span t-if="not o.firma">Sin firma disponible</span>
                                             <!-- Línea de firma y texto "Conformidad transportista" -->
@@ -238,15 +243,15 @@
                           <header class="header-content">
                                 <div class="company-info">
                                     <div class="logo-section">
-                                        <img class="logo" t-att-src="image_data_uri(o.company_id.logo)" alt="Company Logo" style="width: 40px; margin-right: 10px;"/>
-                                        <div style="font-size:8px">
+                                        <img class="logo" t-att-src="image_data_uri(o.company_id.logo)" alt="Company Logo" style="width: 60px; margin-right: 10px;"/>
+                                        <div style="font-size:10px">
                                             <span>Tel.: 4540 4135 - Cel.: 098 530 081</span><br/>
                                             <span>balanza@artigasilveira.com</span>
                                         </div>
                                     </div>
                                 </div>
                               
-                                <div class="div_encabezado">
+                            <div class="div_encabezado">
                                 <div class="alineado_izquierda">
                                         <table style="font-size:15px; width:85%;">
                                             <tr>
@@ -257,39 +262,63 @@
                                             </tr>
                                         </table>
                                 </div>
-                                <div class="alineado_derecha">
-                                    <table style="width:100%">
-                                        <tr style="font-size:12px">
-                                            <td colspan="2" style="width:50%"><strong><span>Tipo Pesaje: </span></strong><span t-field="o.tipo_viaje"/></td>
-                                            <!-- <td colspan="2" style="padding-right:5px"><b>Propiedades adicionales:</b></td> -->
-                                        </tr>
-                                    </table>
-                                    <table style="font-size:11px; width:70%;">
+                               <div class="alineado_derecha">
+                                    <table style="width:100%; font-size:13px;">
                                         <tr>
-                                            <td><strong><span>Arribo: </span></strong></td>
-                                            <td style="padding-left:5px;"><span t-field="o.arribo"/></td>
-                                            <td><b>Propiedad</b></td>
-                                            <td style="padding-right:5px"><b>Valor</b></td>
+                                            <td style="width:50%; vertical-align:top;">
+                                                <table style="width:100%;">
+                                                    <tr>
+                                                        <td colspan="2"><strong><span>Tipo Pesaje: </span></strong><span t-field="o.tipo_viaje"/></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong><span>Arribo: </span></strong></td>
+                                                        <td style="font-size:12px;"><span t-field="o.arribo"/></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong><span>Partida: </span></strong></td>
+                                                        <td style="font-size:12px;"><span t-field="o.partida"/></td>
+                                                    </tr>
+                                                    <br/>
+                                                    <tr>
+                                                        <td><strong><span>Numero: </span></strong></td>
+                                                        <td><span t-esc="o.name[-4:]"/></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong><span>Bruto: </span></strong></td>
+                                                        <td><span t-field="o.peso_bruto"/></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong><span>Tara: </span></strong></td>
+                                                        <td><span t-field="o.tara"/></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong><span>Neto: </span></strong></td>
+                                                        <td><span t-field="o.peso_neto"/></td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                            <td style="width:50%; vertical-align:top;">
+                                                <table style="width:100%; font-size:13px;">
+                                                    <tr>
+                                                        <td><b>Propiedad</b></td>
+                                                        <td style="padding-right:5px"><b>Valor</b></td>
+                                                    </tr>
+                                                    <!-- Bucle foreach para las propiedades adicionales -->
+                                                    <t t-foreach="o.medidas_propiedades_ids" t-as="medida">
+                                                        <tr>
+                                                            <td><span t-field="medida.propiedad.name"/></td>
+                                                            <td style="padding-right:5px"><span t-field="medida.valor_medida"/></td>
+                                                        </tr>
+                                                    </t>
+                                                </table>
+                                            </td>
                                         </tr>
-                                        <tr>
-                                            <td><strong><span>Partida: </span></strong></td>
-                                            <td style="padding-left:5px;"><span t-field="o.partida"/></td>
-                                            <!-- Espacios adicionales para alinear con las columnas de propiedades -->
-                                            <td></td>
-                                            <td></td>
-                                        </tr>
-                                        <!-- Bucle foreach para las propiedades adicionales -->
-                                        <t t-foreach="o.medidas_propiedades_ids" t-as="medida">
-                                            <tr>
-                                                <td colspan="2"><!-- Colspan para alinear bajo 'Partida' si es necesario --></td>
-                                                <td><span t-field="medida.propiedad.name"/></td>
-                                                <td style="padding-right:5px"><span t-field="medida.valor_medida"/></td>
-                                            </tr>
-                                        </t>
                                     </table>
                                 </div>
+        
+                                  
 
-                                </div>
+                            </div>
                               
                             <div class="clearfix"/>
                             <div class="break" style="height:10px"/>
@@ -332,26 +361,7 @@
                                             </tr>
                                         </table>
                                 </div>
-                                <div class="alineado_derecha">
-                                   <table style="font-size:14px;">
-                                            <tr>
-                                                <th colspan="2"><strong><span>Numero: </span></strong><span t-esc="o.name[-4:]"/></th>
-                                            </tr>
-                                            <tr>
-                                                <td><strong><span>Bruto: </span></strong></td>
-                                                <td style="padding-left:5px;"><span t-field="o.peso_bruto"/></td>
-                                            </tr>
-                                            <tr>
-                                               <td><strong><span>Tara: </span></strong></td>
-                                                <td style="padding-left:5px;"><span t-field="o.tara"/></td>
-                                            </tr>
-                                           <tr>
-                                                <td><strong><span>Neto: </span></strong></td>
-                                                <td style="padding-left:5px;"><span t-field="o.peso_neto"/></td>
-                                            </tr>
-                                           
-                                    </table>
-                                </div>
+                                
                             </div>
                             
                             <div class="clearfix"/>
