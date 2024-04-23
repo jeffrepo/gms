@@ -55,7 +55,7 @@
                               float:right;
                             }
                             .buttom{
-                            height: 50px;
+                            height: 40px;
 
                             }
                             .buttom-top{
@@ -154,6 +154,9 @@
                                                 <td><b>Destino: </b><span t-field="o.destino"/></td>
                                             </tr>
                                             <tr>
+                                                <td><b>KM: </b><span t-field="o.kilometros_flete"/></td>
+                                            </tr>
+                                            <tr>
                                                 <td><b>Operador: </b><span t-field="request.env.user.name"/></td>
                                             </tr>
                                             <tr>
@@ -223,10 +226,10 @@
                             </div>
                         </body>
 
-                        <!-- <div class ="buttom">
+                        <div class ="buttom">
                         
 
-                        </div> -->
+                        </div> 
 
 
                         <!--Transportista-->
@@ -319,6 +322,9 @@
                                                 <td><b>Destino: </b><span t-field="o.destino"/></td>
                                             </tr>
                                             <tr>
+                                                <td><b>KM: </b><span t-field="o.kilometros_flete"/></td>
+                                            </tr>
+                                            <tr>
                                                 <td><b>Operador: </b><span t-field="request.env.user.name"/></td>
                                             </tr>
                                             <tr>
@@ -384,7 +390,7 @@
                                         <td style="text-align: right">Transportista</td>
                                     </tr>
                                 </table>
-                                <hr style="color: gray"/>
+                                <!--<hr style="color: gray"/>-->
                             </div>
                         </body>
                        
@@ -400,13 +406,13 @@
 
         <!-- template para los caracteres especiales -->
         <template id="gms.report_viaje">
-            <t t-call="web.html_container">
-                <t t-set="data_report_margin_top" t-value="1"/>
-                <t t-set="data_report_header_spacing" t-value="1"/>
-                <t t-foreach="docs" t-as="o">
-                    <t t-call="gms.report_viaje_template" t-lang="o.user_id.lang"/>
-                </t>
+        <t t-call="web.html_container">
+            <t t-set="data_report_margin_top" t-value="1"/>
+            <t t-set="data_report_header_spacing" t-value="1"/>
+            <t t-foreach="docs" t-as="o">
+                <t t-call="gms.report_viaje_template" t-lang="o.user_id.lang"/>
             </t>
+        </t>
     </template>
     
 </odoo>
