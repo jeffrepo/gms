@@ -320,8 +320,8 @@ class Viajes(models.Model):
                 valor_medida = medida.valor_medida
 
            # Buscar la coincidencia en gms.datos_humedad para calcular el precio total del secado
-            datos_humedad = self.env['gms.datos_humedad'].search([('humedad', '=', valor_medida)], limit=1)
-            tarifa_humedad = datos_humedad.tarifa if datos_humedad else 0
+            tarifa_humedad = self.env['gms.datos_humedad'].buscar_humedad_cercana(valor_medida)
+
 
             # El cálculo del precio total del secado se ajusta para usar valor_medida de humedad
             precio_total_secado = (valor_medida * tarifa_humedad) / 1000
@@ -338,8 +338,8 @@ class Viajes(models.Model):
             cantidad_kilos_flete_puerto = float(config_params.get_param('gms.cantidad_kilos_flete_puerto', 0.0))
 
             # Buscar coincidencia en gms.datos_flete
-            datos_flete = self.env['gms.datos_flete'].search([('flete_km', '=', kilometros_flete)], limit=1)
-            tarifa_flete = datos_flete.tarifa if datos_flete else 0
+            tarifa_flete = self.env['gms.datos_flete'].buscar_flete_cercano(kilometros_flete)
+
 
             # Calcular el precio_total_flete para 'Flete Puerto'
             precio_total_flete_puerto = cantidad_kilos_flete_puerto * self.kilometros_flete
@@ -684,8 +684,12 @@ class Viajes(models.Model):
             # Obtener el precio unitario del producto
             precio_unitario = producto.standard_price
 
+            # Buscar la tarifa de flete más cercana
+            kilometros_flete = self.kilometros_flete  # Asegúrate de que `self.kilometros_flete` esté definido correctamente
+            tarifa_flete = self.env['gms.datos_flete'].buscar_flete_cercano(kilometros_flete)
+
             # Calcular el precio total multiplicando por los kilómetros de la ruta
-            precio_total_flete = self.peso_neto * self.kilometros_flete * precio_unitario
+            precio_total_flete = self.peso_neto * self.kilometros_flete * tarifa_flete
 
             # Obtener la moneda de compra del proveedor
             moneda_proveedor_id = self.transportista_id.property_purchase_currency_id.id if self.transportista_id else False
