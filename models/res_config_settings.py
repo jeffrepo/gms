@@ -27,7 +27,8 @@ class ResConfigSettings(models.TransientModel):
     )
 
     cantidad_kilos_flete_puerto = fields.Float(
-        string='Cantidad Kilos por Kilómetro para Flete Puerto'
+        string='Cantidad Kilos por Kilómetro para Flete Puerto',
+        digits=(10, 4) 
     )
    
     def set_values(self):

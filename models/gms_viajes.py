@@ -342,7 +342,7 @@ class Viajes(models.Model):
 
 
             # Calcular el precio_total_flete para 'Flete Puerto'
-            precio_total_flete_puerto = cantidad_kilos_flete_puerto * self.kilometros_flete
+            precio_total_flete_puerto = cantidad_kilos_flete_puerto * self.kilogramos_a_liquidar
 
             # Crear las líneas de gasto si los productos están configurados
             if producto_secado_id:

@@ -13,7 +13,7 @@ class DatosHumedad(models.Model):
 
    
     def buscar_humedad_cercana(self, valor_medida):
-        # Asumir un rango razonable alrededor del valor de medida
+        # rango razonable alrededor del valor de medida
         rango = 5.0
         candidatos = self.search([
             ('humedad', '>=', valor_medida - rango),

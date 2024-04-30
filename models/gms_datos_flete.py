@@ -22,3 +22,4 @@ class DatosFlete(models.Model):
             candidato_mas_cercano = min(candidatos, key=lambda x: abs(x.flete_km - kilometros_flete))
             return candidato_mas_cercano.tarifa
         return 0
+    
