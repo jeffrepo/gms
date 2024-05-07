@@ -320,11 +320,14 @@ class Viajes(models.Model):
                 valor_medida = medida.valor_medida
 
            # Buscar la coincidencia en gms.datos_humedad para calcular el precio total del secado
-            datos_humedad = self.env['gms.datos_humedad'].search([('humedad', '=', valor_medida)], limit=1)
-            tarifa_humedad = datos_humedad.tarifa if datos_humedad else 0
+            tarifa_humedad = self.env['gms.datos_humedad'].buscar_humedad_cercana(valor_medida)
+            _logger.info(f'Tarifa de humedad encontrada: {tarifa_humedad}')
+            _logger.info(f'Tarifa de humedad encontrada 4 c: {tarifa_humedad:.4f}')
+
 
             # El cálculo del precio total del secado se ajusta para usar valor_medida de humedad
             precio_total_secado = (valor_medida * tarifa_humedad) / 1000
+            _logger.info(f'Precio total del secado calculado: {precio_total_secado}')
 
             # Para el producto de Pre Limpieza
             producto_pre_limpieza = self.env['product.product'].browse(producto_pre_limpieza_id)
@@ -338,11 +341,11 @@ class Viajes(models.Model):
             cantidad_kilos_flete_puerto = float(config_params.get_param('gms.cantidad_kilos_flete_puerto', 0.0))
 
             # Buscar coincidencia en gms.datos_flete
-            datos_flete = self.env['gms.datos_flete'].search([('flete_km', '=', kilometros_flete)], limit=1)
-            tarifa_flete = datos_flete.tarifa if datos_flete else 0
+            tarifa_flete = self.env['gms.datos_flete'].buscar_flete_cercano(kilometros_flete)
+
 
             # Calcular el precio_total_flete para 'Flete Puerto'
-            precio_total_flete_puerto = cantidad_kilos_flete_puerto * self.kilometros_flete
+            precio_total_flete_puerto = cantidad_kilos_flete_puerto * self.kilogramos_a_liquidar
 
             # Crear las líneas de gasto si los productos están configurados
             if producto_secado_id:
@@ -684,8 +687,12 @@ class Viajes(models.Model):
             # Obtener el precio unitario del producto
             precio_unitario = producto.standard_price
 
+            # Buscar la tarifa de flete más cercana
+            kilometros_flete = self.kilometros_flete  # Asegúrate de que `self.kilometros_flete` esté definido correctamente
+            tarifa_flete = self.env['gms.datos_flete'].buscar_flete_cercano(kilometros_flete)
+
             # Calcular el precio total multiplicando por los kilómetros de la ruta
-            precio_total_flete = self.peso_neto * self.kilometros_flete * precio_unitario
+            precio_total_flete = self.peso_neto * self.kilometros_flete * tarifa_flete
 
             # Obtener la moneda de compra del proveedor
             moneda_proveedor_id = self.transportista_id.property_purchase_currency_id.id if self.transportista_id else False
@@ -839,13 +846,18 @@ class Viajes(models.Model):
             raise UserError("El viaje no puede pasar a estado 'Proceso' bajo las condiciones actuales.")
 
 
-
+    
     def enviar_sms_solicitante(self):
         try:
-            # Preparar el mensaje con detalles del viaje y las propiedades con sus mermas
-            mensaje_sms = "Detalles del viaje: {}\n".format(self.name)
+            # Preparar el mensaje con detalles del viaje
+            mensaje_sms = f"Detalles del viaje: {self.name}\n"
+            
+            # Agregar cada medida y el peso neto después de cada medida
             for medida in self.medidas_propiedades_ids:
-                mensaje_sms += "{}: {}\n".format(medida.propiedad.cod, medida.valor_medida)
+                mensaje_sms += f"{medida.propiedad.cod}: {medida.valor_medida} - Peso neto: {self.peso_neto} kg\n"
+
+            # Log para depurar el mensaje completo antes de enviarlo
+            _logger.debug("Mensaje SMS completo antes de enviar: %s", mensaje_sms)
 
             # Obtener el número de teléfono del solicitante
             telefono_solicitante = self.solicitante_id.mobile or self.solicitante_id.phone
@@ -863,6 +875,9 @@ class Viajes(models.Model):
             error_message = f"Error al enviar SMS: {e}"
             _logger.error(error_message)
             self.message_post(body=error_message, message_type='comment', subtype_xmlid='mail.mt_comment')
+
+
+
 
 
 

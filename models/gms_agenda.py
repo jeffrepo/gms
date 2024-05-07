@@ -396,9 +396,8 @@ class Agenda(models.Model):
     
         # Notificación al Solicitante
         if self.solicitante_id:
-            mensaje_solicitante = "Detalles de la agenda: {} - Matricula: {} - Camión: {} - Origen: {} - Destino: {} - Link Origen: {} - Link Destino: {}".format(
+            mensaje_solicitante = "Detalles de la agenda: {} - Matricula: {}  - Origen: {} - Destino: {} - Link Origen: {} - Link Destino: {}".format(
                 self.name,
-                self.camion_id.matricula if self.camion_id else "-",
                 self.camion_id.matricula if self.camion_id else "-",
                 self.origen.name if self.origen else "-",
                 self.destino.name if self.destino else "-",
