@@ -321,10 +321,13 @@ class Viajes(models.Model):
 
            # Buscar la coincidencia en gms.datos_humedad para calcular el precio total del secado
             tarifa_humedad = self.env['gms.datos_humedad'].buscar_humedad_cercana(valor_medida)
+            _logger.info(f'Tarifa de humedad encontrada: {tarifa_humedad}')
+            _logger.info(f'Tarifa de humedad encontrada 4 c: {tarifa_humedad:.4f}')
 
 
             # El cálculo del precio total del secado se ajusta para usar valor_medida de humedad
             precio_total_secado = (valor_medida * tarifa_humedad) / 1000
+            _logger.info(f'Precio total del secado calculado: {precio_total_secado}')
 
             # Para el producto de Pre Limpieza
             producto_pre_limpieza = self.env['product.product'].browse(producto_pre_limpieza_id)
@@ -843,13 +846,18 @@ class Viajes(models.Model):
             raise UserError("El viaje no puede pasar a estado 'Proceso' bajo las condiciones actuales.")
 
 
-
+    
     def enviar_sms_solicitante(self):
         try:
-            # Preparar el mensaje con detalles del viaje y las propiedades con sus mermas
-            mensaje_sms = "Detalles del viaje: {}\n".format(self.name)
+            # Preparar el mensaje con detalles del viaje
+            mensaje_sms = f"Detalles del viaje: {self.name}\n"
+            
+            # Agregar cada medida y el peso neto después de cada medida
             for medida in self.medidas_propiedades_ids:
-                mensaje_sms += "{}: {}\n".format(medida.propiedad.cod, medida.valor_medida)
+                mensaje_sms += f"{medida.propiedad.cod}: {medida.valor_medida} - Peso neto: {self.peso_neto} kg\n"
+
+            # Log para depurar el mensaje completo antes de enviarlo
+            _logger.debug("Mensaje SMS completo antes de enviar: %s", mensaje_sms)
 
             # Obtener el número de teléfono del solicitante
             telefono_solicitante = self.solicitante_id.mobile or self.solicitante_id.phone
@@ -867,6 +875,9 @@ class Viajes(models.Model):
             error_message = f"Error al enviar SMS: {e}"
             _logger.error(error_message)
             self.message_post(body=error_message, message_type='comment', subtype_xmlid='mail.mt_comment')
+
+
+
 
 
 
