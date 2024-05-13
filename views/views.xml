@@ -1135,7 +1135,7 @@
                     </button>
 
 
-                      <!--  botón para visualizar las órdenes de V -->
+                      <!--  botón para visualizar las órdenes de Ventas -->
                     <button name="action_view_sale_orders"
                             type="object"
                             class="oe_stat_button"
@@ -1156,6 +1156,9 @@
                 
             </field>
         </record>
+
+
+        
 
 
 

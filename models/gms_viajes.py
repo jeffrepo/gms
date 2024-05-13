@@ -903,43 +903,57 @@ class Viajes(models.Model):
         invoice_lines_by_partner = {}
 
         for viaje in self:
+            invoice_line = None  
             _logger.info(f"Procesando viaje: {viaje.name}")
-            if viaje.albaran_id and viaje.albaran_id.state != 'done':
-                _logger.warning(f"El viaje {viaje.name} no se puede liquidar porque su albarán no está confirmado.")
-                raise UserError("No se puede pasar el viaje a estado 'Liquidado' hasta que el albarán esté confirmado.")
-
+            
             if viaje.tipo_viaje == 'entrada':
                 if not viaje.purchase_order_id:
                     _logger.warning(f"El viaje {viaje.name} no tiene una orden de compra asociada.")
                     continue
                 order = viaje.purchase_order_id
-                _logger.info(f"Orden de compra asociada al viaje {viaje.name}: {order.name}")
-                # Buscar la línea de pedido de compra específica para el producto transportado
                 purchase_line = self.env['purchase.order.line'].search([
                     ('order_id', '=', order.id),
                     ('product_id', '=', viaje.producto_transportado_id.id),
                 ], limit=1)
-
                 if not purchase_line:
                     _logger.warning(f"No se encontró una línea de pedido de compra para el producto transportado en el viaje {viaje.name}")
                     continue
+                invoice_line = (0, 0, {
+                    'product_id': viaje.producto_transportado_id.id,
+                    'name': f"Viaje: {viaje.name}",
+                    'quantity': viaje.kilogramos_a_liquidar,
+                    'price_unit': viaje.producto_transportado_id.lst_price,
+                    'account_id': viaje.producto_transportado_id.categ_id.property_account_income_categ_id.id,
+                    'purchase_line_id': purchase_line.id,
+                })
             else:  # 'salida'
                 if not viaje.sale_order_id:
                     _logger.warning(f"El viaje {viaje.name} no tiene una orden de venta asociada.")
                     continue
                 order = viaje.sale_order_id
                 _logger.info(f"Orden de venta asociada al viaje {viaje.name}: {order.name}")
+                # Buscar la línea de pedido de venta específica para el producto transportado
+                sale_line = self.env['sale.order.line'].search([
+                    ('order_id', '=', order.id),
+                    ('product_id', '=', viaje.producto_transportado_id.id),
+                ], limit=1)
+
+                if not sale_line:
+                    _logger.warning(f"No se encontró una línea de pedido de venta para el producto transportado en el viaje {viaje.name}")
+                    continue
+
+                invoice_line = (0, 0, {
+                    'product_id': viaje.producto_transportado_id.id,
+                    'name': f"Viaje: {viaje.name}",
+                    'quantity': viaje.kilogramos_a_liquidar,
+                    'price_unit': viaje.producto_transportado_id.lst_price,
+                    'account_id': viaje.producto_transportado_id.categ_id.property_account_income_categ_id.id,
+                    'sale_line_ids': [(4, sale_line.id)],  # Usar comando (4, id) para añadir a Many2many
+                })
+
+
 
             partner_id = order.partner_id.id
-            invoice_line = (0, 0, {
-                'product_id': viaje.producto_transportado_id.id,
-                'name': f"Viaje: {viaje.name}",
-                'quantity': viaje.kilogramos_a_liquidar,
-                'price_unit': viaje.producto_transportado_id.lst_price,
-                'account_id': viaje.producto_transportado_id.categ_id.property_account_income_categ_id.id,
-                'purchase_line_id': purchase_line.id,  #ID de la línea de pedido de compra
-            })
-
             order_type_key = 'purchase_order_ids' if viaje.tipo_viaje == 'entrada' else 'sale_order_ids'
 
             if partner_id not in invoice_lines_by_partner:
@@ -953,6 +967,7 @@ class Viajes(models.Model):
                 invoice_lines_by_partner[partner_id]['lines'].append(invoice_line)
                 invoice_lines_by_partner[partner_id][order_type_key].add(order.id)
                 invoice_lines_by_partner[partner_id]['total_descontar'] += sum(gasto.precio_total for gasto in viaje.gastos_ids)
+
 
         for partner_id, data in invoice_lines_by_partner.items():
             usd_currency_id = self.env['res.currency'].search([('name', '=', 'USD')], limit=1).id
