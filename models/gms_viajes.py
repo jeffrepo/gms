@@ -908,6 +908,11 @@ class Viajes(models.Model):
             raise UserError("No se seleccionó ningún viaje.")
         _logger.info("Iniciando el proceso de liquidación de viajes...")
 
+         # Validar que ningún viaje esté en estado 'liquidado'
+        for viaje in self:
+            if viaje.state == 'liquidado':
+                raise UserError(f"El viaje {viaje.name} ya está liquidado y no puede ser procesado nuevamente.")
+
         # Diccionario para agrupar líneas de factura por proveedor
         invoice_lines_by_partner = {}
 
