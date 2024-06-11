@@ -179,7 +179,13 @@ class Viajes(models.Model):
 
     user_id = fields.Many2one('res.users', string='Usuario')
 
+    kg_pendiente_liquidar = fields.Float(
+        string='Kg Pendiente de Liquidar',
+        store=True
+    )
 
+
+    
 
     def _compute_albaran_count(self):
         for record in self:
@@ -243,13 +249,16 @@ class Viajes(models.Model):
         ('coordinado', 'Coordinado'),
         ('proceso', 'Proceso'),
         ('terminado', 'Terminado'),
+        ('pendiente_liquidar', 'Pendiente Liquidar'),
         ('liquidado', 'Liquidado')
     ], string='Estado', default='coordinado', required=True)
 
 
     gastos_ids = fields.One2many('gms.gasto_viaje', 'viaje_id', string='Gastos' , tracking=True)
 
-
+    def action_pendiente_liquidar(self):
+        self.write({'state': 'pendiente_liquidar'})
+        
     def action_proceso(self):
         # Eliminar gastos de viaje existentes
         gastos_viaje = self.env['gms.gasto_viaje'].search([('viaje_id', '=', self.id)])
