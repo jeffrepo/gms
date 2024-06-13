@@ -264,16 +264,66 @@
             <field name="arch" type="xml">
                 <form string="Viajes">
                     <header>
-                        <button name="action_coordinado" string="Coordinado" type="object" states="borrador" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'borrador')]}"/>
-                        <button name="action_cancel" string="Cancelado" type="object" states="borrador" attrs="{'invisible': [('state', 'in', ('coordinado', 'liquidado', 'proceso', 'terminado', 'pendiente_liquidar'))]}"/>
-                        <button name="action_borrador" string="Borrador" type="object" states="coordinado" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'coordinado')]}"/>
-                        <button name="action_proceso" string="Proceso" type="object" states="coordinado" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'coordinado')]}"/>
-                        <button name="action_terminado" string="Terminado" type="object" states="proceso" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'proceso')]}"/>
-                        <button name="action_pendiente_liquidar" string="Pendiente Liquidar" type="object" states="terminado" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'terminado')]}"/>
-                        <button name="action_liquidado" string="Liquidado" type="object" states="pendiente_liquidar" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'pendiente_liquidar')]}"/>
-                        <field name="state" widget="statusbar" statusbar_visible="borrador,coordinado,proceso,terminado,pendiente_liquidar,cancelado,liquidado"/>
-                       
-                    
+                        <!-- Botón para cambiar a estado 'coordinado' desde 'borrador' -->
+                        <button name="action_coordinado" 
+                                string="Coordinado" 
+                                type="object" 
+                                states="borrador" 
+                                class="oe_highlight" 
+                                attrs="{'invisible': [('state', '!=', 'borrador')]}"/>
+        
+                        <!-- Botón para cancelar desde 'borrador' -->
+                        <button name="action_cancel" 
+                                string="Cancelado" 
+                                type="object" 
+                                states="borrador" 
+                                attrs="{'invisible': [('state', 'in', ('coordinado', 'liquidado', 'proceso', 'terminado', 'pendiente_liquidar'))]}"/>
+        
+                        <!-- Botón para volver a 'borrador' desde 'coordinado' -->
+                        <button name="action_borrador" 
+                                string="Borrador" 
+                                type="object" 
+                                states="coordinado" 
+                                class="oe_highlight" 
+                                attrs="{'invisible': [('state', '!=', 'coordinado')]}"/>
+        
+                        <!-- Botón para cambiar a 'proceso' desde 'coordinado' -->
+                        <button name="action_proceso" 
+                                string="Proceso" 
+                                type="object" 
+                                states="coordinado" 
+                                class="oe_highlight" 
+                                attrs="{'invisible': [('state', '!=', 'coordinado')]}"/>
+        
+                        <!-- Botón para cambiar a 'terminado' desde 'proceso' -->
+                        <button name="action_terminado" 
+                                string="Terminado" 
+                                type="object" 
+                                states="proceso" 
+                                class="oe_highlight" 
+                                attrs="{'invisible': [('state', '!=', 'proceso')]}"/>
+        
+                        <!-- Botón para cambiar a 'proceso' desde 'terminado' -->
+                        <button name="action_proceso" 
+                                string="Proceso" 
+                                type="object" 
+                                states="terminado" 
+                                class="oe_highlight" 
+                                attrs="{'invisible': [('state', '!=', 'terminado')]}"/>
+        
+                        <!-- Botón para cambiar a 'liquidado' desde 'terminado' y 'pendiente_liquidar' -->
+                        <button name="action_liquidado" 
+                                string="Liquidado" 
+                                type="object" 
+                                states="terminado,pending_liquidar" 
+                                class="oe_highlight" 
+                                attrs="{'invisible': [('state', 'not in', ['terminado', 'pendiente_liquidar'])]}"/>
+
+        
+                        <!-- Barra de estado para los distintos estados -->
+                        <field name="state" 
+                               widget="statusbar" 
+                               statusbar_visible="borrador,coordinado,proceso,terminado,pendiente_liquidar,cancelado,liquidado"/>
                     </header>
 
                     
