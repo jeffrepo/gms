@@ -249,7 +249,7 @@ class Viajes(models.Model):
         ('coordinado', 'Coordinado'),
         ('proceso', 'Proceso'),
         ('terminado', 'Terminado'),
-        ('pendiente_liquidar', 'Pendiente Liquidar'),
+        ('pendiente_liquidar', 'Parcialmente Liquidado'),
         ('liquidado', 'Liquidado')
     ], string='Estado', default='coordinado', required=True)
 
@@ -934,7 +934,7 @@ class Viajes(models.Model):
                     continue
                 invoice_line = (0, 0, {
                     'product_id': viaje.producto_transportado_id.id,
-                    'name': f"Viaje: {viaje.name}",
+                    'name': f"{viaje.name} - {viaje.producto_transportado_id.name}",
                     'quantity': viaje.kilogramos_a_liquidar,
                     'price_unit': viaje.producto_transportado_id.lst_price,
                     'account_id': viaje.producto_transportado_id.categ_id.property_account_income_categ_id.id,
@@ -958,11 +958,11 @@ class Viajes(models.Model):
 
                 invoice_line = (0, 0, {
                     'product_id': viaje.producto_transportado_id.id,
-                    'name': f"Viaje: {viaje.name}",
+                    'name': f"{viaje.name} - {viaje.producto_transportado_id.name}",
                     'quantity': viaje.kilogramos_a_liquidar,
                     'price_unit': viaje.producto_transportado_id.lst_price,
                     'account_id': viaje.producto_transportado_id.categ_id.property_account_income_categ_id.id,
-                    'sale_line_ids': [(4, sale_line.id)],  # Usar comando (4, id) para añadir a Many2many
+                    'sale_line_ids': [(4, sale_line.id)], 
                 })
 
 
