@@ -36,6 +36,32 @@ class AccountMove(models.Model):
         store=True
     )
 
+     # Campo para mostrar la cantidad total de kg en la factura
+    total_kg_factura = fields.Float(
+        string='Total kg en Factura',
+        compute='_compute_total_kg_factura',
+        store=True,
+        readonly=True
+    )
+
+     # Campo para mostrar la cantidad de kg pendientes por liquidar
+    kg_pendientes_liquidar = fields.Float(
+        string='Kg Pendientes por Liquidar',
+        compute='_compute_kg_pendientes_liquidar',
+        store=True,
+        readonly=True
+    )
+
+    # Campo para seleccionar viajes a eliminar
+    viajes_eliminar_ids = fields.Many2many(
+        'gms.viaje', 
+        string='Viajes a Eliminar',
+        domain="[('id', 'in', viajes_ids)]",  # Sólo mostrar viajes que están en la factura actual
+        relation='account_move_viaje_eliminar_rel',  # Nombre de la relación Many2many
+    )
+
+    
+
     @api.depends('viajes_liquidar_ids')
     def _compute_total_kg_seleccionados(self):
         for record in self:
@@ -46,6 +72,22 @@ class AccountMove(models.Model):
                 else:
                     total_kg += viaje.kilogramos_a_liquidar
             record.total_kg_seleccionados = total_kg
+
+
+    @api.depends('invoice_line_ids')
+    def _compute_total_kg_factura(self):
+        for record in self:
+            if len(record.invoice_line_ids) == 1:
+                record.total_kg_factura = record.invoice_line_ids[0].quantity
+            else:
+                record.total_kg_factura = 0.0
+
+    @api.depends('total_kg_factura', 'total_kg_seleccionados')
+    def _compute_kg_pendientes_liquidar(self):
+        for record in self:
+            record.kg_pendientes_liquidar = record.total_kg_factura - record.total_kg_seleccionados
+
+    
 
     def action_view_viajes(self):
         self.ensure_one()
@@ -121,6 +163,36 @@ class AccountMove(models.Model):
             'context': {'default_partner_id': self.partner_id.id},
         }
 
+    # Método para eliminar viajes seleccionados
+    def action_eliminar_viajes(self):
+        self.ensure_one()  # Asegurarse de que solo una factura esté siendo procesada
+
+        if not self.viajes_eliminar_ids:
+            raise UserError("No se seleccionaron viajes para eliminar.")
+
+        _logger.info("Iniciando el proceso de eliminación de viajes...")
+
+        for viaje in self.viajes_eliminar_ids:
+            if viaje.state in ['liquidado', 'pendiente_liquidar']:
+                viaje.write({
+                    'state': 'terminado',
+                    'kg_pendiente_liquidar': 0,
+                    'factura_id': False
+                })
+                _logger.info(f"Viaje {viaje.name} ha sido revertido al estado 'terminado'.")
+            else:
+                _logger.warning(f"Viaje {viaje.name} no está en estado 'liquidado' o 'pendiente_liquidar' y no se puede revertir.")
+
+        # Eliminar los viajes seleccionados de la factura
+        self.write({'viajes_ids': [(3, viaje.id) for viaje in self.viajes_eliminar_ids]})
+        _logger.info(f"Viajes seleccionados han sido removidos de la factura {self.name}.")
+
+        # Limpiar el campo de viajes a eliminar
+        self.write({'viajes_eliminar_ids': [(5, 0, 0)]})
+        _logger.info("Campo de viajes a eliminar ha sido limpiado.")
+
+        _logger.info("Proceso de eliminación de viajes finalizado.")
+
 
     def action_liquidar_viajes_desde_factura(self):
         self.ensure_one()  # Asegurarse de que solo una factura esté siendo procesada
@@ -177,3 +249,8 @@ class AccountMove(models.Model):
             self.write({'viajes_ids': [(4, vid) for vid in viajes_liquidados + viajes_pendientes]})
     
         _logger.info("Proceso de liquidación de viajes desde la factura finalizado.")
+
+
+
+
+
