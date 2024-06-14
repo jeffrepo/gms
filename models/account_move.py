@@ -183,8 +183,11 @@ class AccountMove(models.Model):
             else:
                 _logger.warning(f"Viaje {viaje.name} no está en estado 'liquidado' o 'pendiente_liquidar' y no se puede revertir.")
 
-        # Eliminar los viajes seleccionados de la factura
-        self.write({'viajes_ids': [(3, viaje.id) for viaje in self.viajes_eliminar_ids]})
+        # Eliminar los viajes seleccionados de los campos viajes_ids y viajes_liquidar_ids
+        self.write({
+            'viajes_ids': [(3, viaje.id) for viaje in self.viajes_eliminar_ids],
+            'viajes_liquidar_ids': [(3, viaje.id) for viaje in self.viajes_eliminar_ids]
+        })
         _logger.info(f"Viajes seleccionados han sido removidos de la factura {self.name}.")
 
         # Limpiar el campo de viajes a eliminar
