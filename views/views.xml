@@ -413,7 +413,7 @@
 
                             <group>
                             
-                                <field name="kg_pendiente_liquidar"/>
+                                <field name="kg_pendiente_liquidar" readonly="1" />
                                 <field name="remito" attrs="{'readonly': [('state', 'in', ['cancelado', 'terminado', 'liquidado'])]}" />
                                
                             </group>  
@@ -1192,6 +1192,9 @@
                         <field name="sale_order_ids" widget="statinfo" string="Órdenes de Venta"/>
                     </button>
 
+                    
+                   
+
                    
 
                 </xpath>
@@ -1203,25 +1206,44 @@
                 </xpath>
 
 
-                  <!-- Nueva pestaña "Liquidar Viajes" después de "Otra Información" -->
+                 <!-- Nueva pestaña "Liquidar Viajes" después de "Otra Información" -->
                 <xpath expr="//page[@name='other_info']" position="after">
                     <page name="liquidar_viajes" string="Liquidar Viajes">
                         <group>
-                            <field name="viajes_liquidar_ids" widget="many2many_tags" options="{'no_create_edit': True}" />
                             <group>
-                                 <field name="total_kg_seleccionados" readonly="1"/>
+                                <field name="viajes_liquidar_ids" widget="many2many_tags" options="{'no_create_edit': True}" />
+                                <field name="total_kg_seleccionados" readonly="1"/>
+                                <field name="total_kg_factura" readonly="1"/>
+                                <field name="kg_pendientes_liquidar" readonly="1"/>
+                            </group>
+                                                                              
+                             <!-- Campo para seleccionar viajes a eliminar -->
+                            <group>
+                                <field name="viajes_eliminar_ids" widget="many2many_tags" options="{'no_create_edit': True}" />
+                               
                             </group>
                         </group>
-                      
                     </page>
                 </xpath>
 
-                <xpath expr="//page[@name='liquidar_viajes']" position="inside">
-                    <button name="action_liquidar_viajes_desde_factura"
-                            type="object"
-                            string="Liquidar Viajes"
-                            class="btn-primary"
-                            icon="fa-check-circle" />
+                 <xpath expr="//page[@name='liquidar_viajes']" position="inside">
+                    <div class="oe_button_box" style="display: flex; justify-content: space-between;">
+                        <!-- Botón para Liquidar Viajes -->
+                        <button name="action_liquidar_viajes_desde_factura"
+                                type="object"
+                                string="Liquidar Viajes"
+                                class="btn btn-primary"
+                                style="width: 45%;"
+                                icon="fa-check-circle" />
+                        
+                        <!-- Botón para Eliminar Viajes -->
+                        <button name="action_eliminar_viajes"
+                                type="object"
+                                string="Eliminar Viajes"
+                                class="btn btn-danger"
+                                style="width: 45%;"
+                                icon="fa-times-circle" />
+                    </div>
                 </xpath>
                 
             </field>
