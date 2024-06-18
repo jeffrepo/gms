@@ -205,14 +205,32 @@ class AccountMove(models.Model):
     # Método para eliminar viajes seleccionados
     def action_eliminar_viajes(self):
         self.ensure_one()  # Asegurarse de que solo una factura esté siendo procesada
-
+    
         if not self.viajes_eliminar_ids:
             raise UserError("No se seleccionaron viajes para eliminar.")
-
+    
         _logger.info("Iniciando el proceso de eliminación de viajes...")
-
+    
         for viaje in self.viajes_eliminar_ids:
-            if viaje.state in ['liquidado', 'pendiente_liquidar']:
+            if viaje.state == 'liquidado':
+                # Si el viaje está en estado 'liquidado' y hay kg pendientes, revertir a 'pendiente_liquidar'
+                if viaje.kg_pendiente_liquidar > 0:
+                    viaje.write({
+                        'state': 'pendiente_liquidar',
+                        'kg_pendiente_liquidar': viaje.kg_pendiente_liquidar + viaje.kilogramos_a_liquidar,
+                        'factura_id': False
+                    })
+                    _logger.info(f"Viaje {viaje.name} ha sido revertido a 'pendiente_liquidar' con {viaje.kg_pendiente_liquidar} kg.")
+                else:
+                    # Si no hay kg pendientes, revertir a 'terminado'
+                    viaje.write({
+                        'state': 'terminado',
+                        'kg_pendiente_liquidar': 0,
+                        'factura_id': False
+                    })
+                    _logger.info(f"Viaje {viaje.name} ha sido revertido al estado 'terminado'.")
+            elif viaje.state == 'pendiente_liquidar':
+                # Si el viaje está en 'pendiente_liquidar', revertir a 'terminado'
                 viaje.write({
                     'state': 'terminado',
                     'kg_pendiente_liquidar': 0,
@@ -221,19 +239,21 @@ class AccountMove(models.Model):
                 _logger.info(f"Viaje {viaje.name} ha sido revertido al estado 'terminado'.")
             else:
                 _logger.warning(f"Viaje {viaje.name} no está en estado 'liquidado' o 'pendiente_liquidar' y no se puede revertir.")
-
+    
         # Eliminar los viajes seleccionados de los campos viajes_ids y viajes_liquidar_ids
         self.write({
             'viajes_ids': [(3, viaje.id) for viaje in self.viajes_eliminar_ids],
             'viajes_liquidar_ids': [(3, viaje.id) for viaje in self.viajes_eliminar_ids]
         })
         _logger.info(f"Viajes seleccionados han sido removidos de la factura {self.name}.")
-
+    
         # Limpiar el campo de viajes a eliminar
         self.write({'viajes_eliminar_ids': [(5, 0, 0)]})
         _logger.info("Campo de viajes a eliminar ha sido limpiado.")
-
+    
         _logger.info("Proceso de eliminación de viajes finalizado.")
+
+
 
 
     def action_liquidar_viajes_desde_factura(self):
