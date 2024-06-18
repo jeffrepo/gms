@@ -29,6 +29,13 @@ class AccountMove(models.Model):
     purchase_order_ids = fields.Many2many('purchase.order', string='Órdenes de Compra')
     sale_order_ids = fields.Many2many('sale.order', string='Órdenes de Venta', tracking=True)
 
+    estado_anterior = fields.Selection([
+        ('draft', 'Borrador'),
+        ('posted', 'Publicado'),
+        ('cancel', 'Cancelado'),
+        ('reversed', 'Revertido')
+    ], string='Estado Anterior', readonly=True)
+
     # total de kg seleccionados
     total_kg_seleccionados = fields.Float(
         string='Total kg a Liquidar', 
@@ -116,14 +123,46 @@ class AccountMove(models.Model):
                         picking.write({'owner_id': invoice.ap_id.id})
                         _logger.info(f"Actualizado owner_id en el albarán {picking.name} con el valor {invoice.ap_id.id}")
         return res
+        for record in self:
+            record.estado_anterior = record.state
+        return super(AccountMove, self).action_post()
+
+    def button_draft(self):
+        for record in self:
+            record.estado_anterior = record.state
+        return super(AccountMove, self).button_draft()
+    
+    def button_cancel(self):
+        for record in self:
+            record.estado_anterior = record.state
+        return super(AccountMove, self).button_cancel()
+    
+    def button_reversal(self):
+        for record in self:
+            record.estado_anterior = record.state
+        return super(AccountMove, self).button_reversal()
 
     def unlink(self):
         for record in self:
-            if record.state != 'draft' and record.viajes_ids:
-                raise UserError(_("No se puede eliminar la factura en estado '%s' porque está asociada a uno o más viajes.") % record.state)
-            if record.viajes_ids:
-                record.viajes_ids.write({'state': 'proceso'})
+            # Comprobar si la factura está o ha estado en estado 'posted' (publicado)
+            if record.estado_anterior == 'posted':
+                # Comprobar si hay viajes asociados
+                if record.viajes_ids:
+                    _logger.info(f"Procesando factura {record.name} que fue 'publicada' y ahora está en 'borrador' para eliminar. Actualizando viajes asociados.")
+                    
+                    # Actualizar el estado de cada viaje asociado a 'terminado'
+                    for viaje in record.viajes_ids:
+                        viaje.write({'state': 'terminado'})
+                        _logger.info(f"Viaje {viaje.name} asociado a la factura {record.name} ha sido actualizado a 'terminado'.")
+                else:
+                    _logger.info(f"No hay viajes asociados para la factura {record.name}.")
+            else:
+                _logger.info(f"La factura {record.name} no estuvo en estado 'publicado'. No se actualizarán los viajes asociados.")
+    
         return super(AccountMove, self).unlink()
+
+
+
 
     @api.model_create_multi 
     def create(self, vals_list):
