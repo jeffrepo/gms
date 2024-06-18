@@ -1097,6 +1097,8 @@
                 <tree string="Datos de Humedad">
                     <field name="humedad"/>
                     <field name="tarifa"/>
+                    <field name="tarifa_de_compra"/>
+                    
                 </tree>
             </field>
         </record>
@@ -1111,6 +1113,7 @@
                         <group>
                             <field name="humedad"/>
                             <field name="tarifa"/>
+                            <field name="tarifa_de_compra"/>
                         </group>
                     </sheet>
                     <div class="oe_chatter">
@@ -1130,6 +1133,7 @@
                 <tree string="Datos de Flete">
                     <field name="flete_km"/>
                     <field name="tarifa"/>
+                    <field name="tarifa_de_compra"/>
                 </tree>
             </field>
         </record>
@@ -1145,6 +1149,7 @@
                         <group>
                             <field name="flete_km"/>
                             <field name="tarifa"/>
+                            <field name="tarifa_de_compra"/>
                         </group>
                     </sheet>
                      <div class="oe_chatter">
