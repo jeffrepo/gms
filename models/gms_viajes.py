@@ -260,13 +260,17 @@ class Viajes(models.Model):
         self.write({'state': 'pendiente_liquidar'})
         
     def action_proceso(self):
-        # Eliminar gastos de viaje existentes
-        gastos_viaje = self.env['gms.gasto_viaje'].search([('viaje_id', '=', self.id)])
-        gastos_viaje.unlink()  # Esto eliminará todos los gastos asociados al viaje actual
-
+        # Buscar y eliminar solo los gastos de viaje con valor 0
+        gastos_viaje = self.env['gms.gasto_viaje'].search([
+            ('viaje_id', '=', self.id),
+            ('precio_total', '=', 0)
+        ])
+        gastos_viaje.unlink()  # Esto eliminará solo los gastos con valor 0
+    
         self.actualizar_ubicacion_destino()
-
+    
         self.write({'state': 'proceso'})
+
 
 
     def action_cancel(self):
@@ -281,113 +285,96 @@ class Viajes(models.Model):
         self.determinar_y_asignar_gasto_viaje()
         self.write({'state': 'terminado'})
         self.actualizar_ubicacion_destino()
-        # Guarda la fecha y hora actual
         fecha_hora_actual = fields.Datetime.now()
-
-        # Busca el registro en gms.historial que tenga la misma agenda_id que el nombre del viaje
         historial = self.env['gms.historial'].search([('agenda_id.name', '=', self.name)], limit=1)
 
         if historial:
-            # Actualiza la fecha_hora_liberacion en el registro existente
             historial.write({'fecha_hora_liberacion': fecha_hora_actual})
 
-        # Recupera el camión asociado a este viaje (si existe)
-        camion_id = self.camion_disponible_id.camion_id.id if self.camion_disponible_id else False
+        if self.camion_disponible_id:
+            self.camion_disponible_id.estado = "disponible"
+            self.camion_disponible_id.fecha_hora_liberacion = fecha_hora_actual
 
-         # Actualiza el estado del camión a 'disponible' si existe
-        self.camion_disponible_id.estado = "disponible"
-        self.camion_disponible_id.fecha_hora_liberacion = fecha_hora_actual
         medida_obj = self.env['gms.medida.propiedad']
         medidas = medida_obj.search([('viaje_id', '=', self.id)])
-
-        # Llamamos al método _onchange_calculate_merma para cada medida encontrada
         for medida in medidas:
             medida._onchange_calculate_merma()
 
-        fecha_hora_actual = fields.Datetime.now()
-            # Establece la fecha y hora de partida para el viaje
         self.partida = fecha_hora_actual
-
 
         if self.tipo_viaje == 'entrada':
             self.enviar_sms_solicitante()
 
-
         if self.tipo_viaje in ['entrada', 'salida']:
-            # Obtener los productos de configuración
             config = self.env['res.config.settings'].default_get([])
             producto_secado_id = config.get('producto_secado_id')
             producto_pre_limpieza_id = config.get('producto_pre_limpieza_id')
             producto_flete_puerto_id = config.get('producto_flete_puerto_id')
+            producto_flete_id = config.get('producto_flete_id')
 
-            # Obtener la moneda de compra del proveedor
             moneda_proveedor_id = self.transportista_id.property_purchase_currency_id.id
 
-            # Obtener el valor de medida para humedad
-            valor_medida = 0
-            for medida in self.medidas_propiedades_ids:
-                valor_medida = medida.valor_medida
+            valor_medida = sum(medida.valor_medida for medida in self.medidas_propiedades_ids)
 
-           # Buscar la coincidencia en gms.datos_humedad para calcular el precio total del secado
+            # Llama a buscar_humedad_cercana que ahora devuelve solo la tarifa
             tarifa_humedad = self.env['gms.datos_humedad'].buscar_humedad_cercana(valor_medida)
-            _logger.info(f'Tarifa de humedad encontrada: {tarifa_humedad}')
-            _logger.info(f'Tarifa de humedad encontrada 4 c: {tarifa_humedad:.4f}')
-
-
-            # El cálculo del precio total del secado se ajusta para usar valor_medida de humedad
+            _logger.info(f'Valor medida: {valor_medida}, Tarifa humedad: {tarifa_humedad}')
+    
+            if not isinstance(tarifa_humedad, (int, float)):
+                _logger.error(f'Tarifa humedad no es un número: {tarifa_humedad}')
+                tarifa_humedad = 0.0
+    
             precio_total_secado = (valor_medida * tarifa_humedad) / 1000
             _logger.info(f'Precio total del secado calculado: {precio_total_secado}')
+           
 
-            # Para el producto de Pre Limpieza
             producto_pre_limpieza = self.env['product.product'].browse(producto_pre_limpieza_id)
             precio_total_pre_limpieza = self.peso_neto * producto_pre_limpieza.lst_price if producto_pre_limpieza else 0
 
-            # Obtener el valor de kilometros_flete para calcular el precio total del flete puerto
             kilometros_flete = self.kilometros_flete
-
-            # Obtener el valor de 'cantidad_kilos_flete_puerto' de la configuración
             config_params = self.env['ir.config_parameter'].sudo()
             cantidad_kilos_flete_puerto = float(config_params.get_param('gms.cantidad_kilos_flete_puerto', 0.0))
 
-            # Buscar coincidencia en gms.datos_flete
             tarifa_flete = self.env['gms.datos_flete'].buscar_flete_cercano(kilometros_flete)
-
-
-            # Calcular el precio_total_flete para 'Flete Puerto'
             precio_total_flete_puerto = cantidad_kilos_flete_puerto * self.kilogramos_a_liquidar
+            precio_total_flete = self.peso_neto * kilometros_flete * tarifa_flete
 
-            # Crear las líneas de gasto si los productos están configurados
-            if producto_secado_id:
-                self.env['gms.gasto_viaje'].create({
-                    'name': 'Secado',
-                    'producto_id': producto_secado_id,
-                    'precio_total': precio_total_secado,
-                    'viaje_id': self.id,
-                    'estado_compra': 'no_aplica',
+            self._actualizar_o_crear_gasto('Secado', producto_secado_id, precio_total_secado, moneda_proveedor_id)
+            self._actualizar_o_crear_gasto('Pre Limpieza', producto_pre_limpieza_id, precio_total_pre_limpieza, moneda_proveedor_id)
+            self._actualizar_o_crear_gasto('Flete Puerto', producto_flete_puerto_id, precio_total_flete_puerto, moneda_proveedor_id)
+
+            if self.agenda:
+                self._actualizar_o_crear_gasto('Flete', producto_flete_id, precio_total_flete, moneda_proveedor_id, estado_compra='no_comprado')
+            else:
+                _logger.info(f'El viaje {self.name} no está asociado a ninguna agenda. No se creó ni actualizó el gasto de Flete.')
+
+    def _actualizar_o_crear_gasto(self, name, producto_id, precio_total, moneda_proveedor_id, estado_compra='no_aplica'):
+        if producto_id:
+            gasto_viaje = self.env['gms.gasto_viaje'].search([
+                ('viaje_id', '=', self.id),
+                ('name', '=', name)
+            ], limit=1)
+    
+            if gasto_viaje:
+                if gasto_viaje.estado_compra in ['comprado']:
+                    _logger.error(f'El gasto "{name}" no se puede actualizar porque ya tiene una orden de compra asociada.')
+                    raise UserError(f'El gasto "{name}" no se puede actualizar porque ya tiene una orden de compra asociada.')
+    
+                _logger.info(f'Actualizando gasto existente: {name}, Precio total: {precio_total}')
+                gasto_viaje.write({
+                    'precio_total': precio_total,
                     'moneda_id': moneda_proveedor_id
                 })
-
-            if producto_pre_limpieza_id:
+            else:
+                _logger.info(f'Creando nuevo gasto: {name}, Precio total: {precio_total}, Estado compra: {estado_compra}')
                 self.env['gms.gasto_viaje'].create({
-                    'name': 'Pre Limpieza',
-                    'producto_id': producto_pre_limpieza_id,
-                    'precio_total': precio_total_pre_limpieza,
+                    'name': name,
+                    'producto_id': producto_id,
+                    'precio_total': precio_total,
                     'viaje_id': self.id,
-                    'estado_compra': 'no_aplica',
+                    'estado_compra': estado_compra,
                     'moneda_id': moneda_proveedor_id
                 })
-
-            if producto_flete_puerto_id:
-                self.env['gms.gasto_viaje'].create({
-                    'name': 'Flete Puerto',
-                    'producto_id': producto_flete_puerto_id,
-                    'precio_total': precio_total_flete_puerto,
-                    'viaje_id': self.id,
-                    'estado_compra': 'no_aplica',
-                    'moneda_id': moneda_proveedor_id
-                })
-
-
 
 
 
@@ -478,41 +465,55 @@ class Viajes(models.Model):
 
     def action_generate_purchase_order(self):
         PurchaseOrder = self.env['purchase.order']
-
+    
         # Agrupa los viajes por transportista
         grouped_trips_by_transportista = {}
         for trip in self:
             if trip.transportista_id not in grouped_trips_by_transportista:
                 grouped_trips_by_transportista[trip.transportista_id] = []
             grouped_trips_by_transportista[trip.transportista_id].append(trip)
-
+    
+        # Preparar el ID de la moneda USD
+        usd_currency = self.env['res.currency'].search([('name', '=', 'USD')], limit=1)
+        usd_currency_id = usd_currency.id if usd_currency else False
+    
         # Por cada transportista, crea una orden de compra
         for transportista, trips in grouped_trips_by_transportista.items():
             po_vals = {
                 'partner_id': transportista.id,
+                'currency_id': usd_currency_id,
                 'order_line': [],
             }
-
+    
             # Guarda una relación entre gastos y líneas de compra
             gastos_and_po_lines = {}
-            # Preparar valores para la factura
-            usd_currency_id = self.env['res.currency'].search([('name', '=', 'USD')], limit=1).id
             for trip in trips:
                 for gasto in trip.gastos_ids:
                     if gasto.estado_compra == 'no_comprado':
-                        po_line_vals = {
-                            'product_id': gasto.producto_id.id,
-                            'name': f"Peso Neto: {trip.peso_neto} kg, Kilómetros Flete: {trip.kilometros_flete} km, {trip.name}",
-                            'product_qty': 1,
-                            'price_unit': gasto.precio_total,
-                            'product_uom': gasto.producto_id.uom_id.id,
-                            'currency_id': usd_currency_id,
-                            'date_planned': fields.Date.today(),
-                        }
+                        if gasto.name == 'Flete':
+                            tarifa_de_compra = self.env['gms.datos_flete'].buscar_tarifa_compra_cercana(trip.kilometros_flete)
+                            price_unit = trip.peso_neto * trip.kilometros_flete * tarifa_de_compra
+                            po_line_vals = {
+                                'product_id': gasto.producto_id.id,
+                                'name': f"Flete: {trip.name}",
+                                'product_qty': trip.kilometros_flete,
+                                'price_unit': price_unit,
+                                'product_uom': gasto.producto_id.uom_id.id,
+                                'date_planned': fields.Date.today(),
+                            }
+                        else:
+                            po_line_vals = {
+                                'product_id': gasto.producto_id.id,
+                                'name': f"Peso Neto: {trip.peso_neto} kg, Kilómetros Flete: {trip.kilometros_flete} km, {trip.name}",
+                                'product_qty': 1,
+                                'price_unit': gasto.precio_total,
+                                'product_uom': gasto.producto_id.uom_id.id,
+                                'date_planned': fields.Date.today(),
+                            }
                         po_vals['order_line'].append((0, 0, po_line_vals))
                         # Asociar el gasto con esta línea de orden de compra
                         gastos_and_po_lines[gasto] = po_line_vals
-
+    
             if po_vals['order_line']:
                 purchase_order = PurchaseOrder.create(po_vals)
                 for trip in trips:
@@ -522,11 +523,12 @@ class Viajes(models.Model):
                                 'purchase_order_id': purchase_order.id,
                                 'estado_compra': 'comprado'
                             })
-
+    
         return {
             'type': 'ir.actions.client',
             'tag': 'reload',
         }
+
 
 
 
@@ -716,6 +718,9 @@ class Viajes(models.Model):
                 'moneda_id': moneda_proveedor_id,
                 'estado_compra': 'no_comprado'
             })
+
+
+          
 
 
     def _get_gasto_viaje_producto_id(self):
