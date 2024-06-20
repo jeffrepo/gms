@@ -282,78 +282,82 @@ class Viajes(models.Model):
         return True
 
     def action_terminado(self):
-        self.determinar_y_asignar_gasto_viaje()
+        #self.determinar_y_asignar_gasto_viaje()
         self.write({'state': 'terminado'})
         self.actualizar_ubicacion_destino()
         fecha_hora_actual = fields.Datetime.now()
         historial = self.env['gms.historial'].search([('agenda_id.name', '=', self.name)], limit=1)
-
+    
         if historial:
             historial.write({'fecha_hora_liberacion': fecha_hora_actual})
-
+    
         if self.camion_disponible_id:
             self.camion_disponible_id.estado = "disponible"
             self.camion_disponible_id.fecha_hora_liberacion = fecha_hora_actual
-
+    
         medida_obj = self.env['gms.medida.propiedad']
         medidas = medida_obj.search([('viaje_id', '=', self.id)])
         for medida in medidas:
             medida._onchange_calculate_merma()
-
+    
         self.partida = fecha_hora_actual
-
+    
         if self.tipo_viaje == 'entrada':
             self.enviar_sms_solicitante()
-
+    
         if self.tipo_viaje in ['entrada', 'salida']:
             config = self.env['res.config.settings'].default_get([])
             producto_secado_id = config.get('producto_secado_id')
             producto_pre_limpieza_id = config.get('producto_pre_limpieza_id')
             producto_flete_puerto_id = config.get('producto_flete_puerto_id')
-            producto_flete_id = config.get('producto_flete_id')
-
+            gasto_viaje_con_impuesto_id = config.get('gasto_viaje_con_impuesto_id')
+    
             moneda_proveedor_id = self.transportista_id.property_purchase_currency_id.id
-
+    
             valor_medida = sum(medida.valor_medida for medida in self.medidas_propiedades_ids)
-
-            # Llama a buscar_humedad_cercana que ahora devuelve solo la tarifa
+    
             tarifa_humedad = self.env['gms.datos_humedad'].buscar_humedad_cercana(valor_medida)
             _logger.info(f'Valor medida: {valor_medida}, Tarifa humedad: {tarifa_humedad}')
-    
+        
             if not isinstance(tarifa_humedad, (int, float)):
                 _logger.error(f'Tarifa humedad no es un número: {tarifa_humedad}')
                 tarifa_humedad = 0.0
-    
+        
             precio_total_secado = (valor_medida * tarifa_humedad) / 1000
             _logger.info(f'Precio total del secado calculado: {precio_total_secado}')
            
-
             producto_pre_limpieza = self.env['product.product'].browse(producto_pre_limpieza_id)
             precio_total_pre_limpieza = self.peso_neto * producto_pre_limpieza.lst_price if producto_pre_limpieza else 0
-
+    
             kilometros_flete = self.kilometros_flete
             config_params = self.env['ir.config_parameter'].sudo()
             cantidad_kilos_flete_puerto = float(config_params.get_param('gms.cantidad_kilos_flete_puerto', 0.0))
-
+    
             tarifa_flete = self.env['gms.datos_flete'].buscar_flete_cercano(kilometros_flete)
             precio_total_flete_puerto = cantidad_kilos_flete_puerto * self.kilogramos_a_liquidar
-            precio_total_flete = self.peso_neto * kilometros_flete * tarifa_flete
-
+            precio_total_flete = self.peso_neto * tarifa_flete
+    
+            _logger.info(f'Precio total calculado para Flete: {precio_total_flete}')
+    
             self._actualizar_o_crear_gasto('Secado', producto_secado_id, precio_total_secado, moneda_proveedor_id)
             self._actualizar_o_crear_gasto('Pre Limpieza', producto_pre_limpieza_id, precio_total_pre_limpieza, moneda_proveedor_id)
             self._actualizar_o_crear_gasto('Flete Puerto', producto_flete_puerto_id, precio_total_flete_puerto, moneda_proveedor_id)
-
+    
             if self.agenda:
-                self._actualizar_o_crear_gasto('Flete', producto_flete_id, precio_total_flete, moneda_proveedor_id, estado_compra='no_comprado')
+                _logger.info(f'El viaje {self.name} tiene agenda asociada. Creando/actualizando gasto de Flete.')
+                self._crear_o_actualizar_gasto_flete('Flete', gasto_viaje_con_impuesto_id, precio_total_flete, moneda_proveedor_id, estado_compra='no_comprado')
+               
             else:
                 _logger.info(f'El viaje {self.name} no está asociado a ninguna agenda. No se creó ni actualizó el gasto de Flete.')
 
+    
     def _actualizar_o_crear_gasto(self, name, producto_id, precio_total, moneda_proveedor_id, estado_compra='no_aplica'):
         if producto_id:
             gasto_viaje = self.env['gms.gasto_viaje'].search([
                 ('viaje_id', '=', self.id),
                 ('name', '=', name)
             ], limit=1)
+        
     
             if gasto_viaje:
                 if gasto_viaje.estado_compra in ['comprado']:
@@ -367,14 +371,61 @@ class Viajes(models.Model):
                 })
             else:
                 _logger.info(f'Creando nuevo gasto: {name}, Precio total: {precio_total}, Estado compra: {estado_compra}')
-                self.env['gms.gasto_viaje'].create({
+                new_gasto = self.env['gms.gasto_viaje'].create({
                     'name': name,
                     'producto_id': producto_id,
                     'precio_total': precio_total,
                     'viaje_id': self.id,
                     'estado_compra': estado_compra,
                     'moneda_id': moneda_proveedor_id
+                    
                 })
+                if new_gasto:
+                    _logger.info(f'Gasto "{name}" creado con éxito: ID={new_gasto.id}')
+                else:
+                    _logger.error(f'Error al crear el gasto "{name}". Verifique los datos de entrada y las restricciones del modelo.')
+
+
+
+    def _crear_o_actualizar_gasto_flete(self, name, producto_id, precio_total, moneda_proveedor_id, estado_compra='no_comprado'):
+        if producto_id:
+            gasto_viaje = self.env['gms.gasto_viaje'].search([
+                ('viaje_id', '=', self.id),
+                ('name', '=', name)
+            ], limit=1)
+            
+            proveedor_id = self.transportista_id.id
+            _logger.debug(f'Parámetros de creación/actualización para Flete: name={name}, producto_id={producto_id}, precio_total={precio_total}, moneda_proveedor_id={moneda_proveedor_id}, proveedor_id={proveedor_id}')
+    
+            if gasto_viaje:
+                if gasto_viaje.estado_compra in ['comprado']:
+                    _logger.error(f'El gasto "{name}" no se puede actualizar porque ya tiene una orden de compra asociada.')
+                    raise UserError(f'El gasto "{name}" no se puede actualizar porque ya tiene una orden de compra asociada.')
+    
+                _logger.info(f'Actualizando gasto de Flete existente: {name}, Precio total: {precio_total}')
+                gasto_viaje.write({
+                    'precio_total': precio_total,
+                    'moneda_id': moneda_proveedor_id,
+                    'proveedor_id': proveedor_id
+                })
+            else:
+                _logger.info(f'Creando nuevo gasto de Flete: {name}, Precio total: {precio_total}, Estado compra: {estado_compra}')
+                new_gasto = self.env['gms.gasto_viaje'].create({
+                    'name': name,
+                    'producto_id': producto_id,
+                    'precio_total': precio_total,
+                    'viaje_id': self.id,
+                    'estado_compra': estado_compra,
+                    'moneda_id': moneda_proveedor_id,
+                    'proveedor_id': proveedor_id
+                })
+                if new_gasto:
+                    _logger.info(f'Gasto de Flete "{name}" creado con éxito: ID={new_gasto.id}')
+                else:
+                    _logger.error(f'Error al crear el gasto de Flete "{name}". Verifique los datos de entrada y las restricciones del modelo.')
+    
+
+
 
 
 
@@ -492,11 +543,11 @@ class Viajes(models.Model):
                     if gasto.estado_compra == 'no_comprado':
                         if gasto.name == 'Flete':
                             tarifa_de_compra = self.env['gms.datos_flete'].buscar_tarifa_compra_cercana(trip.kilometros_flete)
-                            price_unit = trip.peso_neto * trip.kilometros_flete * tarifa_de_compra
+                            price_unit = trip.peso_neto * tarifa_de_compra
                             po_line_vals = {
                                 'product_id': gasto.producto_id.id,
                                 'name': f"Flete: {trip.name}",
-                                'product_qty': trip.kilometros_flete,
+                                'product_qty': trip.peso_neto,
                                 'price_unit': price_unit,
                                 'product_uom': gasto.producto_id.uom_id.id,
                                 'date_planned': fields.Date.today(),
@@ -698,26 +749,10 @@ class Viajes(models.Model):
             # Obtener el precio unitario del producto
             precio_unitario = producto.standard_price
 
-            # Buscar la tarifa de flete más cercana
-            kilometros_flete = self.kilometros_flete  # Asegúrate de que `self.kilometros_flete` esté definido correctamente
-            tarifa_flete = self.env['gms.datos_flete'].buscar_flete_cercano(kilometros_flete)
-
-            # Calcular el precio total multiplicando por los kilómetros de la ruta
-            precio_total_flete = self.peso_neto * self.kilometros_flete * tarifa_flete
-
             # Obtener la moneda de compra del proveedor
             moneda_proveedor_id = self.transportista_id.property_purchase_currency_id.id if self.transportista_id else False
 
-            # Crear nuevo registro de gasto de viaje
-            self.env['gms.gasto_viaje'].create({
-                'name': 'Flete',
-                'producto_id': producto_gasto_id,
-                'viaje_id': self.id,
-                'precio_total': precio_total_flete,
-                'proveedor_id': self.transportista_id.id,
-                'moneda_id': moneda_proveedor_id,
-                'estado_compra': 'no_comprado'
-            })
+           
 
 
           
@@ -760,7 +795,7 @@ class Viajes(models.Model):
             record.message_post(body="Este viaje fue creado desde una agenda.", subtype_xmlid="mail.mt_note")
 
         # Asignar la ruta y los gastos del viaje
-        self._asignar_ruta_y_gastos(record, vals)
+        #self._asignar_ruta_y_gastos(record, vals)
 
         return record
 
@@ -776,8 +811,7 @@ class Viajes(models.Model):
         if ruta:
             record.ruta_id = ruta.id
 
-        # Asignar los gastos de viaje
-        record.determinar_y_asignar_gasto_viaje()
+       
 
 
 

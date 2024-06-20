@@ -1244,7 +1244,7 @@
                         <!-- Botón para Eliminar Viajes -->
                         <button name="action_eliminar_viajes"
                                 type="object"
-                                string="Eliminar Viajes"
+                                string="Cancelar Liquidación"
                                 class="btn btn-danger"
                                 style="width: 45%;"
                                 icon="fa-times-circle" />
