@@ -543,10 +543,10 @@ class Viajes(models.Model):
                     if gasto.estado_compra == 'no_comprado':
                         if gasto.name == 'Flete':
                             tarifa_de_compra = self.env['gms.datos_flete'].buscar_tarifa_compra_cercana(trip.kilometros_flete)
-                            price_unit = trip.peso_neto * tarifa_de_compra
+                            price_unit = tarifa_de_compra
                             po_line_vals = {
                                 'product_id': gasto.producto_id.id,
-                                'name': f"Flete: {trip.name}",
+                                'name': f"Peso Neto: {trip.peso_neto} kg, Kilómetros Flete: {trip.kilometros_flete} km, {trip.name}",
                                 'product_qty': trip.peso_neto,
                                 'price_unit': price_unit,
                                 'product_uom': gasto.producto_id.uom_id.id,
