@@ -53,6 +53,7 @@ class AccountMove(models.Model):
         readonly=True
     )
 
+   
     # Campo para seleccionar viajes a eliminar
     viajes_eliminar_ids = fields.Many2many(
         'gms.viaje', 
@@ -232,40 +233,41 @@ class AccountMove(models.Model):
 
 
 
+   
     def action_liquidar_viajes_desde_factura(self):
         self.ensure_one()  # Asegurarse de que solo una factura esté siendo procesada
-    
+
         if not self.viajes_liquidar_ids:
             raise UserError("No se seleccionaron viajes para liquidar.")
-    
+
         _logger.info("Iniciando el proceso de liquidación de viajes desde la factura...")
-    
+
         # Verificar si la factura ya tiene un viaje en estado 'pendiente_liquidar'
         if any(viaje.state == 'pendiente_liquidar' for viaje in self.viajes_ids):
             raise UserError("No se pueden agregar más viajes se paso de la cantidad a liquidar.")
-    
+
         # Obtener la línea de la factura y su cantidad
         if len(self.invoice_line_ids) != 1:
             raise UserError("La factura debe tener exactamente una línea de producto.")
-    
+
         linea_factura = self.invoice_line_ids[0]
         cantidad_factura = linea_factura.quantity
-    
+
         # Filtrar solo los viajes que no están liquidados
         viajes_a_liquidar = self.viajes_liquidar_ids.filtered(lambda v: v.state != 'liquidado')
-    
+
         if not viajes_a_liquidar:
             raise UserError("Todos los viajes seleccionados ya están liquidados. No hay nada para procesar.")
-    
+
         viajes_liquidados = []  # Lista para almacenar los viajes que se liquidan
         viajes_pendientes = []  # Lista para almacenar los viajes que quedan pendientes
-    
+
         for viaje in viajes_a_liquidar:
             _logger.info(f"Procesando viaje: {viaje.name}")
-    
+
             # Determinar la cantidad a liquidar, usando kg_pendiente_liquidar si el viaje está en estado 'pendiente_liquidar'
             kg_a_liquidar = viaje.kg_pendiente_liquidar if viaje.state == 'pendiente_liquidar' else viaje.kilogramos_a_liquidar
-    
+
             # Restar la cantidad del viaje de la cantidad de la factura
             if cantidad_factura >= kg_a_liquidar:
                 # Se puede liquidar completamente este viaje
@@ -281,14 +283,15 @@ class AccountMove(models.Model):
                 cantidad_factura = 0  # No queda cantidad disponible en la factura para más viajes
                 viajes_pendientes.append(viaje.id)
                 break  # Se interrumpe el proceso al no poder liquidar más
-    
+
+        # Validar que el campo kg_pendientes_liquidar no sea negativo
+        if self.kg_pendientes_liquidar < 0:
+            ultimo_viaje = self.viajes_liquidar_ids[-1]
+            kg_pendientes = ultimo_viaje.kg_pendiente_liquidar if ultimo_viaje.state == 'pendiente_liquidar' else ultimo_viaje.kilogramos_a_liquidar - abs(self.kg_pendientes_liquidar)
+            ultimo_viaje.write({'state': 'pendiente_liquidar', 'kg_pendiente_liquidar': self.kg_pendientes_liquidar * -1, 'factura_id': self.id})
+
         # Actualizar el campo 'viajes_ids' en la factura para incluir todos los viajes procesados
         if viajes_liquidados or viajes_pendientes:
             self.write({'viajes_ids': [(4, vid) for vid in viajes_liquidados + viajes_pendientes]})
-    
+
         _logger.info("Proceso de liquidación de viajes desde la factura finalizado.")
-
-
-
-
-
