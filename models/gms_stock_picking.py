@@ -297,4 +297,16 @@ class StockPicking(models.Model):
                 # Establecer 'owner_id' igual a 'partner_id'
                 vals['owner_id'] = vals.get('partner_id')
         return super(StockPicking, self).create(vals)
+
+
+
+
+
+    def actualizar_viajes_sale_order_id(self):
+        viajes = self.env['gms.viaje'].search([('albaran_id', 'in', self.ids)])
+        for viaje in viajes:
+            if viaje.albaran_id and viaje.albaran_id.origin:
+                sale_order = self.env['sale.order'].search([('name', '=', viaje.albaran_id.origin)], limit=1)
+                if sale_order:
+                    viaje.write({'sale_order_id': sale_order.id})
         
