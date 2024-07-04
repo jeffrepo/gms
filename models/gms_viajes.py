@@ -1091,3 +1091,19 @@ class Viajes(models.Model):
             if field in vals and vals[field] < 0:
                 raise UserError(_("%s no puede ser negativo." % field))
         return super(Viajes, self).write(vals)
+
+
+
+
+
+    def actualizar_sale_order_id(self):
+        # Busca todos los viajes
+        viajes = self.search([])
+        for viaje in viajes:
+            if viaje.albaran_id and viaje.albaran_id.origin:
+                # Busca la orden de venta relacionada con el campo origin del albarán
+                sale_order = self.env['sale.order'].search([('name', '=', viaje.albaran_id.origin)], limit=1)
+                if sale_order:
+                    viaje.write({'sale_order_id': sale_order.id})
+
+
