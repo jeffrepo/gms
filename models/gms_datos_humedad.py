@@ -11,8 +11,8 @@ class DatosHumedad(models.Model):
     follower_ids = fields.Many2many('res.users', string='Followers')
 
     humedad = fields.Float(string='Humedad')
-    tarifa = fields.Float(string='Tarifa', digits=(16, 4))
-    tarifa_de_compra = fields.Float(string='Tarifa de Compra', digits=(16, 4))
+    tarifa = fields.Float(string='Tarifa',  digits=(16, 7))
+    tarifa_de_compra = fields.Float(string='Tarifa de Compra',  digits=(16, 7))
 
 
    
