@@ -976,7 +976,7 @@ class Viajes(models.Model):
                     'name': f"{viaje.name} - {viaje.producto_transportado_id.name}",
                     'quantity': viaje.kilogramos_a_liquidar,
                     'price_unit': viaje.producto_transportado_id.lst_price,
-                    'account_id': viaje.producto_transportado_id.categ_id.property_account_income_categ_id.id,
+                    'account_id': viaje.producto_transportado_id.categ_id.property_account_expense_categ_id.id,
                     'purchase_line_id': purchase_line.id,
                 })
             else:  # 'salida'
@@ -1000,7 +1000,7 @@ class Viajes(models.Model):
                     'name': f"{viaje.name} - {viaje.producto_transportado_id.name}",
                     'quantity': viaje.kilogramos_a_liquidar,
                     'price_unit': viaje.producto_transportado_id.lst_price,
-                    'account_id' : viaje.producto_transportado_id.categ_id.property_account_expense_categ_id.id,
+                    'account_id' : viaje.producto_transportado_id.categ_id.property_account_income_categ_id.id,
                     'sale_line_ids': [(4, sale_line.id)], 
                 })
 

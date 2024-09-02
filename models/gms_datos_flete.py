@@ -10,8 +10,8 @@ class DatosFlete(models.Model):
 
     follower_ids = fields.Many2many('res.users', string='Followers')
     flete_km = fields.Float(string='Flete kilometros')
-    tarifa = fields.Float(string='Tarifa', digits=(16, 4))  # 4 decimales
-    tarifa_de_compra = fields.Float(string='Tarifa de Compra', digits=(16, 4))  # Nuevo campo
+    tarifa = fields.Float(string='Tarifa', digits=(16, 7))  # 4 decimales
+    tarifa_de_compra = fields.Float(string='Tarifa de Compra', digits=(16, 7))  # Nuevo campo
 
     def buscar_flete_cercano(self, kilometros_flete):
         candidatos = self.search([], order='flete_km')
