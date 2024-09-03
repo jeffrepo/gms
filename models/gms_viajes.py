@@ -6,7 +6,7 @@ import paramiko
 import logging
 import requests
 import asyncio
-from asyncvnc import Client
+#from asyncvnc import Client
 import serial
 
 _logger = logging.getLogger(__name__)
@@ -361,9 +361,10 @@ class Viajes(models.Model):
     
             if gasto_viaje:
                 if gasto_viaje.estado_compra in ['comprado']:
-                    _logger.error(f'El gasto "{name}" no se puede actualizar porque ya tiene una orden de compra asociada.')
-                    raise UserError(f'El gasto "{name}" no se puede actualizar porque ya tiene una orden de compra asociada.')
-    
+                    _logger.info(f'El gasto "{name}" no se actualizará porque ya tiene una orden de compra asociada.')
+                    # Aquí omitimos la actualización y simplemente continuamos
+                    return
+                
                 _logger.info(f'Actualizando gasto existente: {name}, Precio total: {precio_total}')
                 gasto_viaje.write({
                     'precio_total': precio_total,
@@ -396,12 +397,13 @@ class Viajes(models.Model):
             
             proveedor_id = self.transportista_id.id
             _logger.debug(f'Parámetros de creación/actualización para Flete: name={name}, producto_id={producto_id}, precio_total={precio_total}, moneda_proveedor_id={moneda_proveedor_id}, proveedor_id={proveedor_id}')
-    
+
             if gasto_viaje:
                 if gasto_viaje.estado_compra in ['comprado']:
-                    _logger.error(f'El gasto "{name}" no se puede actualizar porque ya tiene una orden de compra asociada.')
-                    raise UserError(f'El gasto "{name}" no se puede actualizar porque ya tiene una orden de compra asociada.')
-    
+                    _logger.info(f'El gasto "{name}" no se actualizará porque ya tiene una orden de compra asociada.')
+                    # Omitimos la actualización y continuamos
+                    return
+                
                 _logger.info(f'Actualizando gasto de Flete existente: {name}, Precio total: {precio_total}')
                 gasto_viaje.write({
                     'precio_total': precio_total,
@@ -423,7 +425,7 @@ class Viajes(models.Model):
                     _logger.info(f'Gasto de Flete "{name}" creado con éxito: ID={new_gasto.id}')
                 else:
                     _logger.error(f'Error al crear el gasto de Flete "{name}". Verifique los datos de entrada y las restricciones del modelo.')
-    
+
 
 
 
