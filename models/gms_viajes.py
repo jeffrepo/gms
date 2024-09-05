@@ -2,12 +2,8 @@ from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 from collections import defaultdict
 import datetime
-#import paramiko
 import logging
-#import requests
 import asyncio
-#from asyncvnc import Client
-#import serial
 
 _logger = logging.getLogger(__name__)
 
