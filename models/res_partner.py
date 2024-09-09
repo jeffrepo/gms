@@ -4,12 +4,12 @@ from odoo.exceptions import UserError
 class ResPartner(models.Model):
     _inherit = 'res.partner'
 
-    transportista = fields.Boolean(string='Transportista', tracking="1")
+    transportista = fields.Boolean(string='Transportista', tracking= 1)
     camiones_ids = fields.One2many(
         'gms.camiones', 
         'transportista_id', 
         string='Camiones', 
-        tracking="1", 
+        tracking= 1, 
         domain="[('transportista_id', '=', id)]",readonly=True
     )
     tipo = fields.Selection([

@@ -1,13 +1,7 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
-from collections import defaultdict
-import datetime
-import paramiko
 import logging
-import requests
-import asyncio
-#from asyncvnc import Client
-import serial
+
 
 _logger = logging.getLogger(__name__)
 
@@ -837,49 +831,6 @@ class Viajes(models.Model):
             self.conductor_id = self.camion_id.conductor_id.id
         else:
             self.conductor_id = False
-
-
-
-
-    def leer_peso_balanza_archivo(self):
-        balanza = self.balanza_id
-        if not balanza:
-            raise UserError("Selecciona una balanza primero.")
-
-
-        archivo_datos = '/Users/balanza/datos_balanza.txt'
-
-        try:
-            # Conectar vía SSH al servidor
-            ssh = paramiko.SSHClient()
-            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            ssh.connect(balanza.direccion_servidor, username=balanza.usuario, password=balanza.contrasena)
-
-            # Comando para obtener la última línea del archivo de datos
-            comando_ssh = f"tail -n 1 {archivo_datos}"
-            stdin, stdout, stderr = ssh.exec_command(comando_ssh)
-            ultima_linea = stdout.read().decode().strip()
-
-            ssh.close()
-
-            if ultima_linea:
-                peso = float(ultima_linea.split(' - Peso: ')[1])
-                return peso
-            else:
-                raise UserError("No se recibieron datos de la balanza.")
-        except Exception as e:
-            _logger.error(f"Error al leer los datos de la balanza: {e}")
-            raise UserError(f"No se pudo leer el peso de la balanza: {e}")
-
-    def accion_leer_balanza(self):
-        self.ensure_one()
-        try:
-            peso = self.leer_peso_balanza_archivo()
-            self.write({'peso_bruto': peso})
-        except Exception as e:
-            _logger.error("Error al leer datos de la balanza: %s", e)
-            raise UserError(f"No se pudo leer la balanza: {e}")
-
 
 
     def accion_calcular_tara(self):
