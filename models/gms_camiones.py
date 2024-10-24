@@ -11,10 +11,10 @@ class Camiones(models.Model):
     _rec_name = "matricula"
 
     follower_ids = fields.Many2many('res.users', string='Followers')
-    nombre = fields.Char(string='Nombre', tracking="1")
-    matricula = fields.Char(string='Matrícula', tracking="1")
-    capacidad_kgs = fields.Float(string='Capacidad en Kgs', tracking="1")
-    minimo_carga_kgs = fields.Float(string='Mínimo de Carga en Kgs', tracking="1")
+    nombre = fields.Char(string='Nombre', tracking= 1)
+    matricula = fields.Char(string='Matrícula', tracking= 1)
+    capacidad_kgs = fields.Float(string='Capacidad en Kgs', tracking= 1)
+    minimo_carga_kgs = fields.Float(string='Mínimo de Carga en Kgs', tracking= 1)
     transportista_id = fields.Many2one(
     'res.partner', 
     string='Transportista', 
@@ -22,9 +22,9 @@ class Camiones(models.Model):
     tracking="1"
 )
 
-    conductor_id = fields.Many2one('res.partner', string='Chofer', required=True, tracking="1", domain=[('tipo', '=', 'chofer')])
-    disponible = fields.Boolean(string='Disponible', default=True, tracking="1")
-    disponible_zafra = fields.Boolean(string="Zafra", tracking="1")
+    conductor_id = fields.Many2one('res.partner', string='Chofer', required=True, tracking= 1 , domain=[('tipo', '=', 'chofer')])
+    disponible = fields.Boolean(string='Disponible', default=True, tracking= 1)
+    disponible_zafra = fields.Boolean(string="Zafra", tracking= 1)
      
     @api.model_create_multi
     def create(self, vals_list):
