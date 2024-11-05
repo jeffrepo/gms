@@ -181,6 +181,7 @@ class StockPicking(models.Model):
         self.ensure_one()
         last_viaje_id = self.viaje_ids and max(self.viaje_ids.ids) or False
         if last_viaje_id:
+            context = self.env.context if isinstance(self.env.context, dict) else {}
             return {
                 'type': 'ir.actions.act_window',
                 'name': 'Viaje',
@@ -188,11 +189,12 @@ class StockPicking(models.Model):
                 'view_mode': 'form',
                 'res_id': last_viaje_id,  # ID del último viaje creado
                 'target': 'current',
-                'context': self.env.context,
+                'context': context,
             }
         else:
             # Manejar el caso en que no hay viajes asociados
             return {'type': 'ir.actions.act_window_close'}
+
 
 
     def _prepare_purchase_order_vals(self):
