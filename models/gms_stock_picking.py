@@ -42,6 +42,7 @@ class StockPicking(models.Model):
             else:
                 origen = self.picking_type_id.warehouse_id.partner_id.id
                 # Buscar el primer sub contacto del destinatario para viajes de salida
+                contacto_id = self.picking_type_id.warehouse_id.partner_id.parent_id.id if self.picking_type_id.warehouse_id.partner_id.parent_id else self.picking_type_id.warehouse_id.partner_id.id
                 sub_contactos_destino = self.env['res.partner'].search([('parent_id', '=', self.partner_id.id)], limit=1)
                 if sub_contactos_destino:
                     destino = sub_contactos_destino.id
@@ -54,6 +55,7 @@ class StockPicking(models.Model):
                 'fecha_viaje': fields.Date.today(),
                 'solicitante_id': self.partner_id.id,
                 'origen': origen,
+                'contacto_id': contacto_id,
                 'destino': destino,
                 'picking_id': self.id,
                 'tipo_viaje': tipo_viaje,

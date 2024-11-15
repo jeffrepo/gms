@@ -182,6 +182,7 @@
                         <group>
                             <group>
                                 <field name="fecha" readonly="state in ['cancelado', 'confirmado', 'proceso']"/>
+                                <field name="contacto_id" invisible="1"/>
                                 <field name="fecha_viaje" readonly="state in ['cancelado', 'confirmado', 'proceso']"/>
                                 <field name="tipo_viaje" readonly="state in ['cancelado', 'confirmado', 'solicitud', 'proceso']"/>
                                 <field name="solicitante_id" readonly="state in ['cancelado', 'confirmado', 'solicitud', 'proceso']"/>

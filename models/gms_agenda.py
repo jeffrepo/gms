@@ -22,6 +22,11 @@ class Agenda(models.Model):
     fecha = fields.Date(string='Fecha', required=True, readonly=True, tracking = False, default=fields.Date.today())
 
     fecha_viaje = fields.Date(string='Fecha de viaje', required=True, tracking = False)
+    
+    contacto_id = fields.Many2one(
+        'res.partner',
+        string='Contacto Auxiliar'
+    )
 
     origen = fields.Many2one(
         'res.partner', 
