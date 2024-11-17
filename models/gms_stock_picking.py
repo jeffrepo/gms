@@ -42,6 +42,7 @@ class StockPicking(models.Model):
             else:
                 origen = self.picking_type_id.warehouse_id.partner_id.id
                 # Buscar el primer sub contacto del destinatario para viajes de salida
+                contacto_id = self.picking_type_id.warehouse_id.partner_id.parent_id.id if self.picking_type_id.warehouse_id.partner_id.parent_id else self.picking_type_id.warehouse_id.partner_id.id
                 sub_contactos_destino = self.env['res.partner'].search([('parent_id', '=', self.partner_id.id)], limit=1)
                 if sub_contactos_destino:
                     destino = sub_contactos_destino.id
@@ -54,6 +55,7 @@ class StockPicking(models.Model):
                 'fecha_viaje': fields.Date.today(),
                 'solicitante_id': self.partner_id.id,
                 'origen': origen,
+                'contacto_id': contacto_id,
                 'destino': destino,
                 'picking_id': self.id,
                 'tipo_viaje': tipo_viaje,
@@ -116,10 +118,7 @@ class StockPicking(models.Model):
                 self.origin = order.name
 
         if tipo_viaje == 'entrada':
-                # Verificar si el tipo del partner_id es 'chacra' o 'planta'
-                #if self.partner_id.tipo not in ['chacra', 'planta']:
-                    # Lanzar un error si el tipo no es ni 'chacra' ni 'planta'
-                    #raise UserError("El Solicitante no es de tipo 'Chacra' ni 'Planta'. No se puede agendar el viaje.")
+               
                 origen = self.partner_id.id
 
                 sub_contactos_origen = self.env['res.partner'].search([('parent_id', '=', self.partner_id.id)], limit=1)
@@ -130,6 +129,12 @@ class StockPicking(models.Model):
                 destino = self.picking_type_id.warehouse_id.partner_id.id
         else:
                 origen = self.picking_type_id.warehouse_id.partner_id.id
+                 # Obtener solo un subcontacto del `origen`
+                sub_contactos_origen = self.env['res.partner'].search([('parent_id', '=', origen)], limit=1)
+                #contacto_id = sub_contactos_origen.id if sub_contactos_origen else origen
+                contacto_id = self.picking_type_id.warehouse_id.partner_id.parent_id.id if self.picking_type_id.warehouse_id.partner_id.parent_id else self.picking_type_id.warehouse_id.partner_id.id
+                _logger.info(f"Valor de contacto_id para viaje de salida: {contacto_id}")
+
                 # Buscar la orden de venta basada en el campo origin del albarán
                 sale_order = self.env['sale.order'].search([('name', '=', self.origin)], limit=1)
                 # Buscar el primer sub contacto del destinatario para viajes de salida
@@ -143,7 +148,7 @@ class StockPicking(models.Model):
         # Determinar el producto transportado y la cantidad
         if len(self.move_ids_without_package) > 0:
             producto_transportado_id = self.move_ids_without_package[0].product_id.id
-            cantidad = self.move_ids_without_package[0].quantity_done
+            cantidad = self.move_ids_without_package[0].quantity
         else:
             producto_transportado_id = False
             cantidad = 0.0
@@ -162,6 +167,7 @@ class StockPicking(models.Model):
             'solicitante_id': self.partner_id.id,
             'origen': origen,
             'destino': destino,
+            'contacto_id': contacto_id,
             'picking_id': self.id,
             'tipo_viaje': tipo_viaje,
             'producto_transportado_id': producto_transportado_id,
@@ -177,10 +183,12 @@ class StockPicking(models.Model):
 
         return True
 
+    
     def action_view_trip(self):
         self.ensure_one()
         last_viaje_id = self.viaje_ids and max(self.viaje_ids.ids) or False
         if last_viaje_id:
+            context = self.env.context if isinstance(self.env.context, dict) else {}
             return {
                 'type': 'ir.actions.act_window',
                 'name': 'Viaje',
@@ -188,11 +196,12 @@ class StockPicking(models.Model):
                 'view_mode': 'form',
                 'res_id': last_viaje_id,  # ID del último viaje creado
                 'target': 'current',
-                'context': self.env.context,
+                'context': context,
             }
         else:
             # Manejar el caso en que no hay viajes asociados
             return {'type': 'ir.actions.act_window_close'}
+
 
 
     def _prepare_purchase_order_vals(self):
@@ -276,7 +285,7 @@ class StockPicking(models.Model):
             if not viaje_confirmado:
                 raise UserError("No se puede validar el albarán hasta que el viaje esté confirmado.")
          # Sumar el total de los productos en el albarán
-            total_albaran = sum(move.quantity_done  for move in self.move_ids_without_package)
+            total_albaran = sum(move.quantity  for move in self.move_ids_without_package)
 
             # Sumar el total de los viajes asociados
             total_viaje = sum(viaje.kilogramos_a_liquidar for viaje in self.viaje_ids)

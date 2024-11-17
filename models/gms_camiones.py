@@ -19,7 +19,7 @@ class Camiones(models.Model):
     'res.partner', 
     string='Transportista', 
     domain="[('transportista', '=', True), ('parent_id', '=', False)]", 
-    tracking="1"
+    tracking = False
 )
 
     conductor_id = fields.Many2one('res.partner', string='Chofer', required=True, tracking= 1 , domain=[('tipo', '=', 'chofer')])
@@ -101,4 +101,8 @@ class Camiones(models.Model):
     @api.model
     def search(self, args, offset=0, limit=None, order=None, count=False):
         _logger.info("Dominio actual para 'conductor_id': %s", self._fields['conductor_id'].domain)
-        return super(Camiones, self).search(args, offset=offset, limit=limit, order=order, count=count)
+        if count:
+            # Realiza una búsqueda con conteo si se especifica
+            return super(Camiones, self).search_count(args)
+        else:
+            return super(Camiones, self).search(args, offset=offset, limit=limit, order=order)

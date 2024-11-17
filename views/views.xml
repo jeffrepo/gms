@@ -1,7 +1,7 @@
 <odoo>
     <data>
-
-
+        
+    
         <!-- menú principal para GMS -->
         <menuitem id="gms_menu" name="Balanza" sequence="1"/>
         
@@ -182,6 +182,7 @@
                         <group>
                             <group>
                                 <field name="fecha" readonly="state in ['cancelado', 'confirmado', 'proceso']"/>
+                                <field name="contacto_id" invisible="1"/>
                                 <field name="fecha_viaje" readonly="state in ['cancelado', 'confirmado', 'proceso']"/>
                                 <field name="tipo_viaje" readonly="state in ['cancelado', 'confirmado', 'solicitud', 'proceso']"/>
                                 <field name="solicitante_id" readonly="state in ['cancelado', 'confirmado', 'solicitud', 'proceso']"/>
@@ -310,6 +311,7 @@
                         statusbar_visible="borrador,coordinado,proceso,terminado,pendiente_liquidar,cancelado,liquidado"/>
                     </header>
 
+                    <field name="contacto_id" invisible="1"/>   
                     
                     <sheet>
 
@@ -605,7 +607,7 @@
             <field name="inherit_id" ref="product.product_template_only_form_view"/>
             <field name="arch" type="xml">
                 <!-- <xpath expr="//field[@name='product_tag_ids']" position="after">
-                    <field name="humedad" string="Humedad del producto" tracking="1"/>
+                    <field name="humedad" string="Humedad del producto" tracking = False/>
                 </xpath> -->
                 <notebook position="inside">
                     <page string="Propiedades">
@@ -828,63 +830,43 @@
 
 
 
-    <record id="view_res_config_settings_gms" model="ir.ui.view">
-        <field name="name">res.config.settings.view.gms</field>
-        <field name="model">res.config.settings</field>
-        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
-        <field name="arch" type="xml">
-          <xpath expr="//form[@class='oe_form_configuration']" position="inside">
-                <div class="app_settings_block" data-string="GMS Configuraciones" string="Balanza" data-key="gms">
-                    <h2>Gastos de Viaje</h2>
-                    <div class="row mt16 o_settings_container">
-                        <div class="col-12 col-lg-6 o_setting_box">
-                            <div class="o_setting_right_pane">
-                                <label for="gasto_viaje_con_impuesto_id"/>
+        <record id="view_res_config_settings_balanza" model="ir.ui.view">
+            <field name="name">res.config.settings.view.balanza</field>
+            <field name="model">res.config.settings</field>
+            <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//form" position="inside">
+                    <app string="Balanza" data-string="Balanza" name="balanza" groups="base.group_system">
+                        <block title="Configuración de Balanza">
+                            <!-- Gasto de Viaje con Impuesto -->
+                            <setting id="gasto_viaje_con_impuesto" help="Configura el producto para gastos de viaje con impuesto">
                                 <field name="gasto_viaje_con_impuesto_id"/>
-                            </div>
-                        </div>
-                        <div class="col-12 col-lg-6 o_setting_box">
-                            <div class="o_setting_right_pane">
-                                <label for="gasto_viaje_sin_impuesto_id"/>
+                            </setting>
+                            <!-- Gasto de Viaje sin Impuesto -->
+                            <setting id="gasto_viaje_sin_impuesto" help="Configura el producto para gastos de viaje sin impuesto">
                                 <field name="gasto_viaje_sin_impuesto_id"/>
-                            </div>
-                        </div>
-                    </div>
-                     <div class="row mt16 o_settings_container">
-                        <!-- Producto Secado -->
-                        <div class="col-12 col-lg-6 o_setting_box">
-                            <div class="o_setting_right_pane">
-                                <label for="producto_secado_id"/>
+                            </setting>
+                            <!-- Producto Secado -->
+                            <setting id="producto_secado" help="Configura el producto de secado">
                                 <field name="producto_secado_id"/>
-                            </div>
-                        </div>
-                        <!-- Producto Pre Limpieza -->
-                        <div class="col-12 col-lg-6 o_setting_box">
-                            <div class="o_setting_right_pane">
-                                <label for="producto_pre_limpieza_id"/>
+                            </setting>
+                            <!-- Producto Pre Limpieza -->
+                            <setting id="producto_pre_limpieza" help="Configura el producto para pre limpieza">
                                 <field name="producto_pre_limpieza_id"/>
-                            </div>
-                        </div>
-                        <!-- Producto Flete Puerto -->
-                        <div class="col-12 col-lg-6 o_setting_box">
-                            <div class="o_setting_right_pane">
-                                <label for="producto_flete_puerto_id"/>
+                            </setting>
+                            <!-- Producto Flete Puerto -->
+                            <setting id="producto_flete_puerto" help="Configura el producto para flete puerto">
                                 <field name="producto_flete_puerto_id"/>
-                            </div>
-                        </div>
-
-                         <!-- Kilos -->
-                        <div class="col-12 col-lg-6 o_setting_box">
-                            <div class="o_setting_right_pane">
-                                <label for="cantidad_kilos_flete_puerto"/>
+                            </setting>
+                            <!-- Kilos Flete Puerto -->
+                            <setting id="cantidad_kilos_flete_puerto" help="Configura la cantidad de kilos para el flete puerto">
                                 <field name="cantidad_kilos_flete_puerto"/>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </xpath>
-        </field>
-    </record>
+                            </setting>
+                        </block>
+                    </app>
+                </xpath>
+            </field>
+        </record>
 
 
 
@@ -1147,7 +1129,7 @@
             <field name="name">Configuración de Balanza</field>
             <field name="res_model">res.config.settings</field>
             <field name="view_mode">form</field>
-            <field name="view_id" ref="view_res_config_settings_gms"/>
+            <field name="view_id" ref="view_res_config_settings_balanza"/>
             <field name="target">inline</field>
         </record>  
         
@@ -1275,7 +1257,7 @@
             <field name="name">Configuración de Balanza</field>
             <field name="res_model">res.config.settings</field>
             <field name="view_mode">form</field>
-            <field name="view_id" ref="view_res_config_settings_gms"/>
+            <field name="view_id" ref="view_res_config_settings_balanza"/>
             <field name="target">inline</field>
         </record>
 

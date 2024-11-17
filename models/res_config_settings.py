@@ -45,12 +45,13 @@ class ResConfigSettings(models.TransientModel):
         res = super(ResConfigSettings, self).get_values()
         config_params = self.env['ir.config_parameter'].sudo()
         res.update(
-            gasto_viaje_con_impuesto_id=int(config_params.get_param('gms.gasto_viaje_con_impuesto_id', 0)),
-            gasto_viaje_sin_impuesto_id=int(config_params.get_param('gms.gasto_viaje_sin_impuesto_id', 0)),
-            producto_secado_id=int(config_params.get_param('gms.producto_secado_id', 0)),
-            producto_pre_limpieza_id=int(config_params.get_param('gms.producto_pre_limpieza_id', 0)),
-            producto_flete_puerto_id=int(config_params.get_param('gms.producto_flete_puerto_id', 0)),
+            gasto_viaje_con_impuesto_id=self.env['product.product'].browse(int(config_params.get_param('gms.gasto_viaje_con_impuesto_id', 0))),
+            gasto_viaje_sin_impuesto_id=self.env['product.product'].browse(int(config_params.get_param('gms.gasto_viaje_sin_impuesto_id', 0))),
+            producto_secado_id=self.env['product.product'].browse(int(config_params.get_param('gms.producto_secado_id', 0))),
+            producto_pre_limpieza_id=self.env['product.product'].browse(int(config_params.get_param('gms.producto_pre_limpieza_id', 0))),
+            producto_flete_puerto_id=self.env['product.product'].browse(int(config_params.get_param('gms.producto_flete_puerto_id', 0))),
             cantidad_kilos_flete_puerto=float(config_params.get_param('gms.cantidad_kilos_flete_puerto', 0.0)),
         )
+
         return res
 

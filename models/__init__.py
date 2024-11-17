@@ -24,3 +24,4 @@ from . import gms_balanza
 from . import account_move
 from . import gms_datos_humedad
 from . import gms_datos_flete
+from . import mail_thread
