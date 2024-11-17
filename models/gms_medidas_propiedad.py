@@ -48,51 +48,52 @@ class MedidaPropiedad(models.Model):
             _logger.info("Iniciando cálculo de merma...")
             _logger.info("Propiedad: %s", record.propiedad)
             _logger.info("Viaje ID: %s", record.viaje_id)
-            valor_extra = 0
-            if record.propiedad and record.viaje_id:
-                producto = record.viaje_id.producto_transportado_id
-                _logger.info("Producto Transportado ID: %s", producto)
-                
-                if producto and producto.propiedades_ids:
-                    propiedad_linea = producto.propiedades_ids.filtered(
-                        lambda p: p.propiedades_id == record.propiedad
-                    )
-                    _logger.info("Propiedad Filtrada: %s", propiedad_linea)
+
+            if not (record.propiedad and record.viaje_id):
+                continue  # Salta el cálculo si falta algún dato clave
+
+            producto = record.viaje_id.producto_transportado_id
+            _logger.info("Producto Transportado ID: %s", producto)
+
+            # Obtener propiedad específica y valores adicionales
+            propiedad_linea = producto.propiedades_ids.filtered(lambda p: p.propiedades_id == record.propiedad)
+            valor_extra = propiedad_linea.mapped('valor_extra')[0] if propiedad_linea else 0
+            umbral_tolerancia = propiedad_linea.mapped('umbral_tolerancia')[0] if propiedad_linea else 0
+
+            _logger.info("Valor extra: %s", valor_extra)
+            _logger.info("Umbral de Tolerancia: %s", umbral_tolerancia)
+
+            parametro = record.parametro
+            peso_neto = record.viaje_id.peso_neto
+            valor_medida = record.valor_medida
+
+            # Evaluación de la fórmula o cálculo directo
+            if record.propiedad.formula:
+                try:
+                    localdict = {
+                        'parametro': parametro,
+                        'peso_neto': peso_neto,
+                        'valor_medida': valor_medida,
+                        'umbral_tolerancia': umbral_tolerancia,
+                        'valor_extra': valor_extra,
+                        'resultado': record.merma_kg  
+                    }
+                    _logger.info("Antes de evaluar la fórmula, localdict: %s", localdict)
                     
-                    if propiedad_linea:
-                        parametro = record.parametro  
-                        _logger.info("Parámetro: %s", parametro)
-                        peso_neto = record.viaje_id.peso_neto
-                        _logger.info("Peso Neto: %s", peso_neto)
-                        valor_medida = record.valor_medida
-                      
+                    # Evaluar la fórmula
+                    safe_eval.safe_eval(record.propiedad.formula, localdict, mode="exec", nocopy=True)
+                    
+                    _logger.info("Después de evaluar la fórmula, localdict: %s", localdict)
+                    record.merma_kg = max(0, localdict.get('resultado', record.merma_kg))
+                except Exception as e:
+                    _logger.error("Error al evaluar la fórmula: %s", e)
+            else:
+                # Cálculo directo sin fórmula
+                record.merma_kg = max(0, (peso_neto * parametro) / 100.0)
 
-                        
-                        if len(record.viaje_id.producto_transportado_id.propiedades_ids) > 0:
-                            for linea_propiedad in record.viaje_id.producto_transportado_id.propiedades_ids:
-                                if linea_propiedad.propiedades_id.id == record.propiedad.id:
-                                    valor_extra = linea_propiedad.valor_extra
-                                    umbral_tolerancia = linea_propiedad.umbral_tolerancia
-
-                        _logger.info("Valor extra x: %s", valor_extra)
-                        _logger.info("umbral_tolerancia : %s",umbral_tolerancia)
-
-                        # Si la propiedad tiene una fórmula, evaluarla
-                        if record.propiedad.formula:
-                            localdict = {
-                                'parametro': parametro,
-                                'peso_neto': peso_neto,
-                                'valor_medida': valor_medida,
-                                'umbral_tolerancia': umbral_tolerancia,
-                                'valor_extra': valor_extra,  
-                                'resultado': record.merma_kg  
-                            }
-                            safe_eval.safe_eval(record.propiedad.formula, localdict, mode="exec", nocopy=True) #Ejecuta la formula
-                            record.merma_kg = max(0, localdict.get('resultado', record.merma_kg))
-                        else:
-                            # Asegurar que el cálculo directo de merma_kg no resulte negativo
-                            record.merma_kg = max(0, (peso_neto * parametro) / 100.0)
-                        _logger.info("Merma KG Calculada: %s", record.merma_kg)
+            _logger.info("Merma KG Calculada: %s", record.merma_kg)
+             # Comprobación final para verificar si el registro sigue existiendo
+            _logger.info("Registro después del cálculo de merma (ID: %s): %s", record.id, record.exists())
 
 
     @api.model

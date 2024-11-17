@@ -41,11 +41,17 @@ class Viajes(models.Model):
 
     fecha_viaje = fields.Date(string='Fecha de viaje', tracking="1")
 
+    contacto_id = fields.Many2one(
+        'res.partner',
+        string='Contacto Auxiliar'
+    )
+
     origen = fields.Many2one('res.partner',
                              string='Origen',
                              tracking="1",
-                            domain="[('tipo', 'in', ['planta', 'chacra', 'puerto']), ('parent_id', '=', solicitante_id)]"
+                            domain="[('tipo', 'in', ['planta', 'chacra', 'puerto']), ('parent_id', '=', contacto_id)]"
     )
+
     destino = fields.Many2one('res.partner', string='Destino', tracking="1")
 
     camion_disponible_id = fields.Many2one('gms.camiones.disponibilidad', string='Camión Disponible', tracking="1")
@@ -254,6 +260,7 @@ class Viajes(models.Model):
         self.write({'state': 'pendiente_liquidar'})
         
     def action_proceso(self):
+        self._actualizar_kilogramos_a_liquidar()
         # Buscar y eliminar solo los gastos de viaje con valor 0
         gastos_viaje = self.env['gms.gasto_viaje'].search([
             ('viaje_id', '=', self.id),
@@ -277,6 +284,10 @@ class Viajes(models.Model):
 
     def action_terminado(self):
         #self.determinar_y_asignar_gasto_viaje()
+        logging.warning("ejecutando accion terminado")
+        self._compute_kilogramos_a_liquidar()  
+        self._actualizar_kilogramos_a_liquidar()
+        logging.warning("kg a liquidar",self.kilogramos_a_liquidar)
         self.write({'state': 'terminado'})
         self.actualizar_ubicacion_destino()
         fecha_hora_actual = fields.Datetime.now()
@@ -300,11 +311,13 @@ class Viajes(models.Model):
             self.enviar_sms_solicitante()
     
         if self.tipo_viaje in ['entrada', 'salida']:
-            config = self.env['res.config.settings'].default_get([])
-            producto_secado_id = config.get('producto_secado_id')
-            producto_pre_limpieza_id = config.get('producto_pre_limpieza_id')
-            producto_flete_puerto_id = config.get('producto_flete_puerto_id')
-            gasto_viaje_con_impuesto_id = config.get('gasto_viaje_con_impuesto_id')
+            #config = self.env['res.config.settings'].default_get([])
+            # config = self.env['ir.config_parameter'].sudo().get_param('gms.track_draft_orders'))
+
+            producto_secado_id = self.env['ir.config_parameter'].sudo().get_param('gms.producto_secado_id')
+            producto_pre_limpieza_id =  self.env['ir.config_parameter'].sudo().get_param('gms.producto_pre_limpieza_id')
+            producto_flete_puerto_id = self.env['ir.config_parameter'].sudo().get_param('gms.producto_flete_puerto_id')
+            gasto_viaje_con_impuesto_id = self.env['ir.config_parameter'].sudo().get_param('gms.gasto_viaje_con_impuesto_id')
     
             moneda_proveedor_id = self.transportista_id.property_purchase_currency_id.id
     
@@ -319,8 +332,8 @@ class Viajes(models.Model):
         
             precio_total_secado = (valor_medida * tarifa_humedad) / 1000
             _logger.info(f'Precio total del secado calculado: {precio_total_secado}')
-           
-            producto_pre_limpieza = self.env['product.product'].browse(producto_pre_limpieza_id)
+
+            producto_pre_limpieza = self.env['product.product'].search([("id", "=", producto_pre_limpieza_id)])
             precio_total_pre_limpieza = self.peso_neto * producto_pre_limpieza.lst_price if producto_pre_limpieza else 0
     
             kilometros_flete = self.kilometros_flete
@@ -332,7 +345,7 @@ class Viajes(models.Model):
             precio_total_flete = self.peso_neto * tarifa_flete
     
             _logger.info(f'Precio total calculado para Flete: {precio_total_flete}')
-    
+
             self._actualizar_o_crear_gasto('Secado', producto_secado_id, precio_total_secado, moneda_proveedor_id)
             self._actualizar_o_crear_gasto('Pre Limpieza', producto_pre_limpieza_id, precio_total_pre_limpieza, moneda_proveedor_id)
             self._actualizar_o_crear_gasto('Flete Puerto', producto_flete_puerto_id, precio_total_flete_puerto, moneda_proveedor_id)
@@ -352,7 +365,7 @@ class Viajes(models.Model):
                 ('name', '=', name)
             ], limit=1)
         
-    
+            
             if gasto_viaje:
                 if gasto_viaje.estado_compra in ['comprado']:
                     _logger.info(f'El gasto "{name}" no se actualizará porque ya tiene una orden de compra asociada.')
@@ -384,11 +397,11 @@ class Viajes(models.Model):
 
     def _crear_o_actualizar_gasto_flete(self, name, producto_id, precio_total, moneda_proveedor_id, estado_compra='no_comprado'):
         if producto_id:
+
             gasto_viaje = self.env['gms.gasto_viaje'].search([
                 ('viaje_id', '=', self.id),
                 ('name', '=', name)
             ], limit=1)
-            
             proveedor_id = self.transportista_id.id
             _logger.debug(f'Parámetros de creación/actualización para Flete: name={name}, producto_id={producto_id}, precio_total={precio_total}, moneda_proveedor_id={moneda_proveedor_id}, proveedor_id={proveedor_id}')
 
@@ -426,6 +439,7 @@ class Viajes(models.Model):
 
 
     def action_liquidado(self):
+        self._actualizar_kilogramos_a_liquidar()
         Invoice = self.env['account.move']
         for viaje in self:
             if viaje.albaran_id and viaje.albaran_id.state != 'done':
@@ -583,23 +597,20 @@ class Viajes(models.Model):
 
 
 
-    @api.onchange('kilogramos_a_liquidar')
-    def _onchange_kilogramos_a_liquidar(self):
+    def _actualizar_kilogramos_a_liquidar(self):
+       
+        _logger.info("Intentando actualizar kilogramos a liquidar en el albarán.")
         if self.albaran_id:
-            # Verifica si hay líneas de albarán antes de intentar acceder a ellas
+            _logger.info("Albarán encontrado: %s", self.albaran_id.id)
             if self.albaran_id.move_ids_without_package:
-                # Obtener la primera línea del albarán (esto podría cambiar si hay múltiples líneas)
                 move_line = self.albaran_id.move_ids_without_package[0]
-                # Actualizar la demanda (quantity_done) de esa línea
-                move_line.write({
-                    'quantity_done': self.kilogramos_a_liquidar
-                })
+                _logger.info("Línea de movimiento seleccionada para actualizar: %s", move_line.id)
+                move_line.write({'quantity': self.kilogramos_a_liquidar})
+                _logger.info("Demanda actualizada en la línea de movimiento: %s", move_line.quantity)
             else:
-
-                pass
-        # No se lanza error si no hay albarán asociado
-
-
+                _logger.info("No hay líneas de movimiento en el albarán para actualizar.")
+        else:
+            _logger.info("No hay albarán asociado para actualizar.")
 
 
 
@@ -610,6 +621,8 @@ class Viajes(models.Model):
         for record in self:
             total_mermas = sum(record.medidas_propiedades_ids.mapped('merma_kg'))
             record.kilogramos_a_liquidar = record.peso_neto - total_mermas
+            _logger.info("Cálculo de kilogramos_a_liquidar para el registro %s: Peso Neto = %s, Total Merma = %s, Kilogramos a Liquidar = %s", 
+                        record.id, record.peso_neto, total_mermas, record.kilogramos_a_liquidar)
 
 
 
@@ -646,24 +659,7 @@ class Viajes(models.Model):
             return {'domain': {'origen': [('id', 'child_of', self.solicitante_id.id)]}}
         return {'domain': {'origen': []}}
 
-    # silo_id debe llenarse con el campo destino del albarán
-    # @api.onchange('silo_id')
-    # def _onchange_silo_id(self):
-    #     # Proceder solo si hay un albarán y un silo seleccionados
-    #     if self.albaran_id and self.silo_id:
-    #         # Actualizar la ubicación destino del albarán con la del silo seleccionado
-    #         self.albaran_id.write({'location_dest_id': self.silo_id.id})
-    #         _logger.info(f"Ubicación destino del albarán {self.albaran_id.name} actualizada a {self.silo_id.name}")
-
-    #         # Ahora actualizamos también cada línea de movimiento del albarán
-    #         move_lines = self.albaran_id.move_line_ids_without_package | self.albaran_id.move_line_nosuggest_ids
-    #         for move_line in move_lines:
-    #             move_line.write({'location_dest_id': self.silo_id.id})
-    #             _logger.info(f"Ubicación destino de la línea de movimiento {move_line.id} actualizada a {self.silo_id.name}")
-    #     else:
-    #         # Mensaje de log si no se cumplen las condiciones necesarias
-    #         _logger.info("Es necesario seleccionar tanto un albarán como un silo para actualizar la ubicación.")
-
+    
 
 
 
@@ -675,7 +671,7 @@ class Viajes(models.Model):
                 _logger.info(f"Ubicación destino del albarán {self.albaran_id.name} actualizada a {self.silo_id.name}")
 
                 # Actualizar las líneas de movimiento del albarán
-                move_lines = self.albaran_id.move_line_ids_without_package | self.albaran_id.move_line_nosuggest_ids
+                move_lines = self.albaran_id.move_line_ids_without_package
                 for move_line in move_lines:
                     move_line.write({'location_dest_id': self.albaran_id.location_dest_id.id})
                     move_line.write({'location_id': self.silo_id.id})
@@ -686,7 +682,7 @@ class Viajes(models.Model):
                 _logger.info(f"Ubicación destino del albarán {self.albaran_id.name} actualizada a {self.silo_id.name}")
 
                 # Actualizar las líneas de movimiento del albarán
-                move_lines = self.albaran_id.move_line_ids_without_package | self.albaran_id.move_line_nosuggest_ids
+                move_lines = self.albaran_id.move_line_ids_without_package
                 for move_line in move_lines:
                     move_line.write({'location_id': self.albaran_id.location_id.id})
                     move_line.write({'location_dest_id': self.silo_id.id})
@@ -847,15 +843,16 @@ class Viajes(models.Model):
             raise UserError("El viaje no puede pasar a estado 'Proceso' bajo las condiciones actuales.")
 
 
-    
     def enviar_sms_solicitante(self):
+        logging.warning("ejecutando enviar sms")
         try:
             # Preparar el mensaje con detalles del viaje
             mensaje_sms = f"Detalles del viaje: {self.name}\n"
-            
-            # Agregar cada medida y el peso neto después de cada medida
+            mensaje_sms += f"Peso neto: {self.peso_neto} kg\n"  # Agregar peso neto una sola vez
+
+            # Agregar cada medida sin incluir el peso neto repetidamente
             for medida in self.medidas_propiedades_ids:
-                mensaje_sms += f"{medida.propiedad.cod}: {medida.valor_medida} - Peso neto: {self.peso_neto} kg\n"
+                mensaje_sms += f"{medida.propiedad.cod}: {medida.valor_medida}\n"
 
             # Log para depurar el mensaje completo antes de enviarlo
             _logger.debug("Mensaje SMS completo antes de enviar: %s", mensaje_sms)
@@ -876,6 +873,7 @@ class Viajes(models.Model):
             error_message = f"Error al enviar SMS: {e}"
             _logger.error(error_message)
             self.message_post(body=error_message, message_type='comment', subtype_xmlid='mail.mt_comment')
+
 
 
 
