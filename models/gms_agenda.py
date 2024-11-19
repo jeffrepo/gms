@@ -16,45 +16,34 @@ class Agenda(models.Model):
     name = fields.Char(
     'Name', )
 
-
-    # def _get_warehouse_partner_domain(self):
-    #     # Asegura que hay un solicitante_id definido
-    #     # if not self.solicitante_id:
-    #     #     return [('id', '=', False)]  # Devuelve un dominio vacío si no hay solicitante
-
-    #     # Busca todos los subcontactos (hijos) del solicitante que sean de tipo 'planta' o 'chacra'
-    #     logging.warning(self.solicitante_id)
-    #     logging.warning(self)
-    #     id = self.env.context.get('active_ids', [])
-    #     logging.warning(id)
-    #     subcontactos = self.env['res.partner'].search([
-    #         ('parent_id', '=', self.solicitante_id.id),
-    #         ('tipo', 'in', ['planta', 'chacra']),
-    #     ])
-    #     logging.warning(subcontactos)
-    #     logging.warning('_get_warehouse_partner_domain')
-    #     # Devuelve un dominio que incluya solo esos subcontactos
-    #     return [('id', 'in', subcontactos.ids)]
     
-    name = fields.Char(required=True, default=lambda self: _('New'), copy=False, readonly=True, tracking=True)
+    name = fields.Char(required=True, default=lambda self: _('New'), copy=False, readonly=True, tracking = False)
 
-    fecha = fields.Date(string='Fecha', required=True, readonly=True, tracking="1", default=fields.Date.today())
+    fecha = fields.Date(string='Fecha', required=True, readonly=True, tracking = False, default=fields.Date.today())
 
-    fecha_viaje = fields.Date(string='Fecha de viaje', required=True, tracking="1")
+    fecha_viaje = fields.Date(string='Fecha de viaje', required=True, tracking = False)
+    
+    contacto_id = fields.Many2one(
+        'res.partner',
+        string='Contacto Auxiliar'
+    )
 
-    origen = fields.Many2one('res.partner', 
-                             string='Origen', 
-                             required=True, 
-                             readonly=True,
-                             tracking="1", 
-                             ondelete='cascade',context="{'default_parent_id': solicitante_id}") 
+    origen = fields.Many2one(
+        'res.partner', 
+        string='Origen', 
+        required=True, 
+        readonly=True,
+        tracking=False, 
+        ondelete='cascade'
+    )
+
     
 
     
     destino = fields.Many2one('res.partner', 
                               string='Destino', 
                               required=True, 
-                              tracking="1", 
+                              tracking = False, 
                               )
     
     transportista_id = fields.Many2one('res.partner', 
@@ -63,39 +52,39 @@ class Agenda(models.Model):
                                        states={'proceso': [('readonly', False), ('required', True)],
                                            'cancelado': [('readonly', True)]},
                                        
-                                       tracking="1")
+                                       tracking = False)
     
     camion_disponible_id = fields.Many2one('gms.camiones.disponibilidad',
                                            string='Disponibilidad Camión',
                                            states={'proceso': [('readonly', False), ('required', True)],
                                            'cancelado': [('readonly', True)]},
-                                           tracking="1",
+                                           tracking = False,
                                            domain="[('estado', '=', 'disponible'), ('camion_id.disponible_zafra', '=', True)]",
                                            attrs="{'invisible': [('state', '=', 'solicitud')]}")  
     
 
     camion_id = fields.Many2one('gms.camiones', string='Camion', states={'proceso': [('readonly', False), ('required', True)],
-                                           'cancelado': [('readonly', True)]}, readonly=True ,  tracking="1")
+                                           'cancelado': [('readonly', True)]}, readonly=True ,  tracking = False)
 
     conductor_id = fields.Many2one('res.partner', string='Chofer',  states={'proceso': [('readonly', False), ('required', True)],
-                                           'cancelado': [('readonly', True)]}, readonly=True,  tracking="1")
+                                           'cancelado': [('readonly', True)]}, readonly=True,  tracking = False)
 
     solicitante_id = fields.Many2one('res.partner', 
                                      string='Solicitante', 
                                      store=True,
                                      readonly=True, 
-                                     tracking="1", 
+                                     tracking = False, 
                                      domain="[('tipo', '!=', 'chacras'), ('tipo', '!=', 'planta'), ('tipo', '=', False)]")
 
-    viaje_count = fields.Integer(string="Número de viajes", compute="_compute_viaje_count", tracking="1")
+    viaje_count = fields.Integer(string="Número de viajes", compute="_compute_viaje_count", tracking = False)
 
-    picking_id = fields.Many2one('stock.picking', string='Stock Picking', required=True, readonly=True, tracking=True)
+    picking_id = fields.Many2one('stock.picking', string='Stock Picking', required=True, readonly=True, tracking = False)
 
-    tipo_viaje = fields.Selection([('entrada', 'Entrada'), ('salida', 'Salida')], string="Tipo de Viaje", readonly=True, tracking="1")
+    tipo_viaje = fields.Selection([('entrada', 'Entrada'), ('salida', 'Salida')], string="Tipo de Viaje", readonly=True, tracking = False)
 
-    albaran_id = fields.Many2one('stock.picking', string="Albarán", compute="_compute_albaran", store=True, readonly=True , tracking=True)
+    albaran_id = fields.Many2one('stock.picking', string="Albarán", compute="_compute_albaran", store=True, readonly=True , tracking = False)
 
-    order_id = fields.Many2one('purchase.order', string='Orden de Compra', tracking=True)
+    order_id = fields.Many2one('purchase.order', string='Orden de Compra', tracking = False)
     
      # Campos calculados para dominios en formato JSON
     origen_domain = fields.Char(compute='_compute_origen_domain', readonly=True, store=False)
@@ -152,7 +141,7 @@ class Agenda(models.Model):
         ('proceso', 'Proceso'),
         ('confirmado', 'Confirmado'),
         ('cancelado', 'Cancelado')
-    ], string='Estado', default='solicitud', required=True, tracking=True)
+    ], string='Estado', default='solicitud', required=True, tracking = False)
 
     follower_ids = fields.Many2many('res.users', string='Followers')
 
@@ -233,7 +222,8 @@ class Agenda(models.Model):
                     raise UserError("No se puede confirmar: La fecha de viaje es mayor a 1 día desde la fecha actual.")
 
     def action_confirm(self):
-        
+
+        self._update_context_with_solicitante()
          # Enviar notificaciones por SMS
         self.enviar_notificaciones_sms()
        
@@ -245,7 +235,7 @@ class Agenda(models.Model):
       
         if len(self.picking_id.move_ids_without_package) > 0:
             producto_transportado_id = self.picking_id.move_ids_without_package[0].product_id.id
-            cantidad = self.picking_id.move_ids_without_package[0].quantity_done
+            cantidad = self.picking_id.move_ids_without_package[0].quantity
 
         else:
             producto_transportado_id = False
@@ -425,4 +415,9 @@ class Agenda(models.Model):
 
 
 
-    
+    def _update_context_with_solicitante(self):
+        for record in self:
+            context = dict(self.env.context)
+            if record.solicitante_id:
+                context.update({'default_parent_id': record.solicitante_id.id})
+            record = record.with_context(context)

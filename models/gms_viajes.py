@@ -47,11 +47,17 @@ class Viajes(models.Model):
 
     fecha_viaje = fields.Date(string='Fecha de viaje', tracking="1")
 
+    contacto_id = fields.Many2one(
+        'res.partner',
+        string='Contacto Auxiliar'
+    )
+
     origen = fields.Many2one('res.partner',
                              string='Origen',
                              tracking="1",
-                            domain="[('tipo', 'in', ['planta', 'chacra', 'puerto']), ('parent_id', '=', solicitante_id)]"
+                            domain="[('tipo', 'in', ['planta', 'chacra', 'puerto']), ('parent_id', '=', contacto_id)]"
     )
+
     destino = fields.Many2one('res.partner', string='Destino', tracking="1")
 
     camion_disponible_id = fields.Many2one('gms.camiones.disponibilidad', string='Camión Disponible', tracking="1")
@@ -898,13 +904,15 @@ class Viajes(models.Model):
 
     
     def enviar_sms_solicitante(self):
+        logging.warning("ejecutando enviar sms")
         try:
             # Preparar el mensaje con detalles del viaje
             mensaje_sms = f"Detalles del viaje: {self.name}\n"
-            
-            # Agregar cada medida y el peso neto después de cada medida
+            mensaje_sms += f"Peso neto: {self.peso_neto} kg\n"  # Agregar peso neto una sola vez
+
+            # Agregar cada medida sin incluir el peso neto repetidamente
             for medida in self.medidas_propiedades_ids:
-                mensaje_sms += f"{medida.propiedad.cod}: {medida.valor_medida} - Peso neto: {self.peso_neto} kg\n"
+                mensaje_sms += f"{medida.propiedad.cod}: {medida.valor_medida}\n"
 
             # Log para depurar el mensaje completo antes de enviarlo
             _logger.debug("Mensaje SMS completo antes de enviar: %s", mensaje_sms)
