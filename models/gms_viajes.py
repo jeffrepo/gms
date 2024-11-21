@@ -1,13 +1,7 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
-from collections import defaultdict
-import datetime
-#import paramiko
 import logging
-#import requests
-import asyncio
-#from asyncvnc import Client
-#import serial
+
 
 _logger = logging.getLogger(__name__)
 
@@ -266,6 +260,7 @@ class Viajes(models.Model):
         self.write({'state': 'pendiente_liquidar'})
         
     def action_proceso(self):
+        self._actualizar_kilogramos_a_liquidar()
         # Buscar y eliminar solo los gastos de viaje con valor 0
         gastos_viaje = self.env['gms.gasto_viaje'].search([
             ('viaje_id', '=', self.id),
@@ -373,7 +368,7 @@ class Viajes(models.Model):
                 ('name', '=', name)
             ], limit=1)
         
-    
+            
             if gasto_viaje:
                 if gasto_viaje.estado_compra in ['comprado']:
                     _logger.info(f'El gasto "{name}" no se actualizará porque ya tiene una orden de compra asociada.')
@@ -405,11 +400,11 @@ class Viajes(models.Model):
 
     def _crear_o_actualizar_gasto_flete(self, name, producto_id, precio_total, moneda_proveedor_id, estado_compra='no_comprado'):
         if producto_id:
+
             gasto_viaje = self.env['gms.gasto_viaje'].search([
                 ('viaje_id', '=', self.id),
                 ('name', '=', name)
             ], limit=1)
-            
             proveedor_id = self.transportista_id.id
             _logger.debug(f'Parámetros de creación/actualización para Flete: name={name}, producto_id={producto_id}, precio_total={precio_total}, moneda_proveedor_id={moneda_proveedor_id}, proveedor_id={proveedor_id}')
 
@@ -447,6 +442,7 @@ class Viajes(models.Model):
 
 
     def action_liquidado(self):
+        self._actualizar_kilogramos_a_liquidar()
         Invoice = self.env['account.move']
         for viaje in self:
             if viaje.albaran_id and viaje.albaran_id.state != 'done':
@@ -604,23 +600,20 @@ class Viajes(models.Model):
 
 
 
-    @api.onchange('kilogramos_a_liquidar')
-    def _onchange_kilogramos_a_liquidar(self):
+    def _actualizar_kilogramos_a_liquidar(self):
+       
+        _logger.info("Intentando actualizar kilogramos a liquidar en el albarán.")
         if self.albaran_id:
-            # Verifica si hay líneas de albarán antes de intentar acceder a ellas
+            _logger.info("Albarán encontrado: %s", self.albaran_id.id)
             if self.albaran_id.move_ids_without_package:
-                # Obtener la primera línea del albarán (esto podría cambiar si hay múltiples líneas)
                 move_line = self.albaran_id.move_ids_without_package[0]
-                # Actualizar la demanda (quantity_done) de esa línea
-                move_line.write({
-                    'quantity_done': self.kilogramos_a_liquidar
-                })
+                _logger.info("Línea de movimiento seleccionada para actualizar: %s", move_line.id)
+                move_line.write({'quantity': self.kilogramos_a_liquidar})
+                _logger.info("Demanda actualizada en la línea de movimiento: %s", move_line.quantity)
             else:
-
-                pass
-        # No se lanza error si no hay albarán asociado
-
-
+                _logger.info("No hay líneas de movimiento en el albarán para actualizar.")
+        else:
+            _logger.info("No hay albarán asociado para actualizar.")
 
 
 
@@ -631,6 +624,8 @@ class Viajes(models.Model):
         for record in self:
             total_mermas = sum(record.medidas_propiedades_ids.mapped('merma_kg'))
             record.kilogramos_a_liquidar = record.peso_neto - total_mermas
+            _logger.info("Cálculo de kilogramos_a_liquidar para el registro %s: Peso Neto = %s, Total Merma = %s, Kilogramos a Liquidar = %s", 
+                        record.id, record.peso_neto, total_mermas, record.kilogramos_a_liquidar)
 
 
 
@@ -667,24 +662,7 @@ class Viajes(models.Model):
             return {'domain': {'origen': [('id', 'child_of', self.solicitante_id.id)]}}
         return {'domain': {'origen': []}}
 
-    # silo_id debe llenarse con el campo destino del albarán
-    # @api.onchange('silo_id')
-    # def _onchange_silo_id(self):
-    #     # Proceder solo si hay un albarán y un silo seleccionados
-    #     if self.albaran_id and self.silo_id:
-    #         # Actualizar la ubicación destino del albarán con la del silo seleccionado
-    #         self.albaran_id.write({'location_dest_id': self.silo_id.id})
-    #         _logger.info(f"Ubicación destino del albarán {self.albaran_id.name} actualizada a {self.silo_id.name}")
-
-    #         # Ahora actualizamos también cada línea de movimiento del albarán
-    #         move_lines = self.albaran_id.move_line_ids_without_package | self.albaran_id.move_line_nosuggest_ids
-    #         for move_line in move_lines:
-    #             move_line.write({'location_dest_id': self.silo_id.id})
-    #             _logger.info(f"Ubicación destino de la línea de movimiento {move_line.id} actualizada a {self.silo_id.name}")
-    #     else:
-    #         # Mensaje de log si no se cumplen las condiciones necesarias
-    #         _logger.info("Es necesario seleccionar tanto un albarán como un silo para actualizar la ubicación.")
-
+    
 
 
 
@@ -696,7 +674,7 @@ class Viajes(models.Model):
                 _logger.info(f"Ubicación destino del albarán {self.albaran_id.name} actualizada a {self.silo_id.name}")
 
                 # Actualizar las líneas de movimiento del albarán
-                move_lines = self.albaran_id.move_line_ids_without_package | self.albaran_id.move_line_nosuggest_ids
+                move_lines = self.albaran_id.move_line_ids_without_package
                 for move_line in move_lines:
                     move_line.write({'location_dest_id': self.albaran_id.location_dest_id.id})
                     move_line.write({'location_id': self.silo_id.id})
@@ -707,7 +685,7 @@ class Viajes(models.Model):
                 _logger.info(f"Ubicación destino del albarán {self.albaran_id.name} actualizada a {self.silo_id.name}")
 
                 # Actualizar las líneas de movimiento del albarán
-                move_lines = self.albaran_id.move_line_ids_without_package | self.albaran_id.move_line_nosuggest_ids
+                move_lines = self.albaran_id.move_line_ids_without_package
                 for move_line in move_lines:
                     move_line.write({'location_id': self.albaran_id.location_id.id})
                     move_line.write({'location_dest_id': self.silo_id.id})
@@ -854,49 +832,6 @@ class Viajes(models.Model):
             self.conductor_id = False
 
 
-
-
-    def leer_peso_balanza_archivo(self):
-        balanza = self.balanza_id
-        if not balanza:
-            raise UserError("Selecciona una balanza primero.")
-
-
-        archivo_datos = '/Users/balanza/datos_balanza.txt'
-
-        try:
-            # Conectar vía SSH al servidor
-            ssh = paramiko.SSHClient()
-            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            ssh.connect(balanza.direccion_servidor, username=balanza.usuario, password=balanza.contrasena)
-
-            # Comando para obtener la última línea del archivo de datos
-            comando_ssh = f"tail -n 1 {archivo_datos}"
-            stdin, stdout, stderr = ssh.exec_command(comando_ssh)
-            ultima_linea = stdout.read().decode().strip()
-
-            ssh.close()
-
-            if ultima_linea:
-                peso = float(ultima_linea.split(' - Peso: ')[1])
-                return peso
-            else:
-                raise UserError("No se recibieron datos de la balanza.")
-        except Exception as e:
-            _logger.error(f"Error al leer los datos de la balanza: {e}")
-            raise UserError(f"No se pudo leer el peso de la balanza: {e}")
-
-    def accion_leer_balanza(self):
-        self.ensure_one()
-        try:
-            peso = self.leer_peso_balanza_archivo()
-            self.write({'peso_bruto': peso})
-        except Exception as e:
-            _logger.error("Error al leer datos de la balanza: %s", e)
-            raise UserError(f"No se pudo leer la balanza: {e}")
-
-
-
     def accion_calcular_tara(self):
 
         raise UserError(_('Esta es una acción de prueba para calcular la tara.'))
@@ -911,7 +846,6 @@ class Viajes(models.Model):
             raise UserError("El viaje no puede pasar a estado 'Proceso' bajo las condiciones actuales.")
 
 
-    
     def enviar_sms_solicitante(self):
         logging.warning("ejecutando enviar sms")
         try:
@@ -942,6 +876,7 @@ class Viajes(models.Model):
             error_message = f"Error al enviar SMS: {e}"
             _logger.error(error_message)
             self.message_post(body=error_message, message_type='comment', subtype_xmlid='mail.mt_comment')
+
 
 
 

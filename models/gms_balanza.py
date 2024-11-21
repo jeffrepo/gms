@@ -1,5 +1,4 @@
 from odoo import models, fields
-import paramiko
 class Balanza(models.Model):
     _name = 'gms.balanza'
     _description = 'Balanza'

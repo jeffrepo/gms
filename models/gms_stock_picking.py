@@ -184,10 +184,12 @@ class StockPicking(models.Model):
 
         return True
 
+    
     def action_view_trip(self):
         self.ensure_one()
         last_viaje_id = self.viaje_ids and max(self.viaje_ids.ids) or False
         if last_viaje_id:
+            context = self.env.context if isinstance(self.env.context, dict) else {}
             return {
                 'type': 'ir.actions.act_window',
                 'name': 'Viaje',
@@ -195,11 +197,12 @@ class StockPicking(models.Model):
                 'view_mode': 'form',
                 'res_id': last_viaje_id,  # ID del último viaje creado
                 'target': 'current',
-                'context': self.env.context,
+                'context': context,
             }
         else:
             # Manejar el caso en que no hay viajes asociados
             return {'type': 'ir.actions.act_window_close'}
+
 
 
     def _prepare_purchase_order_vals(self):
@@ -283,7 +286,7 @@ class StockPicking(models.Model):
             if not viaje_confirmado:
                 raise UserError("No se puede validar el albarán hasta que el viaje esté confirmado.")
          # Sumar el total de los productos en el albarán
-            total_albaran = sum(move.quantity_done  for move in self.move_ids_without_package)
+            total_albaran = sum(move.quantity  for move in self.move_ids_without_package)
 
             # Sumar el total de los viajes asociados
             total_viaje = sum(viaje.kilogramos_a_liquidar for viaje in self.viaje_ids)

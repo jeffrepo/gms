@@ -235,7 +235,7 @@ class Agenda(models.Model):
       
         if len(self.picking_id.move_ids_without_package) > 0:
             producto_transportado_id = self.picking_id.move_ids_without_package[0].product_id.id
-            cantidad = self.picking_id.move_ids_without_package[0].quantity_done
+            cantidad = self.picking_id.move_ids_without_package[0].quantity
 
         else:
             producto_transportado_id = False
