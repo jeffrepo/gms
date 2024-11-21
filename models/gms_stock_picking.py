@@ -31,6 +31,7 @@ class StockPicking(models.Model):
                 # if self.partner_id.tipo not in ['chacra', 'planta']:
                 #     # Lanzar un error si el tipo no es ni 'chacra' ni 'planta'
                 #     raise UserError("El Solicitante no es de tipo 'Chacra' ni 'Planta'. No se puede agendar el viaje.")
+                contacto_id = None 
                 origen = self.partner_id.id
 
                 sub_contactos_origen = self.env['res.partner'].search([('parent_id', '=', self.partner_id.id)], limit=1)
@@ -148,7 +149,7 @@ class StockPicking(models.Model):
         # Determinar el producto transportado y la cantidad
         if len(self.move_ids_without_package) > 0:
             producto_transportado_id = self.move_ids_without_package[0].product_id.id
-            cantidad = self.move_ids_without_package[0].quantity
+            cantidad = self.move_ids_without_package[0].quantity__done
         else:
             producto_transportado_id = False
             cantidad = 0.0
