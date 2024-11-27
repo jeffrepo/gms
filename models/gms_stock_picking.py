@@ -149,7 +149,7 @@ class StockPicking(models.Model):
         # Determinar el producto transportado y la cantidad
         if len(self.move_ids_without_package) > 0:
             producto_transportado_id = self.move_ids_without_package[0].product_id.id
-            cantidad = self.move_ids_without_package[0].quantity__done
+            cantidad = self.move_ids_without_package[0].quantity_done__done
         else:
             producto_transportado_id = False
             cantidad = 0.0
@@ -286,7 +286,7 @@ class StockPicking(models.Model):
             if not viaje_confirmado:
                 raise UserError("No se puede validar el albarán hasta que el viaje esté confirmado.")
          # Sumar el total de los productos en el albarán
-            total_albaran = sum(move.quantity  for move in self.move_ids_without_package)
+            total_albaran = sum(move.quantity_done  for move in self.move_ids_without_package)
 
             # Sumar el total de los viajes asociados
             total_viaje = sum(viaje.kilogramos_a_liquidar for viaje in self.viaje_ids)
