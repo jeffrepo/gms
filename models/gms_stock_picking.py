@@ -121,7 +121,7 @@ class StockPicking(models.Model):
         if tipo_viaje == 'entrada':
                
                 origen = self.partner_id.id
-
+                contacto_id = None
                 sub_contactos_origen = self.env['res.partner'].search([('parent_id', '=', self.partner_id.id)], limit=1)
                 if sub_contactos_origen:
                     origen = sub_contactos_origen.id
