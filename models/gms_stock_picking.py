@@ -149,7 +149,7 @@ class StockPicking(models.Model):
         # Determinar el producto transportado y la cantidad
         if len(self.move_ids_without_package) > 0:
             producto_transportado_id = self.move_ids_without_package[0].product_id.id
-            cantidad = self.move_ids_without_package[0].quantity_done__done
+            cantidad = self.move_ids_without_package[0].quantity_done
         else:
             producto_transportado_id = False
             cantidad = 0.0
