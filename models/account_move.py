@@ -80,7 +80,7 @@ class AccountMove(models.Model):
     def _compute_total_kg_factura(self):
         for record in self:
             if len(record.invoice_line_ids) == 1:
-                record.total_kg_factura = record.invoice_line_ids[0].quantity
+                record.total_kg_factura = record.invoice_line_ids[0].quantity_done
             else:
                 record.total_kg_factura = 0.0
 
@@ -251,7 +251,7 @@ class AccountMove(models.Model):
             raise UserError("La factura debe tener exactamente una línea de producto.")
 
         linea_factura = self.invoice_line_ids[0]
-        cantidad_factura = linea_factura.quantity
+        cantidad_factura = linea_factura.quantity_done
 
         # Filtrar solo los viajes que no están liquidados
         viajes_a_liquidar = self.viajes_liquidar_ids.filtered(lambda v: v.state != 'liquidado')
