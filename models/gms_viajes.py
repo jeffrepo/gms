@@ -156,7 +156,8 @@ class Viajes(models.Model):
 
     sale_order_ids = fields.Many2many('sale.order', string='Órdenes de Venta', tracking=True)
 
-    #balanza_id = fields.Many2one('gms.balanza', string='Balanza' , tracking=True)
+
+    balanza_id = fields.Many2one('gms.balanza', string='Balanza' , tracking=True)
 
     humedad = fields.Float(string='Humedad' , tracking=True)
 
@@ -282,77 +283,81 @@ class Viajes(models.Model):
         return True
 
     def action_terminado(self):
-        #self.determinar_y_asignar_gasto_viaje()
-        logging.warning("ejecutando accion terminado")
-        self._compute_kilogramos_a_liquidar()  
         self._actualizar_kilogramos_a_liquidar()
-        logging.warning("kg a liquidar",self.kilogramos_a_liquidar)
+        # Cambiar el estado del viaje a 'terminado'
         self.write({'state': 'terminado'})
         self.actualizar_ubicacion_destino()
         fecha_hora_actual = fields.Datetime.now()
+
+        # Actualizar historial si existe
         historial = self.env['gms.historial'].search([('agenda_id.name', '=', self.name)], limit=1)
-    
         if historial:
             historial.write({'fecha_hora_liberacion': fecha_hora_actual})
-    
+
+        # Actualizar estado del camión
         if self.camion_disponible_id:
             self.camion_disponible_id.estado = "disponible"
             self.camion_disponible_id.fecha_hora_liberacion = fecha_hora_actual
-    
+
+        # Calcular merma de medidas asociadas
         medida_obj = self.env['gms.medida.propiedad']
         medidas = medida_obj.search([('viaje_id', '=', self.id)])
         for medida in medidas:
             medida._onchange_calculate_merma()
-    
+
         self.partida = fecha_hora_actual
-    
+
+        # Enviar SMS al solicitante si es un viaje de entrada
         if self.tipo_viaje == 'entrada':
             self.enviar_sms_solicitante()
-    
-        if self.tipo_viaje in ['entrada', 'salida']:
-            #config = self.env['res.config.settings'].default_get([])
-            # config = self.env['ir.config_parameter'].sudo().get_param('gms.track_draft_orders'))
 
-            producto_secado_id = self.env['ir.config_parameter'].sudo().get_param('gms.producto_secado_id')
-            producto_pre_limpieza_id =  self.env['ir.config_parameter'].sudo().get_param('gms.producto_pre_limpieza_id')
-            producto_flete_puerto_id = self.env['ir.config_parameter'].sudo().get_param('gms.producto_flete_puerto_id')
-            gasto_viaje_con_impuesto_id = self.env['ir.config_parameter'].sudo().get_param('gms.gasto_viaje_con_impuesto_id')
-    
+        if self.tipo_viaje in ['entrada', 'salida']:
+            # Obtener configuraciones desde ir.config_parameter
+            config_params = self.env['ir.config_parameter'].sudo()
+            producto_secado_id = int(config_params.get_param('gms.producto_secado_id', 0))
+            producto_pre_limpieza_id = int(config_params.get_param('gms.producto_pre_limpieza_id', 0))
+            producto_flete_puerto_id = int(config_params.get_param('gms.producto_flete_puerto_id', 0))
+            gasto_viaje_con_impuesto_id = int(config_params.get_param('gms.gasto_viaje_con_impuesto_id', 0))
+            cantidad_kilos_flete_puerto = float(config_params.get_param('gms.cantidad_kilos_flete_puerto', 0.0))
+
             moneda_proveedor_id = self.transportista_id.property_purchase_currency_id.id
-    
+
+            # Calcular valores basados en medidas
             valor_medida = sum(medida.valor_medida for medida in self.medidas_propiedades_ids)
-    
             tarifa_humedad = self.env['gms.datos_humedad'].buscar_humedad_cercana(valor_medida)
             _logger.info(f'Valor medida: {valor_medida}, Tarifa humedad: {tarifa_humedad}')
-        
+            
             if not isinstance(tarifa_humedad, (int, float)):
                 _logger.error(f'Tarifa humedad no es un número: {tarifa_humedad}')
                 tarifa_humedad = 0.0
-        
+            
             precio_total_secado = (valor_medida * tarifa_humedad) / 1000
             _logger.info(f'Precio total del secado calculado: {precio_total_secado}')
+            
+            # Validar producto Pre Limpieza
+            producto_pre_limpieza = self.env['product.product'].browse(producto_pre_limpieza_id)
+            if producto_pre_limpieza.exists():
+                precio_total_pre_limpieza = self.peso_neto * producto_pre_limpieza.lst_price
+            else:
+                _logger.warning(f'Producto Pre Limpieza no encontrado para ID: {producto_pre_limpieza_id}')
+                precio_total_pre_limpieza = 0
 
-            producto_pre_limpieza = self.env['product.product'].search([("id", "=", producto_pre_limpieza_id)])
-            precio_total_pre_limpieza = self.peso_neto * producto_pre_limpieza.lst_price if producto_pre_limpieza else 0
-    
             kilometros_flete = self.kilometros_flete
-            config_params = self.env['ir.config_parameter'].sudo()
-            cantidad_kilos_flete_puerto = float(config_params.get_param('gms.cantidad_kilos_flete_puerto', 0.0))
-    
             tarifa_flete = self.env['gms.datos_flete'].buscar_flete_cercano(kilometros_flete)
             precio_total_flete_puerto = cantidad_kilos_flete_puerto * self.kilogramos_a_liquidar
             precio_total_flete = self.peso_neto * tarifa_flete
-    
+
             _logger.info(f'Precio total calculado para Flete: {precio_total_flete}')
 
+            # Actualizar o crear gastos asociados
             self._actualizar_o_crear_gasto('Secado', producto_secado_id, precio_total_secado, moneda_proveedor_id)
             self._actualizar_o_crear_gasto('Pre Limpieza', producto_pre_limpieza_id, precio_total_pre_limpieza, moneda_proveedor_id)
             self._actualizar_o_crear_gasto('Flete Puerto', producto_flete_puerto_id, precio_total_flete_puerto, moneda_proveedor_id)
-    
+
+            # Crear o actualizar gasto de Flete
             if self.agenda:
                 _logger.info(f'El viaje {self.name} tiene agenda asociada. Creando/actualizando gasto de Flete.')
                 self._crear_o_actualizar_gasto_flete('Flete', gasto_viaje_con_impuesto_id, precio_total_flete, moneda_proveedor_id, estado_compra='no_comprado')
-               
             else:
                 _logger.info(f'El viaje {self.name} no está asociado a ninguna agenda. No se creó ni actualizó el gasto de Flete.')
 
@@ -453,14 +458,14 @@ class Viajes(models.Model):
                     for line in viaje.purchase_order_id.order_line:
                         invoice_lines.append((0, 0, {
                             'product_id': line.product_id.id,
-                            'quantity': line.product_qty,
+                            'quantity_done': line.product_qty,
                             'price_unit': line.price_unit,
                         }))
                 else:
                     for line in viaje.sale_order_id.order_line:
                         invoice_lines.append((0, 0, {
                             'product_id': line.product_id.id,
-                            'quantity': line.product_uom_qty,
+                            'quantity_done': line.product_uom_qty,
                             'price_unit': line.price_unit,
                         }))
 
@@ -469,7 +474,7 @@ class Viajes(models.Model):
                     invoice_lines.append((0, 0, {
                         'product_id': viaje.producto_transportado_id.id,
                         'name': f"Viaje {viaje.name}",
-                        'quantity': viaje.kilogramos_a_liquidar,
+                        'quantity_done': viaje.kilogramos_a_liquidar,
                         'price_unit': viaje.producto_transportado_id.lst_price,
                         'account_id': viaje.producto_transportado_id.categ_id.property_account_income_categ_id.id,
                     }))
@@ -604,8 +609,8 @@ class Viajes(models.Model):
             if self.albaran_id.move_ids_without_package:
                 move_line = self.albaran_id.move_ids_without_package[0]
                 _logger.info("Línea de movimiento seleccionada para actualizar: %s", move_line.id)
-                move_line.write({'quantity': self.kilogramos_a_liquidar})
-                _logger.info("Demanda actualizada en la línea de movimiento: %s", move_line.quantity)
+                move_line.write({'quantity_done': self.kilogramos_a_liquidar})
+                _logger.info("Demanda actualizada en la línea de movimiento: %s", move_line.quantity_done)
             else:
                 _logger.info("No hay líneas de movimiento en el albarán para actualizar.")
         else:
@@ -847,7 +852,7 @@ class Viajes(models.Model):
         try:
             # Preparar el mensaje con detalles del viaje
             mensaje_sms = f"Detalles del viaje: {self.name}\n"
-            mensaje_sms += f"Peso neto: {self.peso_neto} kg\n"  # Agregar peso neto una sola vez
+            mensaje_sms += f"Peso neto: {self.peso_neto} kg\n"
 
             # Agregar cada medida sin incluir el peso neto repetidamente
             for medida in self.medidas_propiedades_ids:
@@ -924,7 +929,7 @@ class Viajes(models.Model):
                 invoice_line = (0, 0, {
                     'product_id': viaje.producto_transportado_id.id,
                     'name': f"{viaje.name} - {viaje.producto_transportado_id.name}",
-                    'quantity': viaje.kilogramos_a_liquidar,
+                    'quantity_done': viaje.kilogramos_a_liquidar,
                     'price_unit': viaje.producto_transportado_id.lst_price,
                     'account_id': viaje.producto_transportado_id.categ_id.property_account_expense_categ_id.id,
                     'purchase_line_id': purchase_line.id,
@@ -948,7 +953,7 @@ class Viajes(models.Model):
                 invoice_line = (0, 0, {
                     'product_id': viaje.producto_transportado_id.id,
                     'name': f"{viaje.name} - {viaje.producto_transportado_id.name}",
-                    'quantity': viaje.kilogramos_a_liquidar,
+                    'quantity_done': viaje.kilogramos_a_liquidar,
                     'price_unit': viaje.producto_transportado_id.lst_price,
                     'account_id' : viaje.producto_transportado_id.categ_id.property_account_income_categ_id.id,
                     'sale_line_ids': [(4, sale_line.id)], 

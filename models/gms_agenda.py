@@ -34,7 +34,8 @@ class Agenda(models.Model):
         required=True, 
         readonly=True,
         tracking=False, 
-        ondelete='cascade'
+        ondelete='cascade',
+        domain="[('tipo', 'in', ['planta', 'chacra', 'puerto']), ('parent_id', '=', contacto_id)]"
     )
 
     
@@ -235,7 +236,7 @@ class Agenda(models.Model):
       
         if len(self.picking_id.move_ids_without_package) > 0:
             producto_transportado_id = self.picking_id.move_ids_without_package[0].product_id.id
-            cantidad = self.picking_id.move_ids_without_package[0].quantity
+            cantidad = self.picking_id.move_ids_without_package[0].quantity_done
 
         else:
             producto_transportado_id = False
