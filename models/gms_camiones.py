@@ -100,9 +100,4 @@ class Camiones(models.Model):
 
     @api.model
     def search(self, args, offset=0, limit=None, order=None, count=False):
-        _logger.info("Dominio actual para 'conductor_id': %s", self._fields['conductor_id'].domain)
-        if count:
-            # Realiza una búsqueda con conteo si se especifica
-            return super(Camiones, self).search_count(args)
-        else:
             return super(Camiones, self).search(args, offset=offset, limit=limit, order=order)
