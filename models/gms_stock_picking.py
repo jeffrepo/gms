@@ -90,6 +90,7 @@ class StockPicking(models.Model):
     def button_create_trip(self):
         _logger.info(f"Iniciando button_create_trip para el albarán {self.name} con estado {self.state} y tipo {self.picking_type_id.code}")
         sale_order = None
+        contacto_id = False
         # Buscar la orden de compra basada en el campo origin del albarán
         if self.origin:
             order = self.env['purchase.order'].search([('name', '=', self.origin)], limit=1)

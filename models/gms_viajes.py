@@ -156,8 +156,7 @@ class Viajes(models.Model):
 
     sale_order_ids = fields.Many2many('sale.order', string='Órdenes de Venta', tracking=True)
 
-
-    balanza_id = fields.Many2one('gms.balanza', string='Balanza' , tracking=True)
+    #balanza_id = fields.Many2one('gms.balanza', string='Balanza' , tracking=True)
 
     humedad = fields.Float(string='Humedad' , tracking=True)
 
