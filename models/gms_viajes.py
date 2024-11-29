@@ -458,14 +458,14 @@ class Viajes(models.Model):
                     for line in viaje.purchase_order_id.order_line:
                         invoice_lines.append((0, 0, {
                             'product_id': line.product_id.id,
-                            'quantity_done': line.product_qty,
+                            'quantity': line.product_qty,
                             'price_unit': line.price_unit,
                         }))
                 else:
                     for line in viaje.sale_order_id.order_line:
                         invoice_lines.append((0, 0, {
                             'product_id': line.product_id.id,
-                            'quantity_done': line.product_uom_qty,
+                            'quantity': line.product_uom_qty,
                             'price_unit': line.price_unit,
                         }))
 
@@ -474,7 +474,7 @@ class Viajes(models.Model):
                     invoice_lines.append((0, 0, {
                         'product_id': viaje.producto_transportado_id.id,
                         'name': f"Viaje {viaje.name}",
-                        'quantity_done': viaje.kilogramos_a_liquidar,
+                        'quantity': viaje.kilogramos_a_liquidar,
                         'price_unit': viaje.producto_transportado_id.lst_price,
                         'account_id': viaje.producto_transportado_id.categ_id.property_account_income_categ_id.id,
                     }))
