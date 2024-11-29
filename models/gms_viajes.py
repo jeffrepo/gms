@@ -929,7 +929,7 @@ class Viajes(models.Model):
                 invoice_line = (0, 0, {
                     'product_id': viaje.producto_transportado_id.id,
                     'name': f"{viaje.name} - {viaje.producto_transportado_id.name}",
-                    'quantity_done': viaje.kilogramos_a_liquidar,
+                    'quantity': viaje.kilogramos_a_liquidar,
                     'price_unit': viaje.producto_transportado_id.lst_price,
                     'account_id': viaje.producto_transportado_id.categ_id.property_account_expense_categ_id.id,
                     'purchase_line_id': purchase_line.id,
@@ -953,7 +953,7 @@ class Viajes(models.Model):
                 invoice_line = (0, 0, {
                     'product_id': viaje.producto_transportado_id.id,
                     'name': f"{viaje.name} - {viaje.producto_transportado_id.name}",
-                    'quantity_done': viaje.kilogramos_a_liquidar,
+                    'quantity': viaje.kilogramos_a_liquidar,
                     'price_unit': viaje.producto_transportado_id.lst_price,
                     'account_id' : viaje.producto_transportado_id.categ_id.property_account_income_categ_id.id,
                     'sale_line_ids': [(4, sale_line.id)], 
