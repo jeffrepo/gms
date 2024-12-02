@@ -199,6 +199,7 @@
 
 
                             <group>
+                                <field name="contacto_id" invisible="1"/>
                                 <field name="camion_disponible_id" attrs="{'invisible': ['|', ('state', '=', 'solicitud'), ('state', '=', 'confirmado')]}"/>
                                 <field name="transportista_id" attrs="{'invisible': [('state', '=', 'solicitud')]}" readonly="1" force_save="1"/>
                                 <field name="conductor_id" attrs="{'invisible': [('state', '=', 'solicitud')]}" readonly="1" force_save="1"/>
