@@ -34,7 +34,8 @@ class Agenda(models.Model):
         required=True, 
         readonly=True,
         tracking=False, 
-        ondelete='cascade'
+        ondelete='cascade',
+        domain="[('tipo', 'in', ['planta', 'chacra', 'puerto']), ('parent_id', '=', contacto_id)]"
     )
 
     
