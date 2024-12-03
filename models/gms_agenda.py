@@ -28,6 +28,11 @@ class Agenda(models.Model):
         string='Contacto Auxiliar'
     )
 
+    contacto_destino_id = fields.Many2one(
+    'res.partner',
+    string='Contacto Destino Auxiliar'
+    )
+    
     origen = fields.Many2one(
         'res.partner', 
         string='Origen', 
@@ -45,7 +50,7 @@ class Agenda(models.Model):
                               string='Destino', 
                               required=True, 
                               tracking = False, 
-                              )
+                              domain="[('tipo', 'in', ['planta', 'chacra', 'puerto']), ('parent_id', '=', contacto_destino_id)]")
     
     transportista_id = fields.Many2one('res.partner', 
                                        string='Trasportista', 

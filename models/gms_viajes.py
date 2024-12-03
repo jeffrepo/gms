@@ -46,13 +46,18 @@ class Viajes(models.Model):
         string='Contacto Auxiliar'
     )
 
+    contacto_destino_id = fields.Many2one(
+    'res.partner',
+    string='Contacto Destino Auxiliar'
+    )
+
     origen = fields.Many2one('res.partner',
                              string='Origen',
                              tracking="1",
                             domain="[('tipo', 'in', ['planta', 'chacra', 'puerto']), ('parent_id', '=', contacto_id)]"
     )
 
-    destino = fields.Many2one('res.partner', string='Destino', tracking="1")
+    destino = fields.Many2one('res.partner', string='Destino', tracking="1", domain="[('tipo', 'in', ['planta', 'chacra', 'puerto']), ('parent_id', '=', contacto_destino_id)]")
 
     camion_disponible_id = fields.Many2one('gms.camiones.disponibilidad', string='Camión Disponible', tracking="1")
 

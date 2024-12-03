@@ -200,6 +200,7 @@
 
                             <group>
                                 <field name="contacto_id" invisible="1"/>
+                                <field name="contacto_destino_id" invisible="1"/>
                                 <field name="camion_disponible_id" attrs="{'invisible': ['|', ('state', '=', 'solicitud'), ('state', '=', 'confirmado')]}"/>
                                 <field name="transportista_id" attrs="{'invisible': [('state', '=', 'solicitud')]}" readonly="1" force_save="1"/>
                                 <field name="conductor_id" attrs="{'invisible': [('state', '=', 'solicitud')]}" readonly="1" force_save="1"/>
@@ -374,6 +375,8 @@
                                 <field name="fecha_viaje" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}"/>
                                 <field name="solicitante_id" attrs="{'readonly': [('state', 'in', ['proceso','coordinado', 'liquidado', 'terminado', 'cancelado'])]}"/>
                                 <field name="contacto_id" invisible="1"/>
+                                <field name="contacto_destino_id" invisible="1"/>
+                                
                                 <field name="origen" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}"/>
                                 <field name="destino" attrs="{'readonly': [('state', 'in', ['proceso', 'liquidado', 'terminado', 'cancelado'])]}"/>
                                 <field name="camion_id" attrs="{'readonly': ['|', '&amp;', ('albaran_id', '!=', False), ('state', 'not in', ['coordinado']), ('state', 'in', ['proceso', 'terminado', 'liquidado', 'cancelado'])], 'required': [('state', '=', 'coordinado')]}" />
