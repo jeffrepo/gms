@@ -100,4 +100,4 @@ class Camiones(models.Model):
 
     @api.model
     def search(self, args, offset=0, limit=None, order=None, count=False):
-            return super(Camiones, self).search(args, offset=offset, limit=limit, order=order)
+        return super(Camiones, self).search(args, offset=offset, limit=limit, order=order)

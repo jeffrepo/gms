@@ -18,7 +18,7 @@ class StockPicking(models.Model):
 
     def button_schedule_trip(self):
         _logger.info("Iniciando button_schedule_trip para el albarán: %s", self.name)
-
+        contacto_id = None 
         agendas = self.agenda_ids.filtered(lambda r: r.state in ['solicitud', 'proceso', 'confirmado'])
         if agendas:
             raise UserError('Ya existe una agenda en estado Solicitud, Proceso o Confirmado.')
@@ -27,17 +27,23 @@ class StockPicking(models.Model):
             _logger.info("Picking type code: %s", self.picking_type_id.code)
 
             if tipo_viaje == 'entrada':
-                # Verificar si el tipo del partner_id es 'chacra' o 'planta'
-                # if self.partner_id.tipo not in ['chacra', 'planta']:
-                #     # Lanzar un error si el tipo no es ni 'chacra' ni 'planta'
-                #     raise UserError("El Solicitante no es de tipo 'Chacra' ni 'Planta'. No se puede agendar el viaje.")
-                origen = self.partner_id.id
+               #Obtener todos los subcontactos del solicitante (partner_id)
+                sub_contactos_origen = self.env['res.partner'].search([('parent_id', '=', self.partner_id.id)])
+                _logger.info(f"Subcontactos encontrados para {self.partner_id.name}: {[sub_contacto.id for sub_contacto in sub_contactos_origen]}")
 
-                sub_contactos_origen = self.env['res.partner'].search([('parent_id', '=', self.partner_id.id)], limit=1)
                 if sub_contactos_origen:
-                    origen = sub_contactos_origen.id
+                    # Seleccionar el primer subcontacto como valor predeterminado
+                    origen = sub_contactos_origen[0].id
+
+                    # Permitir seleccionar un contacto auxiliar y usarlo como origen
+                    contacto_id = sub_contactos_origen[0].id  # Por defecto, el primer subcontacto
+                    if self.partner_id:
+                        contacto_id = self.partner_id.id
+                    _logger.info(f"Contacto asignado para entrada: {contacto_id}")
                 else:
+                    _logger.error(f"No se encontraron subcontactos para el solicitante: {self.partner_id.name}")
                     raise UserError("No se encontraron sub contactos para el solicitante.")
+
                 destino = self.picking_type_id.warehouse_id.partner_id.id
             else:
                 origen = self.picking_type_id.warehouse_id.partner_id.id
@@ -90,7 +96,7 @@ class StockPicking(models.Model):
     def button_create_trip(self):
         _logger.info(f"Iniciando button_create_trip para el albarán {self.name} con estado {self.state} y tipo {self.picking_type_id.code}")
         sale_order = None
-        contacto_id = False
+        contacto_id = None 
         # Buscar la orden de compra basada en el campo origin del albarán
         if self.origin:
             order = self.env['purchase.order'].search([('name', '=', self.origin)], limit=1)
@@ -119,15 +125,27 @@ class StockPicking(models.Model):
                 self.origin = order.name
 
         if tipo_viaje == 'entrada':
-               
-                origen = self.partner_id.id
+            _logger.info(f"Tipo de viaje: {tipo_viaje}")
+            _logger.info(f"Partner ID del solicitante: {self.partner_id.id} ({self.partner_id.name})")
 
-                sub_contactos_origen = self.env['res.partner'].search([('parent_id', '=', self.partner_id.id)], limit=1)
-                if sub_contactos_origen:
-                    origen = sub_contactos_origen.id
-                else:
-                    raise UserError("No se encontraron sub contactos para el solicitante.")
-                destino = self.picking_type_id.warehouse_id.partner_id.id
+            # Obtener todos los subcontactos del solicitante (partner_id)
+            sub_contactos_origen = self.env['res.partner'].search([('parent_id', '=', self.partner_id.id)])
+            _logger.info(f"Subcontactos encontrados para {self.partner_id.name}: {[sub_contacto.id for sub_contacto in sub_contactos_origen]}")
+
+            if sub_contactos_origen:
+                # Seleccionar el primer subcontacto como valor predeterminado
+                origen = sub_contactos_origen[0].id
+
+                # Permitir seleccionar un contacto auxiliar y usarlo como origen
+                contacto_id = sub_contactos_origen[0].id  # Por defecto, el primer subcontacto
+                if self.partner_id:
+                    contacto_id = self.partner_id.id
+                _logger.info(f"Contacto asignado para entrada: {contacto_id}")
+            else:
+                _logger.error(f"No se encontraron subcontactos para el solicitante: {self.partner_id.name}")
+                raise UserError("No se encontraron sub contactos para el solicitante.")
+            # Destino
+            destino = self.picking_type_id.warehouse_id.partner_id.id
         else:
                 origen = self.picking_type_id.warehouse_id.partner_id.id
                  # Obtener solo un subcontacto del `origen`
