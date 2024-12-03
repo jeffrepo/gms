@@ -19,6 +19,7 @@ class StockPicking(models.Model):
     def button_schedule_trip(self):
         _logger.info("Iniciando button_schedule_trip para el albarán: %s", self.name)
         contacto_id = None 
+        contacto_destino_id = None 
         agendas = self.agenda_ids.filtered(lambda r: r.state in ['solicitud', 'proceso', 'confirmado'])
         if agendas:
             raise UserError('Ya existe una agenda en estado Solicitud, Proceso o Confirmado.')
@@ -45,16 +46,20 @@ class StockPicking(models.Model):
                     raise UserError("No se encontraron sub contactos para el solicitante.")
 
                 destino = self.picking_type_id.warehouse_id.partner_id.id
+                contacto_destino_id = self.picking_type_id.warehouse_id.partner_id.parent_id.id if self.picking_type_id.warehouse_id.partner_id.parent_id else self.picking_type_id.warehouse_id.partner_id.id
             else:
                 origen = self.picking_type_id.warehouse_id.partner_id.id
                 # Buscar el primer sub contacto del destinatario para viajes de salida
                 contacto_id = self.picking_type_id.warehouse_id.partner_id.parent_id.id if self.picking_type_id.warehouse_id.partner_id.parent_id else self.picking_type_id.warehouse_id.partner_id.id
                 sub_contactos_destino = self.env['res.partner'].search([('parent_id', '=', self.partner_id.id)], limit=1)
                 if sub_contactos_destino:
-                    destino = sub_contactos_destino.id
+                    destino = sub_contactos_destino[0].id
+                    contacto_destino_id = sub_contactos_destino[0].id  
+                    if self.partner_id:
+                        contacto_destino_id = self.partner_id.id
                 else:
-                    # Si no se encuentra sub contacto para el destinatario, usar el ID del partner_id como destino
                     destino = self.partner_id.id
+                    contacto_destino_id = destino  
 
             agenda_vals = {
                 'fecha': fields.Date.today(),
@@ -62,6 +67,7 @@ class StockPicking(models.Model):
                 'solicitante_id': self.partner_id.id,
                 'origen': origen,
                 'contacto_id': contacto_id,
+                'contacto_destino_id':contacto_destino_id,
                 'destino': destino,
                 'picking_id': self.id,
                 'tipo_viaje': tipo_viaje,
@@ -97,6 +103,7 @@ class StockPicking(models.Model):
         _logger.info(f"Iniciando button_create_trip para el albarán {self.name} con estado {self.state} y tipo {self.picking_type_id.code}")
         sale_order = None
         contacto_id = None 
+        contacto_destino_id = None 
         # Buscar la orden de compra basada en el campo origin del albarán
         if self.origin:
             order = self.env['purchase.order'].search([('name', '=', self.origin)], limit=1)
@@ -146,6 +153,7 @@ class StockPicking(models.Model):
                 raise UserError("No se encontraron sub contactos para el solicitante.")
             # Destino
             destino = self.picking_type_id.warehouse_id.partner_id.id
+            contacto_destino_id = self.picking_type_id.warehouse_id.partner_id.parent_id.id if self.picking_type_id.warehouse_id.partner_id.parent_id else self.picking_type_id.warehouse_id.partner_id.id
         else:
                 origen = self.picking_type_id.warehouse_id.partner_id.id
                  # Obtener solo un subcontacto del `origen`
@@ -159,10 +167,14 @@ class StockPicking(models.Model):
                 # Buscar el primer sub contacto del destinatario para viajes de salida
                 sub_contactos_destino = self.env['res.partner'].search([('parent_id', '=', self.partner_id.id)], limit=1)
                 if sub_contactos_destino:
-                    destino = sub_contactos_destino.id
+                    destino = sub_contactos_destino[0].id
+                    contacto_destino_id = sub_contactos_destino[0].id  
+                    if self.partner_id:
+                        contacto_destino_id = self.partner_id.id
                 else:
-                    # Si no se encuentra sub contacto para el destinatario, usar el ID del partner_id como destino
                     destino = self.partner_id.id
+                    contacto_destino_id = destino  
+
 
         # Determinar el producto transportado y la cantidad
         if len(self.move_ids_without_package) > 0:
@@ -187,6 +199,7 @@ class StockPicking(models.Model):
             'origen': origen,
             'destino': destino,
             'contacto_id': contacto_id,
+            'contacto_destino_id':contacto_destino_id,
             'picking_id': self.id,
             'tipo_viaje': tipo_viaje,
             'producto_transportado_id': producto_transportado_id,
